@@ -111,7 +111,7 @@ eval(pm.collectionVariables.get("hephaestus.v3.post"))
 
 | Требование | Описание |
 |---|---|
-| **Postman Desktop** v10+ | LAN или через VPN — браузерная версия не поддерживается |
+| **Postman Desktop** v10+ | Рекомендуется для работы с коллекцией |
 | **Интернет** | Нужен один раз для `engine-update` |
 | **Git-репозиторий** | Движок хранится в git и загружается в коллекцию |
 
@@ -232,9 +232,9 @@ auth: {
     enabled: true,
     type: "variables",
     fields: {
-        "pmv-login":    "{{login.sbms.technical.main}}",
-        "pmv-channel":  "{{channel.sbms.technical.main}}",
-        "pmv-password": "{{password.sbms.technical.main}}"
+        "login":    "{{login.sbms.technical.main}}",
+        "channel":  "{{channel.sbms.technical.main}}",
+        "password": "{{password.sbms.technical.main}}"
     }
 }
 ```

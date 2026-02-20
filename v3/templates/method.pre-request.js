@@ -36,12 +36,12 @@ const override = {
         // Произвольные pm.variables (используешь {{имя}} в теле/URL/заголовках метода):
         // type: "variables",
         // fields: {
-        //   "pmv-login":    "{{login}}",
-        //   "pmv-channel":  "{{channel}}",
-        //   "pmv-password": "{{password}}"
+        //   "login":    "{{login.technical.main}}",
+        //   "channel":  "{{channel.technical.main}}",
+        //   "password": "{{password.technical.main}}"
         //   // или любой другой набор:
-        //   // "pmv-clientId": "{{client_id}}",
-        //   // "pmv-secret":   "{{client_secret}}"
+        //   // "clientId": "{{client_id}}",
+        //   // "secret":   "{{client_secret}}"
         // }
     },
 

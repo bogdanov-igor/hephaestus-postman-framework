@@ -3,7 +3,7 @@
     "_postman_id": "hephaestus-v3-template-2026",
     "name": "Hephaestus v3 :: Template",
     "description": {
-      "content": "# 📚 Hephaestus v3 :: Template\n\nШаблонная коллекция на базе фреймворка **Hephaestus v3**.\n\n---\n\n## 🚀 Быстрый старт\n\n1. Привязать environment с переменными (`login.*`, `password.*`, `channel.*`)\n2. Заполнить `hephaestus.defaults` в переменных коллекции (JSON конфиг)\n3. Запустить `🛠️ Hephaestus System → 🔧 engine-update` → движок загружен\n4. Добавлять методы в `📦 Collection` по шаблону\n\n---\n\n## ⚙️ Правила\n\n- Движок обновляется только через `🔧 engine-update` — не редактировать вручную\n- Каждый метод содержит только `override` + `eval(...)` — бизнес-логика в движке\n- Используй **Postman Desktop** (LAN или VPN) — браузерная версия не поддерживается\n- Изменения в системной папке — только через автора коллекции\n\n---\n\n## 🔧 Переменные коллекции\n\n| Переменная | Описание |\n|---|---|\n| `hephaestus.collectionName` | Имя коллекции для ключей snapshot |\n| `hephaestus.defaults` | JSON конфиг по умолчанию |\n| `hephaestus.version` | Версия движка (`main` или `v3.x.x`) |\n| `hephaestus.v3.pre` | Код pre-request движка (авто) |\n| `hephaestus.v3.post` | Код post-request движка (авто) |\n| `hephaestus.snapshots` | Хранилище snapshot (авто) |\n| `prod.token` | Сессионный токен (авто) |\n\n---\n\n## 👨‍💼 Автор\n\n**Богданов Игорь Александрович**  \nОтдел инноваций, разработки архитектуры и решений  \nУправление эксплуатации и развития ИТ сервисов  \nДепартамент информационных технологий, Ucell  \n📧 igor.bogdanov@ucell.uz\n\n---\n\n## © Hephaestus v3.0.0 — 2026",
+      "content": "# 📚 Hephaestus v3 :: Template\n\nШаблонная коллекция на базе фреймворка **Hephaestus v3**.\n\n---\n\n## 🚀 Быстрый старт\n\n1. Привязать environment с переменными (`login.*`, `password.*`, `channel.*`)\n2. Заполнить `hephaestus.defaults` в переменных коллекции (JSON конфиг)\n3. Запустить `🛠️ Hephaestus System → 🔧 engine-update` → движок загружен\n4. Добавлять методы в `📦 Collection` по шаблону\n\n---\n\n## ⚙️ Правила\n\n- Движок обновляется только через `🔧 engine-update` — не редактировать вручную\n- Каждый метод содержит только `override` + `eval(...)` — бизнес-логика в движке\n- Изменения в системной папке — только через автора коллекции\n\n---\n\n## 🔧 Переменные коллекции\n\n| Переменная | Описание |\n|---|---|\n| `hephaestus.collectionName` | Имя коллекции для ключей snapshot |\n| `hephaestus.defaults` | JSON конфиг по умолчанию |\n| `hephaestus.version` | Версия движка (`main` или `v3.x.x`) |\n| `hephaestus.v3.pre` | Код pre-request движка (авто) |\n| `hephaestus.v3.post` | Код post-request движка (авто) |\n| `hephaestus.snapshots` | Хранилище snapshot (авто) |\n| `prod.token` | Сессионный токен (авто) |\n\n---\n\n## 👨‍💼 Автор\n\n**Богданов Игорь Александрович**  \nОтдел инноваций, разработки архитектуры и решений  \nУправление эксплуатации и развития ИТ сервисов  \nДепартамент информационных технологий, Ucell  \n📧 igor.bogdanov@ucell.uz\n\n---\n\n## © Hephaestus v3.0.0 — 2026",
       "type": "text/markdown"
     },
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -150,6 +150,80 @@
         "type": "text/markdown"
       },
       "item": [
+
+        {
+          "name": "⚙️ defaults",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Hephaestus v3 — Defaults Update",
+                  "// Читает тело запроса (JSON), валидирует и сохраняет в hephaestus.defaults",
+                  "",
+                  "var raw = pm.request.body ? pm.request.body.raw : '';",
+                  "",
+                  "if (!raw || !raw.trim()) {",
+                  "    pm.test('❌ defaults: тело запроса пустое', function() {",
+                  "        throw new Error('Заполни тело запроса (Body → raw → JSON) перед отправкой.');",
+                  "    });",
+                  "} else {",
+                  "    try {",
+                  "        var parsed = JSON.parse(raw);",
+                  "        var saved  = JSON.stringify(parsed);",
+                  "        pm.collectionVariables.set('hephaestus.defaults', saved);",
+                  "        pm.test('✅ hephaestus.defaults обновлён', function() {",
+                  "            pm.expect(pm.collectionVariables.get('hephaestus.defaults')).to.be.a('string').and.have.length.above(0);",
+                  "        });",
+                  "        console.log([",
+                  "            '╔══════════════════════════════════════════════════════════════╗',",
+                  "            '║  ⚙️ HEPHAESTUS — DEFAULTS UPDATED',",
+                  "            '╠══════════════════════════════════════════════════════════════╣',",
+                  "            '║  baseUrl:      ' + (parsed.baseUrl || '(не задан)'),",
+                  "            '║  auth.type:    ' + (parsed.auth ? parsed.auth.type : '—'),",
+                  "            '║  contentType:  ' + (parsed.contentType || '—'),",
+                  "            '║  snapshot:     ' + (parsed.snapshot ? (parsed.snapshot.enabled ? 'enabled, ' + parsed.snapshot.mode : 'disabled') : '—'),",
+                  "            '║  ci:           ' + (parsed.ci ? 'true' : 'false'),",
+                  "            '╚══════════════════════════════════════════════════════════════╝'",
+                  "        ].join('\\n'));",
+                  "    } catch (e) {",
+                  "        pm.test('❌ defaults: невалидный JSON', function() {",
+                  "            throw new Error('Ошибка парсинга: ' + e.message);",
+                  "        });",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"baseUrl\": \"\",\n\n  \"auth\": {\n    \"enabled\": false,\n    \"type\": \"none\"\n  },\n\n  \"contentType\": \"json\",\n  \"expectEmpty\": false,\n  \"dateFormat\": \"yyyy-MM-dd\",\n\n  \"snapshot\": {\n    \"enabled\": false,\n    \"mode\": \"non-strict\",\n    \"autoSaveMissing\": true,\n    \"checkPaths\": [],\n    \"ignorePaths\": []\n  },\n\n  \"schema\": {\n    \"enabled\": false,\n    \"definition\": null\n  },\n\n  \"secrets\": [\n    \"token\",\n    \"password\",\n    \"pass\",\n    \"secret\",\n    \"key\",\n    \"authorization\",\n    \"session\"\n  ],\n\n  \"ci\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://postman-echo.com/post",
+              "protocol": "https",
+              "host": ["postman-echo", "com"],
+              "path": ["post"]
+            },
+            "description": {
+              "content": "## ⚙️ defaults\n\nОбновляет `hephaestus.defaults` из тела запроса. Редактируй JSON в **Body** и нажми **Send**.\n\n---\n\n### Поля конфигурации\n\n| Поле | Тип | Описание |\n|---|---|---|\n| `baseUrl` | string | Базовый URL API |\n| `auth.enabled` | boolean | Включить авторизацию |\n| `auth.type` | string | `none` / `basic` / `bearer` / `headers` / `variables` |\n| `contentType` | string | `json` / `xml` / `text` |\n| `expectEmpty` | boolean | Ожидать пустой ответ |\n| `snapshot.enabled` | boolean | Включить snapshot-регрессию |\n| `snapshot.mode` | string | `strict` / `non-strict` |\n| `snapshot.autoSaveMissing` | boolean | Сохранять baseline при первом запуске |\n| `schema.enabled` | boolean | Включить JSON Schema валидацию |\n| `secrets` | string[] | Ключи, маскируемые в логах |\n| `ci` | boolean | CI-режим (JSON вывод в логах) |\n\n---\n\n### После выполнения\n\n`hephaestus.defaults` в collectionVariables обновлён. Изменения применяются ко всем методам немедленно.\n\n---\n\n### Примечания\n\n- Каждый метод может переопределить любое поле через `override`\n- Основной запрос уходит на `postman-echo.com` — вся логика в Test script",
+              "type": "text/markdown"
+            }
+          },
+          "response": []
+        },
 
         {
           "name": "🔧 engine-update",
@@ -408,7 +482,7 @@
     {
       "name": "📦 Collection",
       "description": {
-        "content": "# 📦 Collection\n\nРабочие методы API. Организованы по папкам — функциональным группам.\n\n---\n\n> Каждый метод содержит только секцию `override` + вызов движка.  \n> Движок (`hephaestus.v3.pre` / `hephaestus.v3.post`) управляет всей логикой.\n\n---\n\n## Структура папки\n\nКаждая папка — логическая группа методов (авторизация, пользователи, заказы и т.д.).\n\n**Именование методов:** `{HTTP} :: {Описание}`  \nПример: `GET :: Получение токена`, `POST :: Создание заявки`",
+        "content": "# 📦 Collection\n\nРабочие методы API. Организованы по папкам — функциональным группам.\n\n---\n\n> Каждый метод содержит только секцию `override` + вызов движка.  \n> Движок (`hephaestus.v3.pre` / `hephaestus.v3.post`) управляет всей логикой.\n\n---\n\n## Структура папки\n\nКаждая папка — логическая группа методов (авторизация, пользователи, заказы и т.д.).\n\n**Именование методов:** `{Описание метода}`  \nПример: `Получение токена`, `Создание заявки`",
         "type": "text/markdown"
       },
       "item": [
@@ -422,7 +496,7 @@
           "item": [
 
             {
-              "name": "GET :: Получение токена",
+              "name": "Получение токена",
               "event": [
                 {
                   "listen": "prerequest",
@@ -435,9 +509,9 @@
                       "        enabled: true,",
                       "        type: 'variables',",
                       "        fields: {",
-                      "            'pmv-login':    '{{login.sbms.technical.main}}',",
-                      "            'pmv-channel':  '{{channel.sbms.technical.main}}',",
-                      "            'pmv-password': '{{password.sbms.technical.main}}'",
+                      "            'login':    '{{login.sbms.technical.main}}',",
+                      "            'channel':  '{{channel.sbms.technical.main}}',",
+                      "            'password': '{{password.sbms.technical.main}}'",
                       "        }",
                       "    }",
                       "};",
@@ -475,12 +549,12 @@
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{baseUrl}}/tokens-stub/get?login={{pmv-login}}&password={{pmv-password}}",
+                  "raw": "{{baseUrl}}/tokens-stub/get?login={{login}}&password={{password}}",
                   "host": ["{{baseUrl}}"],
                   "path": ["tokens-stub", "get"],
                   "query": [
-                    { "key": "login",    "value": "{{pmv-login}}" },
-                    { "key": "password", "value": "{{pmv-password}}" }
+                    { "key": "login",    "value": "{{login}}" },
+                    { "key": "password", "value": "{{password}}" }
                   ]
                 },
                 "description": {
@@ -492,7 +566,7 @@
             },
 
             {
-              "name": "GET :: Получение данных пользователя",
+              "name": "Получение данных пользователя",
               "event": [
                 {
                   "listen": "prerequest",
