@@ -8,41 +8,57 @@
 // ╚══════════════════════════════════════════════════════════════════════════╝
 
 // ── Конфигурация ──────────────────────────────────────────────────────────
-// hephaestus.version   — "main" (последняя) или "3.1.0" (конкретный тег)
-// hephaestus.githubToken — Personal Access Token для приватного репозитория
-//                          (оставить пустым для публичного репозитория)
+// hephaestus.version     — "main" или "3.1.0" (тег без "v")
+// hephaestus.githubToken — GitHub PAT (classic или fine-grained)
+//                          Публичный репо: оставить пустым
+//                          Приватный репо: токен с доступом к Contents (read)
+
+const REPO_OWNER = "bogdanov-igor";
+const REPO_NAME  = "hephaestus-postman-framework";
 
 const version = pm.collectionVariables.get("hephaestus.version") || "main";
 const token   = pm.collectionVariables.get("hephaestus.githubToken")
              || pm.environment.get("hephaestus.githubToken")
              || "";
 
-const REPO_RAW = "https://raw.githubusercontent.com/bogdanov-igor/hephaestus-postman-framework";
-const ref      = version === "main" ? "main" : "v" + version;
+const ref = version === "main" ? "main" : "v" + version;
 
 const ENGINE_FILES = [
     { key: "hephaestus.v3.pre",  path: "v3/engine/pre-request.js",  label: "Pre-Request Engine"  },
     { key: "hephaestus.v3.post", path: "v3/engine/post-request.js", label: "Post-Request Engine" }
 ];
 
-if (!token) {
-    console.log("ℹ️ hephaestus.githubToken не задан — загрузка из публичного репозитория");
-} else {
-    console.log("🔐 hephaestus.githubToken найден — загрузка из приватного репозитория");
-}
+// Приватный репо → GitHub API (поддерживает classic и fine-grained PAT)
+// Публичный репо → raw.githubusercontent.com (без токена)
+var useApi = !!token;
+console.log(useApi
+    ? "🔐 Загрузка через GitHub API (приватный репо, token задан)"
+    : "ℹ️ Загрузка через raw.githubusercontent.com (публичный репо)"
+);
 
-let completed = 0;
-let failed    = 0;
+var completed = 0;
+var failed    = 0;
 
 ENGINE_FILES.forEach(function(file) {
-    var request = {
-        url:    REPO_RAW + "/" + ref + "/" + file.path,
-        method: "GET",
-        header: {}
-    };
+    var request;
 
-    if (token) {
-        request.header["Authorization"] = "token " + token;
+    if (useApi) {
+        // GitHub Contents API: возвращает сырой файл при Accept: application/vnd.github.raw
+        request = {
+            url:    "https://api.github.com/repos/" + REPO_OWNER + "/" + REPO_NAME + "/contents/" + file.path + "?ref=" + ref,
+            method: "GET",
+            header: {
+                "Authorization": "Bearer " + token,
+                "Accept":        "application/vnd.github.raw",
+                "X-GitHub-Api-Version": "2022-11-28"
+            }
+        };
+    } else {
+        request = {
+            url:    "https://raw.githubusercontent.com/" + REPO_OWNER + "/" + REPO_NAME + "/" + ref + "/" + file.path,
+            method: "GET",
+            header: {}
+        };
     }
 
     pm.sendRequest(request, function(err, res) {
@@ -54,13 +70,35 @@ ENGINE_FILES.forEach(function(file) {
             return;
         }
 
+        if (res.code === 401) {
+            failed++;
+            pm.test("❌ " + file.label + " — HTTP 401 Unauthorized", function() {
+                throw new Error(
+                    "Токен недействителен или истёк.\n" +
+                    "Проверь: hephaestus.githubToken задан верно и не истёк."
+                );
+            });
+            return;
+        }
+
+        if (res.code === 403) {
+            failed++;
+            pm.test("❌ " + file.label + " — HTTP 403 Forbidden", function() {
+                throw new Error(
+                    "Нет прав на чтение репозитория.\n" +
+                    "Fine-grained token: добавь разрешение Contents → Read-only для репо " + REPO_NAME + ".\n" +
+                    "Classic token: нужен scope 'repo'."
+                );
+            });
+            return;
+        }
+
         if (res.code === 404) {
             failed++;
             pm.test("❌ " + file.label + " — HTTP 404", function() {
                 throw new Error(
-                    "Файл не найден: " + file.path + " (ref: " + ref + ")\n" +
-                    "Причины: репозиторий приватный — задай hephaestus.githubToken, " +
-                    "или неверный ref — проверь hephaestus.version"
+                    "Файл не найден: " + file.path + " (ref: " + ref + ").\n" +
+                    "Проверь: hephaestus.version задан верно."
                 );
             });
             return;
@@ -69,7 +107,7 @@ ENGINE_FILES.forEach(function(file) {
         if (res.code !== 200) {
             failed++;
             pm.test("❌ " + file.label + " — HTTP " + res.code, function() {
-                throw new Error("Неожиданный ответ: HTTP " + res.code + " для " + file.path);
+                throw new Error("Неожиданный ответ: HTTP " + res.code);
             });
             return;
         }
