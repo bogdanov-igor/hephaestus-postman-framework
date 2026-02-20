@@ -7,61 +7,88 @@
 // ║  https://github.com/bogdanov-igor/hephaestus-postman-framework          ║
 // ╚══════════════════════════════════════════════════════════════════════════╝
 
-// Версия для загрузки: "main" (последняя) или конкретный тег, например "v3.1.0"
-// Управляется через collectionVariables["hephaestus.version"]
+// ── Конфигурация ──────────────────────────────────────────────────────────
+// hephaestus.version   — "main" (последняя) или "3.1.0" (конкретный тег)
+// hephaestus.githubToken — Personal Access Token для приватного репозитория
+//                          (оставить пустым для публичного репозитория)
+
 const version = pm.collectionVariables.get("hephaestus.version") || "main";
+const token   = pm.collectionVariables.get("hephaestus.githubToken")
+             || pm.environment.get("hephaestus.githubToken")
+             || "";
 
 const REPO_RAW = "https://raw.githubusercontent.com/bogdanov-igor/hephaestus-postman-framework";
-const ref = version === "main" ? "main" : `v${version}`;
+const ref      = version === "main" ? "main" : "v" + version;
 
 const ENGINE_FILES = [
-    {
-        key: "hephaestus.v3.pre",
-        path: "v3/engine/pre-request.js",
-        label: "Pre-Request Engine"
-    },
-    {
-        key: "hephaestus.v3.post",
-        path: "v3/engine/post-request.js",
-        label: "Post-Request Engine"
-    }
+    { key: "hephaestus.v3.pre",  path: "v3/engine/pre-request.js",  label: "Pre-Request Engine"  },
+    { key: "hephaestus.v3.post", path: "v3/engine/post-request.js", label: "Post-Request Engine" }
 ];
 
-let completed = 0;
-let failed = 0;
+if (!token) {
+    console.log("ℹ️ hephaestus.githubToken не задан — загрузка из публичного репозитория");
+} else {
+    console.log("🔐 hephaestus.githubToken найден — загрузка из приватного репозитория");
+}
 
-ENGINE_FILES.forEach(({ key, path, label }) => {
-    pm.sendRequest(`${REPO_RAW}/${ref}/${path}`, (err, res) => {
+let completed = 0;
+let failed    = 0;
+
+ENGINE_FILES.forEach(function(file) {
+    var request = {
+        url:    REPO_RAW + "/" + ref + "/" + file.path,
+        method: "GET",
+        header: {}
+    };
+
+    if (token) {
+        request.header["Authorization"] = "token " + token;
+    }
+
+    pm.sendRequest(request, function(err, res) {
         if (err) {
             failed++;
-            pm.test(`❌ [engine-update] ${label} — сетевая ошибка`, () => {
+            pm.test("❌ " + file.label + " — сетевая ошибка", function() {
                 throw new Error(err.message);
+            });
+            return;
+        }
+
+        if (res.code === 404) {
+            failed++;
+            pm.test("❌ " + file.label + " — HTTP 404", function() {
+                throw new Error(
+                    "Файл не найден: " + file.path + " (ref: " + ref + ")\n" +
+                    "Причины: репозиторий приватный — задай hephaestus.githubToken, " +
+                    "или неверный ref — проверь hephaestus.version"
+                );
             });
             return;
         }
 
         if (res.code !== 200) {
             failed++;
-            pm.test(`❌ [engine-update] ${label} — HTTP ${res.code}`, () => {
-                throw new Error(`Файл не найден: ${path} (ref: ${ref})`);
+            pm.test("❌ " + file.label + " — HTTP " + res.code, function() {
+                throw new Error("Неожиданный ответ: HTTP " + res.code + " для " + file.path);
             });
             return;
         }
 
-        pm.collectionVariables.set(key, res.text());
+        pm.collectionVariables.set(file.key, res.text());
         completed++;
 
-        pm.test(`✅ [engine-update] ${label} загружен (ref: ${ref})`, () => {
-            pm.expect(pm.collectionVariables.get(key)).to.be.a("string").and.have.length.above(0);
+        pm.test("✅ " + file.label + " загружен (ref: " + ref + ")", function() {
+            pm.expect(pm.collectionVariables.get(file.key))
+                .to.be.a("string").and.have.length.above(0);
         });
 
         if (completed + failed === ENGINE_FILES.length) {
             if (failed === 0) {
                 pm.collectionVariables.set("hephaestus.engineRef", ref);
                 pm.collectionVariables.set("hephaestus.updatedAt", new Date().toISOString());
-                console.log(`🚀 Hephaestus v3 engine обновлён: ref=${ref}`);
+                console.log("🚀 Hephaestus engine обновлён: ref=" + ref);
             } else {
-                console.warn(`⚠️ Обновление завершено с ошибками: ${failed} из ${ENGINE_FILES.length} файлов не загружены`);
+                console.warn("⚠️ Обновление с ошибками: " + failed + "/" + ENGINE_FILES.length + " файлов не загружены");
             }
         }
     });
