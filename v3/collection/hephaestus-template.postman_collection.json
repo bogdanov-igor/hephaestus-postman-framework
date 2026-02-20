@@ -10,17 +10,26 @@
   },
 
   "variable": [
+
+    { "key": "// ⚒️ HEPHAESTUS", "value": "// ⚒️ HEPHAESTUS", "type": "string", "description": "" },
+
     {
       "key": "hephaestus.collectionName",
       "value": "Template",
       "type": "string",
-      "description": "Имя коллекции — используется как префикс в ключах snapshot"
+      "description": "Имя коллекции — префикс в ключах snapshot"
     },
     {
       "key": "hephaestus.version",
       "value": "main",
       "type": "string",
-      "description": "Версия движка для engine-update: 'main' или 'v3.1.0'"
+      "description": "Версия движка: 'main' = последняя, '3.1.0' = конкретный тег"
+    },
+    {
+      "key": "hephaestus.githubToken",
+      "value": "",
+      "type": "string",
+      "description": "GitHub PAT (fine-grained, Contents: Read). Пусто = публичный репо"
     },
     {
       "key": "hephaestus.defaults",
@@ -32,62 +41,104 @@
       "key": "hephaestus.v3.pre",
       "value": "// Запустите 🔧 engine-update для загрузки движка",
       "type": "string",
-      "description": "Код pre-request движка — загружается через engine-update"
+      "description": "Код pre-request движка — авто, не редактировать"
     },
     {
       "key": "hephaestus.v3.post",
       "value": "// Запустите 🔧 engine-update для загрузки движка",
       "type": "string",
-      "description": "Код post-request движка — загружается через engine-update"
+      "description": "Код post-request движка — авто, не редактировать"
     },
     {
       "key": "hephaestus.snapshots",
       "value": "{}",
       "type": "string",
-      "description": "Хранилище snapshot — управляется движком автоматически"
-    },
-    {
-      "key": "hephaestus.githubToken",
-      "value": "",
-      "type": "string",
-      "description": "GitHub Personal Access Token для приватного репозитория. Оставить пустым для публичного."
+      "description": "Хранилище snapshot — авто. Управление: snapshot-view / snapshot-clear"
     },
     {
       "key": "hephaestus.engineRef",
       "value": "",
       "type": "string",
-      "description": "Текущая версия загруженного движка"
+      "description": "Ref загруженного движка — авто"
     },
     {
       "key": "hephaestus.updatedAt",
       "value": "",
       "type": "string",
-      "description": "Дата последнего обновления движка"
-    },
-    {
-      "key": "hephaestus.snapshot.clearFilter",
-      "value": "",
-      "type": "string",
-      "description": "Фильтр для snapshot-clear: пусто = всё, 'Login' = только 'Login'"
+      "description": "Дата последнего обновления движка — авто"
     },
     {
       "key": "hephaestus.snapshot.viewFilter",
       "value": "",
       "type": "string",
-      "description": "Фильтр для snapshot-view: пусто = все ключи, 'Login' = только 'Login'"
+      "description": "Фильтр для snapshot-view. Пусто = все, 'Login' = только с 'Login' в ключе"
     },
     {
-      "key": "prod.token",
+      "key": "hephaestus.snapshot.clearFilter",
       "value": "",
       "type": "string",
-      "description": "Сессионный токен — устанавливается методом получения токена"
+      "description": "Фильтр для snapshot-clear. Пусто = всё, 'Login' = только с 'Login' в ключе"
     },
+
+    { "key": "// 🌐 MAIN DATA", "value": "// 🌐 MAIN DATA", "type": "string", "description": "" },
+
     {
       "key": "baseUrl",
       "value": "",
       "type": "string",
       "description": "Текущий baseUrl — устанавливается движком из hephaestus.defaults"
+    },
+
+    { "key": "// 👤 AUTH", "value": "// 👤 AUTH", "type": "string", "description": "Переменные-агрегаты пользователей из environment. Формат: {{login.*}}|{{channel.*}}|{{password.*}}" },
+
+    {
+      "key": "user.technical.main",
+      "value": "{{login.technical.main}}|{{channel.technical.main}}|{{password.technical.main}}",
+      "type": "string",
+      "disabled": true,
+      "description": "Технический пользователь. Пример агрегата — заменить на свои переменные"
+    },
+    {
+      "key": "user.service.main",
+      "value": "{{login.service.main}}|{{password.service.main}}",
+      "type": "string",
+      "disabled": true,
+      "description": "Сервисный пользователь. Пример агрегата"
+    },
+    {
+      "key": "user.person.main",
+      "value": "{{login.person.main}}|{{password.person.main}}",
+      "type": "string",
+      "disabled": true,
+      "description": "Персонализированный пользователь. Пример агрегата"
+    },
+
+    { "key": "// 🔑 TOKENS", "value": "// 🔑 TOKENS", "type": "string", "description": "Токены авторизации — устанавливаются методами получения токена" },
+
+    {
+      "key": "prod.token",
+      "value": "",
+      "type": "string",
+      "description": "Токен production — устанавливается GET :: Получение токена"
+    },
+    {
+      "key": "predprod.token",
+      "value": "",
+      "type": "string",
+      "disabled": true,
+      "description": "Токен pre-production — устанавливается соответствующим методом"
+    },
+
+    { "key": "// 📦 DATA", "value": "// 📦 DATA", "type": "string", "description": "Данные из ответов — переиспользуются в последующих запросах цепочки" },
+
+    {
+      "key": "prod.userId",
+      "value": "",
+      "type": "string",
+      "disabled": true,
+      "description": "ID пользователя — устанавливается GET :: Получение данных пользователя"
     }
+
   ],
 
   "item": [
