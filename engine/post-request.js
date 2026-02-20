@@ -100,6 +100,22 @@
     // MODULE: normalizeResponse
     // ════════════════════════════════════════════════════════════
     const normalizeResponse = {
+        _tryXml(ctx, raw) {
+            // xml2js (Postman v10+, non-deprecated)
+            try {
+                const xml2js = require('xml2js');
+                const parser = new xml2js.Parser({ explicitArray: false, ignoreAttrs: false });
+                var xmlParsed = null;
+                parser.parseString(raw, function(err, result) { if (!err && result) xmlParsed = result; });
+                if (xmlParsed !== null) { ctx.response.parsed = xmlParsed; ctx.response.format = 'xml'; return true; }
+            } catch (e) { /* xml2js unavailable, try fallback */ }
+            // Fallback: xml2Json (deprecated but supported)
+            try {
+                ctx.response.parsed = xml2Json(raw); // eslint-disable-line no-undef
+                ctx.response.format = 'xml';
+                return true;
+            } catch (e) { return false; }
+        },
         run(ctx) {
             const raw = ctx.response.raw;
             const ct  = ctx.response.contentType;
@@ -108,14 +124,12 @@
                 catch (e) { /* fall through */ }
             }
             if (ct.includes('xml') || ct.includes('html')) {
-                try { ctx.response.parsed = xml2Json(raw); ctx.response.format = 'xml'; return; }
-                catch (e) { /* fall through */ }
+                if (this._tryXml(ctx, raw)) return;
             }
             if (ct === 'text/plain') { ctx.response.format = 'text'; return; }
             try { ctx.response.parsed = JSON.parse(raw); ctx.response.format = 'json'; return; }
             catch (e) { /* not json */ }
-            try { ctx.response.parsed = xml2Json(raw); ctx.response.format = 'xml'; return; }
-            catch (e) { /* not xml */ }
+            if (this._tryXml(ctx, raw)) return;
             if (raw && raw.length > 0) ctx.response.format = 'text';
         }
     };
@@ -529,7 +543,7 @@
     // MODULE: schema
     // Валидирует ctx.response.parsed по JSON Schema (draft-04/07).
     // Использует tv4 — доступен в Postman sandbox как глобал.
-    // Поддерживаемые форматы: json, xml (после xml2Json), text (структурно)
+    // Поддерживаемые форматы: json, xml (через xml2js / xml2Json), text (структурно)
     // ════════════════════════════════════════════════════════════
     const schema = {
         run(ctx) {
@@ -589,6 +603,30 @@
             return str.slice(0, keep) + '***MASKED***' + str.slice(-keep);
         },
 
+        // Маскирует query-параметры URL, чьи ключи совпадают с secrets
+        _maskUrl(url, secrets) {
+            if (!url || !secrets || !secrets.length) return url;
+            try {
+                const qi = url.indexOf('?');
+                if (qi === -1) return url;
+                const base = url.slice(0, qi);
+                const query = url.slice(qi + 1).split('&').map(function(param) {
+                    const ei = param.indexOf('=');
+                    if (ei === -1) return param;
+                    const key = param.slice(0, ei);
+                    const val = param.slice(ei + 1);
+                    const kl  = key.toLowerCase();
+                    if (secrets.some(function(s) { return kl.includes(s.toLowerCase()); })) {
+                        return key + '=' + this._maskStr(val);
+                    }
+                    return param;
+                }, this).join('&');
+                return base + '?' + query;
+            } catch (e) { return url; }
+        },
+
+        // Маскирует чувствительные ключи в объекте (рекурсивно)
+        // secrets — список слов; если ключ содержит любое из них — значение маскируется
         _maskObj(obj, secrets) {
             if (!obj || !secrets || secrets.length === 0) return obj;
             try {
@@ -606,19 +644,8 @@
             } catch (e) { return obj; }
         },
 
-        _preview(parsed, raw, format, limit) {
-            const max = limit || 600;
-            if (parsed && (format === 'json' || format === 'xml')) {
-                const str = JSON.stringify(parsed, null, 2);
-                return str.length > max ? str.slice(0, max) + '\n  ... [+' + (str.length - max) + ' chars]' : str;
-            }
-            if (raw) return raw.length > max ? raw.slice(0, max) + '\n  ... [+' + (raw.length - max) + ' chars]' : raw;
-            return '— (пустой ответ)';
-        },
-
         _resultLines(results) {
             const lines = [];
-
             if (results.found.length > 0) {
                 lines.push('🔎 FOUND    ' + results.found.map(r => '\'' + r.name + '\' ✅').join('  |  '));
             }
@@ -632,16 +659,15 @@
                 }).join('  |  '));
             }
             if (results.snapshot) {
-                const s = results.snapshot;
+                const s    = results.snapshot;
                 const icon = s.status === 'match' ? '✅' : s.status === 'saved' ? '🆕' : s.status === 'diff' ? '❌' : '⚠️';
-                const detail = s.status === 'diff' ? ' (' + (s.diff || []).length + ' различий)' : s.status === 'saved' ? ' baseline' : '';
-                lines.push('📸 SNAPSHOT ' + icon + '  ' + (s.mode || '') + detail);
+                const det  = s.status === 'diff' ? ' (' + (s.diff || []).length + ' различий)' : s.status === 'saved' ? ' baseline' : '';
+                lines.push('📸 SNAPSHOT ' + icon + ' ' + (s.mode || '') + det);
             }
             if (results.schema) {
                 const sv = results.schema;
                 lines.push('🔬 SCHEMA   ' + (sv.valid ? '✅ валидна' : '❌ ' + sv.errors.length + ' ошибок'));
             }
-
             return lines;
         },
 
@@ -651,44 +677,60 @@
             const res     = ctx.response;
             const secrets = c.secrets || [];
             const ts      = ctx._meta.processedAt.replace('T', ' ').slice(0, 19);
+            const W       = 62; // ширина блока (символов)
+            const HR      = '╠' + '═'.repeat(W) + '╣';
+            const TOP     = '╔' + '═'.repeat(W) + '╗';
+            const BOT     = '╚' + '═'.repeat(W) + '╝';
+            const DIV     = '─'.repeat(W + 2);
 
-            // ── Заголовок ──────────────────────────────────────────────
-            console.log([
-                '╔══════════════════════════════════════════════════════════════╗',
-                '║  ✅ HEPHAESTUS v' + VERSION + '  ·  POST-REQUEST',
-                '║  📅 ' + ts + ' UTC',
-                '╠══════════════════════════════════════════════════════════════╣',
-                '║  📋 REQUEST  ' + r.method + '  ' + r.name,
-                '║  🌐 URL      ' + (r.url || '—'),
-                '╠══════════════════════════════════════════════════════════════╣',
-                '║  ' + res._statusEmoji + '  STATUS   ' + res.code + ' — ' + (res._statusLabel || '—'),
-                '║  ⏱️  TIME     ' + res.time + ' ms',
-                '║  📦 SIZE     ' + (res._sizeFormatted || '—'),
-                '║  📄 FORMAT   ' + res.format.toUpperCase(),
-                '╠══════════════════════════════════════════════════════════════╣',
-                '║  📤 RESPONSE PREVIEW',
-                '╚══════════════════════════════════════════════════════════════╝'
-            ].join('\n'));
+            // Маскируем URL и обрезаем до ширины блока
+            const maskedUrl = this._maskUrl(r.url || '—', secrets);
+            const urlLine   = maskedUrl.length > W - 6 ? maskedUrl.slice(0, W - 9) + '...' : maskedUrl;
 
-            // ── Preview ────────────────────────────────────────────────
-            console.log(this._preview(this._maskObj(res.parsed, secrets), res.raw, res.format, 600));
+            // Preview: маскируем объект, форматируем как строку
+            const masked = this._maskObj(res.parsed, secrets);
+            var previewStr;
+            if (masked !== null && masked !== undefined) {
+                var ps = JSON.stringify(masked, null, 2);
+                previewStr = ps.length > 800 ? ps.slice(0, 800) + '\n... [+' + (ps.length - 800) + ' chars]' : ps;
+            } else if (res.raw && res.raw.length > 0) {
+                previewStr = res.raw.length > 800 ? res.raw.slice(0, 800) + '\n... [+' + (res.raw.length - 800) + ' chars]' : res.raw;
+            } else {
+                previewStr = '— (пустой ответ)';
+            }
 
-            // ── Результаты assertions / snapshot / schema ──────────────
             const resultLines = this._resultLines(ctx._meta.results);
+
+            // Всё в один console.log → один блок в Postman Console, без "floating quotes"
+            var lines = [
+                TOP,
+                '║  HEPHAESTUS v' + VERSION + '  ·  POST-REQUEST',
+                '║  📅 ' + ts + ' UTC',
+                HR,
+                '║  📋  ' + r.method + '  ' + r.name,
+                '║  🌐  ' + urlLine,
+                HR,
+                '║  ' + res._statusEmoji + ' STATUS  ' + res.code + ' — ' + (res._statusLabel || '—'),
+                '║  ⏱   ' + res.time + ' ms   📦 ' + (res._sizeFormatted || '—') + '   📄 ' + res.format.toUpperCase(),
+                HR,
+                '║  📤 RESPONSE PREVIEW',
+                DIV,
+                previewStr,
+                DIV
+            ];
+
             if (resultLines.length > 0) {
-                console.log('────────────────────────────────────────────────────────────');
-                resultLines.forEach(line => console.log(line));
+                resultLines.forEach(function(l) { lines.push('║  ' + l); });
             }
 
-            // ── Ошибки ─────────────────────────────────────────────────
             if (ctx._meta.errors.length > 0) {
-                console.log('────────────────────────────────────────────────────────────');
-                console.warn('⚠️  [Hephaestus] Ошибки:\n' + ctx._meta.errors.map(e => '  • ' + e).join('\n'));
+                ctx._meta.errors.forEach(function(e) { lines.push('║  ⚠️  ' + e); });
             }
 
-            console.log('════════════════════════════════════════════════════════════');
+            lines.push(BOT);
+            console.log(lines.join('\n'));
 
-            // ── CI-режим ───────────────────────────────────────────────
+            // CI-режим: структурированный JSON для парсинга
             if (c.ci === true) {
                 console.log('[HEPHAESTUS_CI] ' + JSON.stringify({
                     v:        VERSION,

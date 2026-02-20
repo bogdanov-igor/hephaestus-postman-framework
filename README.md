@@ -2,170 +2,157 @@
 
 # ⚒️ Hephaestus
 
-**Модульный фреймворк автоматизации API-тестирования для Postman**
+**Modular API testing automation framework for Postman**
 
 [![Version](https://img.shields.io/badge/version-3.0.0-blue?style=flat-square)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 [![Postman](https://img.shields.io/badge/Postman-v10+-orange?style=flat-square&logo=postman&logoColor=white)](https://postman.com)
 [![Apidog](https://img.shields.io/badge/Apidog-compatible-9cf?style=flat-square)](https://apidog.com)
-[![JavaScript](https://img.shields.io/badge/JavaScript-sandbox-yellow?style=flat-square&logo=javascript&logoColor=black)](v3/engine)
+[![JavaScript](https://img.shields.io/badge/JavaScript-sandbox-yellow?style=flat-square&logo=javascript&logoColor=black)](engine/)
 [![Author](https://img.shields.io/badge/author-Bogdanov_Igor-blueviolet?style=flat-square)](mailto:bogdanov.ig.alex@gmail.com)
 
-[Быстрый старт](#-быстрый-старт) · [Конфигурация](#%EF%B8%8F-конфигурация) · [Модули](#-модули) · [Архитектура](#%EF%B8%8F-архитектура) · [APIDog](#-совместимость-с-apidog) · [Автор](#-автор)
+**[🇷🇺 Русская версия](README.ru.md)**
+
+[Quick Start](#-quick-start) · [Configuration](#️-configuration) · [Modules](#-modules) · [Architecture](#️-architecture) · [Apidog](#-apidog-compatibility) · [Author](#-author)
 
 </div>
 
 ---
 
-## Что такое Hephaestus?
+## Overview
 
-**Hephaestus** — open-source фреймворк для организации, автоматизации и стандартизации API-тестирования в Postman. Он превращает разрозненные pre/post-request скрипты в единую, управляемую систему с поддержкой snapshot-регрессии, валидации схем, гибкой авторизации и маскирования секретов.
+**Hephaestus** is an open-source framework for organizing, automating, and standardizing API testing in Postman. It replaces scattered pre/post-request scripts with a single, version-controlled engine — supporting snapshot regression, schema validation, flexible auth, and secret masking.
 
-Фреймворк построен по принципу **orchestrator → ctx → pipeline модулей**. Каждый запрос в Postman содержит только минимальный `override`-конфиг — всю логику берёт на себя движок, загруженный из git.
+Each request in a collection contains only a minimal `override` config. All logic is handled by the engine loaded from Git.
 
-> Назван в честь бога кузнечного дела в греческой мифологии — **Гефеста**. Как Гефест создавал совершенные инструменты для богов, так и этот фреймворк создаёт надёжную инфраструктуру для инженеров по автоматизации.
-
-### Для кого подходит?
-
-- QA-инженеры, автоматизирующие тестирование REST / XML API
-- Команды, использующие Postman как основной инструмент
-- Проекты с большим количеством методов, которым нужен единый стандарт
-- Команды, которым важно snapshot-регрессионное тестирование без CI-оверхеда
+**Built for:**
+- QA engineers automating REST / XML API testing
+- Teams using Postman as their primary tool
+- Collections with many endpoints that need a consistent standard
+- Projects requiring snapshot regression testing without CI overhead
 
 ---
 
-## ✨ Возможности
+## ✨ Features
 
-| Возможность | Описание |
+| Feature | Description |
 |---|---|
-| 🔄 **Pipeline-архитектура** | Orchestrator управляет цепочкой модулей через единый `ctx` |
-| ⚙️ **Defaults + Override** | Конфиг на уровне коллекции + переопределение на уровне метода |
-| 📸 **Snapshot-регрессия** | Автоматический baseline, strict/non-strict режимы, checkPaths/ignorePaths |
-| 🔐 **Auth-плагин** | `none`, `basic`, `bearer`, `headers`, `variables` — настраивается per-request |
-| 🔍 **Extract API** | `ctx.api.get()`, `.find()`, `.count()`, `.save()` — для JSON и XML |
-| ✅ **Assertions** | `keysToFind`, `varsToSave`, `keysToCount` — с ожидаемыми значениями |
-| 📋 **Schema-валидация** | JSON Schema через встроенный `tv4` без зависимостей |
-| 🛡️ **Маскирование секретов** | Токены и пароли не попадают в логи — автоматически |
-| 📊 **Красивые логи** | Эмодзи, ASCII-рамки, preview ответа, CI-режим (JSON output) |
-| 🔄 **Auto-update** | Движок обновляется из git одним запросом — `engine-update` |
+| 🔄 **Pipeline architecture** | Orchestrator drives a module chain through a shared `ctx` object |
+| ⚙️ **Defaults + Override** | Collection-level config merged with per-request overrides |
+| 📸 **Snapshot regression** | Automatic baseline, strict/non-strict modes, checkPaths/ignorePaths |
+| 🔐 **Auth plugin** | `none`, `basic`, `bearer`, `headers`, `variables` — configurable per request |
+| 🔍 **Extract API** | `ctx.api.get()`, `.find()`, `.count()`, `.save()` — works with JSON and XML |
+| ✅ **Assertions** | `keysToFind`, `varsToSave`, `keysToCount` with expected values |
+| 📋 **Schema validation** | JSON Schema via built-in `tv4` — no external dependencies |
+| 🛡️ **Secret masking** | Tokens, passwords, and URL query params masked in logs automatically |
+| 📊 **Structured logs** | Emoji, ASCII borders, response preview, CI mode (JSON output) |
+| 🔄 **Auto-update** | Engine updated from Git with a single `engine-update` request |
 
 ---
 
-## 🏛️ Архитектура
+## 🏛️ Architecture
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │                         PRE-REQUEST                              │
 │                                                                  │
-│   configMerge → urlBuilder → auth → dateUtils → logger          │
+│   configMerge → urlBuilder → auth → dateUtils → logger           │
 │                                                                  │
-│   • Объединяет hephaestus.defaults + override                    │
-│   • Выставляет pm.variables.baseUrl                              │
-│   • Подставляет auth (headers / pm.variables)                    │
-│   • Логирует конфиг с маскированием секретов                     │
+│   • Merges hephaestus.defaults + override                        │
+│   • Sets pm.variables.baseUrl (auto-prepends protocol)           │
+│   • Applies auth headers / pm.variables                          │
+│   • Logs request config with secret masking                      │
 └──────────────────────────────────────────────────────────────────┘
-                         ⬇️  HTTP запрос ⬇️
+                        ⬇  HTTP Request  ⬇
 ┌──────────────────────────────────────────────────────────────────┐
 │                         POST-REQUEST                             │
 │                                                                  │
 │   configMerge → normalizeResponse → metrics → extractor          │
 │   → assertions → snapshot → schema → logger                      │
 │                                                                  │
-│   • Парсит JSON / XML / text ответ в единый ctx.response         │
-│   • Считает метрики (время, размер)                              │
-│   • Предоставляет ctx.api для работы с данными                   │
-│   • Проверяет assertions, сохраняет переменные                   │
-│   • Сравнивает со snapshot или сохраняет baseline                │
-│   • Валидирует JSON Schema                                       │
-│   • Выводит структурированный лог                                │
+│   • Parses JSON / XML / text response into ctx.response          │
+│   • Records response time and body size                          │
+│   • Exposes ctx.api for data traversal                           │
+│   • Runs assertions, saves variables                             │
+│   • Compares to snapshot or saves baseline                       │
+│   • Validates JSON Schema                                        │
+│   • Outputs a structured, masked log                             │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-### ctx — центральный объект
+### How the engine works
+
+```
+Git (engine/pre-request.js + engine/post-request.js)
+         ↓  engine-update (pm.sendRequest)
+collectionVariables["hephaestus.v3.pre"]
+collectionVariables["hephaestus.v3.post"]
+         ↓  each request
+eval(pm.collectionVariables.get("hephaestus.v3.pre"))
+eval(pm.collectionVariables.get("hephaestus.v3.post"))
+```
+
+### The `ctx` object
 
 ```javascript
 ctx = {
     config:   { /* merged: defaults + override */ },
     request:  { name, method, url },
-    response: { body, status, headers, format, raw },
-    metrics:  { responseTime, size },
+    response: { parsed, raw, code, time, size, format },
     api:      { get(path), find(path, fn), count(path), save(path, target) }
 }
 ```
 
-### Как работает движок
-
-```
-Git (engine/pre-request.js + post-request.js)
-         ↓  engine-update (pm.sendRequest)
-collectionVariables["hephaestus.v3.pre"]
-collectionVariables["hephaestus.v3.post"]
-         ↓  каждый метод
-eval(pm.collectionVariables.get("hephaestus.v3.pre"))
-eval(pm.collectionVariables.get("hephaestus.v3.post"))
-```
-
 ---
 
-## 📋 Требования
+## 🚀 Quick Start
 
-| Требование | Описание |
-|---|---|
-| **Postman Desktop** v10+ | Рекомендуется для работы с коллекцией |
-| **Интернет** | Нужен один раз для `engine-update` |
-| **Git-репозиторий** | Движок хранится в git и загружается в коллекцию |
-
----
-
-## 🚀 Быстрый старт
-
-### Шаг 1 — Импортировать коллекцию
+### Step 1 — Import the collection
 
 ```
-Postman → Import → v3/collection/hephaestus-template.postman_collection.json
+Postman → Import → collection/hephaestus-template.postman_collection.json
 ```
 
-### Шаг 2 — Привязать environment
+### Step 2 — Bind an environment
 
-Создать или подключить environment с переменными:
+Create or attach an environment with the variables your requests need:
 
 ```
-login.*          — логины пользователей
-password.*       — пароли пользователей
-channel.*        — дополнительные поля (если нужно)
+login.*      — user logins
+password.*   — user passwords
+channel.*    — additional fields (if required)
 ```
 
-### Шаг 3 — Настроить defaults
+### Step 3 — Configure defaults
 
-Открыть переменные коллекции → `hephaestus.defaults` → вставить конфиг:
+Open **⚙️ defaults** in `🛠️ Hephaestus System`, edit the JSON body, and click **Send**:
 
 ```json
 {
   "baseUrl": "https://your-api.example.com",
+  "defaultProtocol": "https",
   "auth": { "enabled": false, "type": "none" },
   "contentType": "json",
-  "expectEmpty": false,
   "snapshot": { "enabled": false, "autoSaveMissing": true, "mode": "non-strict" },
-  "schema":   { "enabled": false },
-  "secrets":  ["token", "password", "pass", "key"],
+  "secrets": ["token", "password", "pass", "key"],
   "ci": false
 }
 ```
 
-### Шаг 4 — Загрузить движок
+### Step 4 — Load the engine
 
 ```
 🛠️ Hephaestus System → 🔧 engine-update → Send
 ```
 
-Движок загрузится из git в `hephaestus.v3.pre` и `hephaestus.v3.post`.  
-Повторять при обновлении фреймворка.
+The engine is fetched from Git and saved to `hephaestus.v3.pre` and `hephaestus.v3.post`.  
+Re-run after any framework update.
 
-### Шаг 5 — Написать метод
+### Step 5 — Write a request
 
-Каждый метод содержит только `override` + вызов движка:
+Each request contains only an `override` + engine invocation:
 
-**Pre-request:**
+**Pre-request script:**
 ```javascript
 const override = {
     auth: {
@@ -178,13 +165,16 @@ const override = {
 eval(pm.collectionVariables.get("hephaestus.v3.pre"));
 ```
 
-**Post-request (Tests):**
+**Tests (Post-request):**
 ```javascript
 const override = {
     contentType: "json",
     keysToFind: [
         { path: "data.id",     name: "ID" },
-        { path: "data.status", name: "Статус", expect: "active" }
+        { path: "data.status", name: "Status", expect: "active" }
+    ],
+    varsToSave: [
+        { path: "data.token", name: "prod.token", scope: "collection" }
     ],
     snapshot: { enabled: true, autoSaveMissing: true }
 };
@@ -194,88 +184,94 @@ eval(pm.collectionVariables.get("hephaestus.v3.post"));
 
 ---
 
-## ⚙️ Конфигурация
+## ⚙️ Configuration
 
-### hephaestus.defaults — полный список полей
+### Full field reference
 
-| Поле | Тип | По умолчанию | Описание |
+| Field | Type | Default | Description |
 |---|---|---|---|
-| `baseUrl` | string | `""` | Базовый URL API (можно без протокола — подставится `defaultProtocol`) |
-| `defaultProtocol` | string | `"https"` | Протокол по умолчанию, если в `baseUrl` не указан. `"http"` — выдаст предупреждение |
-| `auth.enabled` | boolean | `false` | Включить авторизацию |
-| `auth.type` | string | `"none"` | Тип: `none`, `basic`, `bearer`, `headers`, `variables` |
-| `contentType` | string | `"json"` | Формат ответа: `json`, `xml`, `text` |
-| `expectEmpty` | boolean | `false` | Ожидать пустой ответ (нет проверки тела) |
-| `dateFormat` | string | `"yyyy-MM-dd"` | Формат дат для dateUtils |
-| `snapshot.enabled` | boolean | `false` | Включить snapshot-сравнение |
-| `snapshot.mode` | string | `"non-strict"` | Режим: `strict` или `non-strict` |
-| `snapshot.autoSaveMissing` | boolean | `true` | Автоматически сохранять baseline |
-| `snapshot.checkPaths` | string[] | `[]` | Сравнивать только эти пути (пусто = всё) |
-| `snapshot.ignorePaths` | string[] | `[]` | Игнорировать эти пути при сравнении |
-| `schema.enabled` | boolean | `false` | Включить JSON Schema валидацию |
-| `schema.definition` | object | `null` | JSON Schema объект |
-| `secrets` | string[] | `[...]` | Ключи, значения которых маскируются в логах |
-| `ci` | boolean | `false` | CI-режим: вывод логов как JSON |
+| `baseUrl` | string | `""` | API base URL — protocol can be omitted, it will be prepended |
+| `defaultProtocol` | string | `"https"` | Default protocol when `baseUrl` has none. `"http"` triggers a warning |
+| `auth.enabled` | boolean | `false` | Enable authentication |
+| `auth.type` | string | `"none"` | Auth type: `none`, `basic`, `bearer`, `headers`, `variables` |
+| `contentType` | string | `"json"` | Expected response format: `json`, `xml`, `text` |
+| `expectEmpty` | boolean | `false` | Expect an empty response body |
+| `dateFormat` | string | `"yyyy-MM-dd"` | Date format for dateUtils |
+| `snapshot.enabled` | boolean | `false` | Enable snapshot comparison |
+| `snapshot.mode` | string | `"non-strict"` | `strict` (full diff) or `non-strict` (checkPaths only) |
+| `snapshot.autoSaveMissing` | boolean | `true` | Auto-save baseline when missing |
+| `snapshot.checkPaths` | string[] | `[]` | Compare only these paths (empty = all) |
+| `snapshot.ignorePaths` | string[] | `[]` | Ignore these paths during comparison |
+| `schema.enabled` | boolean | `false` | Enable JSON Schema validation |
+| `schema.definition` | object | `null` | JSON Schema object |
+| `secrets` | string[] | `[...]` | Key names whose values are masked in logs |
+| `ci` | boolean | `false` | CI mode: structured JSON log output |
 
-### Auth-типы
+### Auth types
 
-| Тип | Что делает |
+| Type | Behavior |
 |---|---|
-| `none` | Без авторизации |
+| `none` | No authentication |
 | `basic` | `Authorization: Basic base64(user:pass)` |
 | `bearer` | `Authorization: Bearer {token}` |
-| `headers` | Подставляет произвольные заголовки |
-| `variables` | Устанавливает `pm.variables` (для URL/Body подстановок) |
+| `headers` | Injects arbitrary request headers |
+| `variables` | Sets `pm.variables` for URL / body substitution |
 
-**Пример — variables (логин + канал + пароль):**
+**Example — `variables` (login + channel + password):**
 ```javascript
 auth: {
     enabled: true,
     type: "variables",
     fields: {
-        "login":    "{{login.sbms.technical.main}}",
-        "channel":  "{{channel.sbms.technical.main}}",
-        "password": "{{password.sbms.technical.main}}"
+        "login":    "{{login.main}}",
+        "channel":  "{{channel.main}}",
+        "password": "{{password.main}}"
     }
 }
 ```
 
+### Secret masking
+
+Masking is applied to **log output only** — actual saved values are never altered.
+
+- Keys matching any word in `secrets` are masked: `AAAI3A***MASKED***KMR3ms`
+- URL query params with matching key names are masked in the POST-REQUEST log
+- Customize the list via `secrets` in defaults or override
+
 ---
 
-## 🧩 Модули
+## 🧩 Modules
 
 ### Pre-request pipeline
 
-| Модуль | Описание |
+| Module | Description |
 |---|---|
 | `configMerge` | Deep merge: `hephaestus.defaults` + `override` → `ctx.config` |
-| `urlBuilder` | Устанавливает `pm.variables.baseUrl` из `ctx.config.baseUrl` |
-| `auth` | Плагин авторизации — применяет выбранный тип к запросу |
-| `dateUtils` | Вычисляет даты (today, tomorrow и др.) и записывает в `pm.variables` |
-| `logger` | Выводит конфиг запроса с маскированием секретов |
+| `urlBuilder` | Sets `pm.variables.baseUrl`; auto-prepends `defaultProtocol` if missing |
+| `auth` | Auth plugin — applies the selected type to the outgoing request |
+| `dateUtils` | Computes dates (today, tomorrow, etc.) into `pm.variables` |
+| `logger` | Logs request config with secret masking |
 
 ### Post-request pipeline
 
-| Модуль | Описание |
+| Module | Description |
 |---|---|
-| `configMerge` | Повторный merge для доступа к конфигу в тестах |
-| `normalizeResponse` | Парсит JSON / XML / text → `ctx.response.body` (единый формат) |
-| `metrics` | Фиксирует время ответа и размер тела |
-| `extractor` | Инициализирует `ctx.api` — Extract API с методами `get/find/count/save` |
-| `assertions` | Проверяет `keysToFind`, сохраняет `varsToSave`, считает `keysToCount` |
-| `snapshot` | Сравнивает с baseline или сохраняет при `autoSaveMissing` |
-| `schema` | Валидирует тело ответа по JSON Schema через `tv4` |
-| `logger` | Структурированный лог: статус, metrics, assertions, snapshot, preview |
+| `configMerge` | Re-merges config for test-side access |
+| `normalizeResponse` | Parses JSON / XML (xml2js) / text → `ctx.response` |
+| `metrics` | Records response time and body size |
+| `extractor` | Initializes `ctx.api` — Extract API with `get/find/count/save` |
+| `assertions` | Runs `keysToFind`, saves `varsToSave`, counts `keysToCount` |
+| `snapshot` | Compares to baseline or saves on `autoSaveMissing` |
+| `schema` | Validates response body against a JSON Schema via `tv4` |
+| `logger` | Outputs a structured, masked log: status, metrics, assertions, preview |
 
-### Extract API — ctx.api
+### Extract API
 
 ```javascript
-// В post-request override можно использовать ctx.api (после eval):
-
-ctx.api.get("data.user.id")               // → значение по пути
-ctx.api.find("data.items", i => i.active) // → первый подходящий элемент
-ctx.api.count("data.items")               // → количество элементов
-ctx.api.save("data.token", {              // → сохранить в pm.variables / env / collection
+ctx.api.get("data.user.id")                // → value at path
+ctx.api.find("data.items", i => i.active)  // → first matching element
+ctx.api.count("data.items")                // → element count
+ctx.api.save("data.token", {               // → save to pm.variables / env / collection
     name: "prod.token",
     scope: "collection"
 })
@@ -283,45 +279,48 @@ ctx.api.save("data.token", {              // → сохранить в pm.variab
 
 ---
 
-## 📸 Snapshot-регрессия
+## 📸 Snapshot Regression
 
-Snapshot сохраняется в `hephaestus.snapshots` (collectionVariables) как JSON-объект.
+Snapshots are stored in `hephaestus.snapshots` (collectionVariables) as a JSON object.
 
-**Ключ snapshot:** `{collectionName}::{requestName}::{statusCode}::{format}`
+**Snapshot key:** `{collectionName}::{requestName}::{statusCode}::{format}`
 
-| Режим | Поведение |
+| Mode | Behavior |
 |---|---|
-| `non-strict` | Проверяет только указанные `checkPaths`, игнорирует `ignorePaths` |
-| `strict` | Полное побайтовое сравнение (с учётом `ignorePaths`) |
+| `non-strict` | Checks only `checkPaths`, ignores `ignorePaths` |
+| `strict` | Full structural diff (with `ignorePaths` applied) |
 
-**Управление снапшотами:**
+**Managing snapshots:**
 
-| Метод | Где |
+| Action | Location |
 |---|---|
-| Просмотр | `🛠️ Hephaestus System → 📋 snapshot-view` |
-| Очистка | `🛠️ Hephaestus System → 🗑️ snapshot-clear` |
-| Фильтр | Переменная `hephaestus.snapshot.clearFilter` |
+| View | `🛠️ Hephaestus System → 📋 snapshot-view` |
+| Clear | `🛠️ Hephaestus System → 🗑️ snapshot-clear` |
+| Filter | `hephaestus.snapshot.clearFilter` collection variable |
 
 ---
 
-## 🔄 Обновление движка
+## 🔄 Engine Updates
 
-Версия движка управляется через `hephaestus.version` в collectionVariables:
+Engine version is controlled by `hephaestus.version` in collectionVariables:
 
-| Значение | Результат |
+| Value | Result |
 |---|---|
-| `main` | Загружает последнюю версию из ветки `main` |
-| `3.1.0` | Загружает конкретный тег `v3.1.0` |
+| `main` | Loads the latest commit from `main` branch |
+| `3.1.0` | Loads tag `v3.1.0` |
 
-После изменения версии → запустить `🔧 engine-update`.
+After changing the version → run `🔧 engine-update`.
+
+**Private repositories:** set `hephaestus.githubToken` to a GitHub PAT.  
+The engine will use the GitHub Contents API instead of raw URLs.
 
 ---
 
-## 🔌 Совместимость с Apidog
+## 🔌 Apidog Compatibility
 
-Hephaestus v3 **полностью совместим** с [Apidog](https://apidog.com) — популярной альтернативой Postman.
+Hephaestus v3 is **fully compatible** with [Apidog](https://apidog.com).
 
-| Функция Hephaestus | Postman | Apidog |
+| Hephaestus feature | Postman | Apidog |
 |---|---|---|
 | `pm.collectionVariables.get/set` | ✅ | ✅ (Module Variables) |
 | `pm.sendRequest` | ✅ | ✅ |
@@ -329,73 +328,58 @@ Hephaestus v3 **полностью совместим** с [Apidog](https://apid
 | `pm.test` | ✅ | ✅ |
 | `pm.response.json/text` | ✅ | ✅ |
 | `pm.variables.set/get` | ✅ | ✅ |
-| `pm.nextRequest` | — не используется | ❌ не поддерживается |
 
-> В Apidog `collectionVariables` называются **Module Variables** в UI, но в коде работают идентично через `pm.collectionVariables.*`.
+> In Apidog, `collectionVariables` are called **Module Variables** in the UI but work identically via `pm.collectionVariables.*`.
 
-**Для импорта в Apidog:** `Import → Postman Collection → выбрать JSON файл`.  
-Скрипты перенесутся без изменений.
+**To import into Apidog:** `Import → Postman Collection → select JSON file`. Scripts transfer without changes.
 
 ---
 
-## 📁 Структура репозитория
+## 📁 Repository Structure
 
 ```
 /
-├── README.md                    — документация проекта
-├── CHANGELOG.md                 — история изменений
-├── LICENSE                      — лицензия MIT
-└── v3/
-    ├── README.md                — архитектура v3
-    ├── engine/
-    │   ├── pre-request.js       — движок pre-request  → hephaestus.v3.pre
-    │   └── post-request.js      — движок post-request → hephaestus.v3.post
-    ├── templates/
-    │   ├── method.pre-request.js   — шаблон метода (pre)
-    │   └── method.post-request.js  — шаблон метода (post)
-    ├── setup/
-    │   ├── defaults.json        — шаблон hephaestus.defaults
-    │   ├── engine-update.js     — загрузка движка из git
-    │   ├── snapshot-clear.js    — очистка снапшотов
-    │   └── snapshot-view.js     — просмотр снапшотов
-    └── collection/
-        ├── README.md            — инструкция по импорту
-        └── hephaestus-template.postman_collection.json  ← импортировать в Postman / Apidog
+├── README.md                     — documentation (English)
+├── README.ru.md                  — documentation (Russian)
+├── CHANGELOG.md                  — version history
+├── LICENSE                       — MIT license
+├── engine/
+│   ├── pre-request.js            — pre-request engine → hephaestus.v3.pre
+│   └── post-request.js           — post-request engine → hephaestus.v3.post
+├── templates/
+│   ├── method.pre-request.js     — method template (pre)
+│   └── method.post-request.js    — method template (post)
+├── setup/
+│   ├── defaults.json             — hephaestus.defaults template
+│   ├── engine-update.js          — fetch engine from Git
+│   ├── snapshot-clear.js         — clear snapshots
+│   └── snapshot-view.js          — view snapshots
+└── collection/
+    ├── README.md                 — import instructions
+    └── hephaestus-template.postman_collection.json
 ```
 
 ---
 
 ## 📝 Changelog
 
-История изменений и список версий — [CHANGELOG.md](CHANGELOG.md)
+See [CHANGELOG.md](CHANGELOG.md) for version history.
 
 ---
 
-## 👤 Автор
+## 👤 Author
 
-<table>
-  <tr>
-    <td valign="top">
-      <strong>Богданов Игорь Александрович</strong><br/>
-      Отдел инноваций, разработки архитектуры и решений<br/>
-      Управление эксплуатации и развития ИТ сервисов<br/>
-      Департамент информационных технологий<br/>
-      <br/>
-      📞 <a href="tel:+998901753836">+998 90 175 38 36</a><br/>
-      ✉️ <a href="mailto:bogdanov.ig.alex@gmail.com">bogdanov.ig.alex@gmail.com</a>
-    </td>
-  </tr>
-</table>
+**Bogdanov Igor Alexandrovich**  
+📞 [+998 90 175 38 36](tel:+998901753836)  
+✉️ [bogdanov.ig.alex@gmail.com](mailto:bogdanov.ig.alex@gmail.com)  
+🐙 [github.com/bogdanov-igor](https://github.com/bogdanov-igor)
 
 ---
 
-## 📄 Лицензия
+## 📄 License
 
-Данный проект распространяется под лицензией **MIT**.  
-Подробнее — [LICENSE](LICENSE).
+Distributed under the **MIT License** — see [LICENSE](LICENSE).
 
 ```
-Copyright (c) 2026 Богданов Игорь Александрович
+Copyright (c) 2026 Bogdanov Igor Alexandrovich
 ```
-
-При использовании фреймворка сохраняйте ссылку на автора и текст лицензии.

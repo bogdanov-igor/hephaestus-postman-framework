@@ -4,6 +4,28 @@
 
 ---
 
+## [3.2.0] — 2026-02-20 — Рефакторинг структуры и полировка
+
+### Добавлено
+- `README.ru.md` — полная русскоязычная документация
+- Раздел о маскировании секретов (URL query params + ключи ответа)
+
+### Изменено
+- **Структура репозитория:** `v3/engine/`, `v3/setup/`, `v3/templates/`, `v3/collection/` перемещены в корень
+  - `engine/`, `setup/`, `templates/`, `collection/` — без prefix версии
+  - Пути в `engine-update.js` и `hephaestus-template.postman_collection.json` обновлены
+- **`README.md`** полностью переписан на английский язык, добавлен language switcher
+- **GitHub About:** описание и теги (topics) обновлены через API
+- **`normalizeResponse`:** `xml2Json` (deprecated) заменён на `require('xml2js')`
+  - Сохранён fallback на `xml2Json` для совместимости
+- **`logger.summary` (post-request):** полная переработка
+  - URL query params с чувствительными ключами теперь маскируются в логе
+  - Response preview перемещён внутрь единого блока — нет "floating quotes"
+  - Все секции выводятся одним `console.log` (один блок в Postman Console)
+  - Консистентные рамки: `╔/╚` сверху/снизу, `╠/╣` для разделителей
+
+---
+
 ## [3.1.0] — 2026-02-20 — Публикация
 
 ### Добавлено

@@ -24,8 +24,8 @@ const token   = pm.collectionVariables.get("hephaestus.githubToken")
 const ref = version === "main" ? "main" : "v" + version;
 
 const ENGINE_FILES = [
-    { key: "hephaestus.v3.pre",  path: "v3/engine/pre-request.js",  label: "Pre-Request Engine"  },
-    { key: "hephaestus.v3.post", path: "v3/engine/post-request.js", label: "Post-Request Engine" }
+    { key: "hephaestus.v3.pre",  path: "engine/pre-request.js",  label: "Pre-Request Engine"  },
+    { key: "hephaestus.v3.post", path: "engine/post-request.js", label: "Post-Request Engine" }
 ];
 
 // Приватный репо → GitHub API (поддерживает classic и fine-grained PAT)
