@@ -152,12 +152,13 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "https://placeholder.hephaestus.io",
+              "raw": "https://postman-echo.com/get",
               "protocol": "https",
-              "host": ["placeholder", "hephaestus", "io"]
+              "host": ["postman-echo", "com"],
+              "path": ["get"]
             },
             "description": {
-              "content": "## 🔧 engine-update\n\nЗагружает актуальный движок Hephaestus v3 из git в `collectionVariables`.\n\n> Запускать при первой настройке и после обновления фреймворка.\n\n---\n\n### Управление версией\n\nПеред запуском установить в переменных коллекции:\n\n| Переменная | Значение | Описание |\n|---|---|---|\n| `hephaestus.version` | `main` | Последняя версия из ветки main |\n| `hephaestus.version` | `3.1.0` | Конкретная версия (тег) |\n\n---\n\n### Что загружается\n\n| Файл | Переменная коллекции |\n|---|---|\n| `v3/engine/pre-request.js` | `hephaestus.v3.pre` |\n| `v3/engine/post-request.js` | `hephaestus.v3.post` |",
+              "content": "## 🔧 engine-update\n\nЗагружает движок Hephaestus v3 из git в `collectionVariables`. Запускать при первой настройке и после обновления фреймворка.\n\n---\n\n### Управление версией\n\n| `hephaestus.version` | Результат |\n|---|---|\n| `main` | Последняя версия из ветки `main` |\n| `3.1.0` | Конкретная версия по тегу `v3.1.0` |\n\n---\n\n### После выполнения\n\nВ `collectionVariables` записываются:\n- `hephaestus.v3.pre` — код pre-request движка\n- `hephaestus.v3.post` — код post-request движка\n- `hephaestus.engineRef` — загруженный ref\n- `hephaestus.updatedAt` — время обновления\n\nРезультат обновления виден во вкладке **Test Results**.\n\n---\n\n### Примечания\n\n- Требует подключение к интернету\n- Репозиторий: `github.com/bogdanov-igor/hephaestus-postman-framework`\n- Основной запрос уходит на `postman-echo.com` — это нормально, вся логика в pre-request",
               "type": "text/markdown"
             }
           },
@@ -237,12 +238,13 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "https://placeholder.hephaestus.io",
+              "raw": "https://postman-echo.com/get",
               "protocol": "https",
-              "host": ["placeholder", "hephaestus", "io"]
+              "host": ["postman-echo", "com"],
+              "path": ["get"]
             },
             "description": {
-              "content": "## 📋 snapshot-view\n\nПоказывает содержимое `hephaestus.snapshots` в Console.\n\n> Только чтение — ничего не изменяет.\n\n---\n\n### Управление\n\n| Переменная | Значение | Результат |\n|---|---|---|\n| `hephaestus.snapshot.viewFilter` | *(пусто)* | Все снапшоты (только ключи + метаданные) |\n| `hephaestus.snapshot.viewFilter` | `Login` | Только снапшоты с «Login» в ключе + данные |",
+              "content": "## 📋 snapshot-view\n\nВыводит содержимое `hephaestus.snapshots` в Console. Ничего не изменяет.\n\n---\n\n### Управление фильтром\n\n| `hephaestus.snapshot.viewFilter` | Результат |\n|---|---|\n| *(пусто)* | Все снапшоты — только ключи и метаданные |\n| `Login` | Снапшоты с `Login` в ключе + полные данные |\n| `Template::200` | Снапшоты коллекции Template со статусом 200 |\n\n---\n\n### Примечания\n\n- Ключ снапшота: `{collectionName}::{requestName}::{statusCode}::{format}`\n- Вывод появляется в **Console** (View → Show Postman Console)\n- Основной запрос уходит на `postman-echo.com` — это нормально, вся логика в pre-request",
               "type": "text/markdown"
             }
           },
@@ -317,12 +319,13 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "https://placeholder.hephaestus.io",
+              "raw": "https://postman-echo.com/get",
               "protocol": "https",
-              "host": ["placeholder", "hephaestus", "io"]
+              "host": ["postman-echo", "com"],
+              "path": ["get"]
             },
             "description": {
-              "content": "## 🗑️ snapshot-clear\n\nОчищает `hephaestus.snapshots` — полностью или по фильтру.\n\n---\n\n### Управление\n\n| Переменная | Значение | Результат |\n|---|---|---|\n| `hephaestus.snapshot.clearFilter` | *(пусто)* | Удалить **все** снапшоты |\n| `hephaestus.snapshot.clearFilter` | `Login` | Удалить только снапшоты с «Login» в ключе |\n| `hephaestus.snapshot.clearFilter` | `Template::200` | Удалить снапшоты коллекции Template со статусом 200 |\n\n---\n\n> Ключ снапшота: `{collectionName}::{requestName}::{statusCode}::{format}`",
+              "content": "## 🗑️ snapshot-clear\n\nУдаляет снапшоты из `hephaestus.snapshots` — полностью или по фильтру.\n\n---\n\n### Управление фильтром\n\n| `hephaestus.snapshot.clearFilter` | Результат |\n|---|---|\n| *(пусто)* | Удалить **все** снапшоты |\n| `Login` | Только снапшоты с `Login` в ключе |\n| `Template::200` | Снапшоты коллекции Template со статусом 200 |\n\n---\n\n### Примечания\n\n- ⚠️ Удаление необратимо — снапшоты пересоздадутся при следующем запуске методов с `autoSaveMissing: true`\n- Ключ снапшота: `{collectionName}::{requestName}::{statusCode}::{format}`\n- Основной запрос уходит на `postman-echo.com` — это нормально, вся логика в pre-request",
               "type": "text/markdown"
             }
           },
@@ -411,7 +414,7 @@
                   ]
                 },
                 "description": {
-                  "content": "## GET /tokens-stub/get\n\nАвторизация пользователя и получение сессионного токена `SESSION_ID`.\n\n---\n\n### Параметры запроса\n\n| Параметр | Тип | Обязателен | Описание |\n|---|---|---|---|\n| `login` | string | ✅ | Логин пользователя (из `{{pmv-login}}`) |\n| `password` | string | ✅ | Пароль пользователя (из `{{pmv-password}}`) |\n\n---\n\n### Что сохраняется\n\n| Переменная | Путь в ответе | Область |\n|---|---|---|\n| `prod.token` | `SELFCARE.SESSION_ID` | collectionVariables |\n\n---\n\n### Пример ответа (XML)\n\n```xml\n<SELFCARE>\n    <SESSION_ID>e7f179a8a3a7cf83f2c86c191c57d6ff</SESSION_ID>\n</SELFCARE>\n```",
+                  "content": "## 🔐 Получение сессионного токена\n\nАутентификация в системе по логину и паролю технического пользователя.\n\n---\n\n### Зависимости\n\n| Переменная | Откуда |\n|---|---|\n| `login.sbms.technical.main` | Environment |\n| `channel.sbms.technical.main` | Environment |\n| `password.sbms.technical.main` | Environment |\n\n---\n\n### После выполнения\n\nТокен сохранён в `prod.token` (collectionVariables). Используй в следующих методах:\n\n```javascript\nauth: { enabled: true, type: 'bearer', token: '{{prod.token}}' }\n```\n\n---\n\n### Примечания\n\n- Ответ в формате `xml` — движок парсит автоматически\n- Токен действителен до истечения сессии на стороне сервера\n- При смене окружения или разрыве сессии — перезапустить метод",
                   "type": "text/markdown"
                 }
               },
@@ -484,7 +487,7 @@
                   "path": ["api", "v1", "users", "{{prod.userId}}"]
                 },
                 "description": {
-                  "content": "## GET /api/v1/users/{id}\n\nПолучение данных пользователя по ID. Требует Bearer токен.\n\n---\n\n### Параметры URL\n\n| Параметр | Тип | Обязателен | Описание |\n|---|---|---|---|\n| `id` | string | ✅ | ID пользователя (из `{{prod.userId}}`) |\n\n---\n\n### Что проверяется\n\n| Поле | Ожидание |\n|---|---|\n| `data.id` | Должно существовать |\n| `data.status` | Должно быть `\"active\"` |\n\n---\n\n### Snapshot\n\nВключён в режиме `non-strict`. Сравниваются поля:\n- `data.status`\n- `data.type`\n\nИгнорируются: `data.updatedAt`, `data.requestId`\n\n---\n\n### Пример ответа (JSON)\n\n```json\n{\n  \"data\": {\n    \"id\": \"usr-001\",\n    \"status\": \"active\",\n    \"type\": \"person\",\n    \"updatedAt\": \"2026-02-20T14:00:00Z\"\n  }\n}\n```",
+                  "content": "## 👤 Данные пользователя по ID\n\nВозвращает профиль пользователя. Требует активную сессию.\n\n---\n\n### Зависимости\n\n| Переменная | Откуда |\n|---|---|\n| `prod.token` | `GET :: Получение токена` |\n| `prod.userId` | Предыдущие методы в цепочке |\n\n---\n\n### После выполнения\n\n- `prod.userId` обновляется из `data.id` для передачи в следующие запросы\n- Snapshot сохраняется или сравнивается по полям `data.status`, `data.type`\n\n---\n\n### Примечания\n\n- Поля `data.updatedAt`, `data.requestId` исключены из snapshot — динамические значения\n- Первый запуск: snapshot сохраняется как baseline (`autoSaveMissing: true`)\n- Последующие запуски: snapshot сравнивается в режиме `non-strict`",
                   "type": "text/markdown"
                 }
               },
