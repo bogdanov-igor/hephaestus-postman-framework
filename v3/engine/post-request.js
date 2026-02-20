@@ -2,6 +2,9 @@
 // ║  Hephaestus v3 — Post-Request Engine                        v3.0.0      ║
 // ║  Хранится в collectionVariables["hephaestus.v3.post"]                  ║
 // ║  Обновляется через setup/engine-update.js                               ║
+// ╠══════════════════════════════════════════════════════════════════════════╣
+// ║  © 2026 Богданов Игорь Александрович  bogdanov.ig.alex@gmail.com        ║
+// ║  https://github.com/bogdanov-igor/hephaestus-postman-framework          ║
 // ╚══════════════════════════════════════════════════════════════════════════╝
 // Итерация 1: configMerge · normalizeResponse · metrics · logger
 // Итерация 2: extractor (ctx.api) · assertions (keysToFind / varsToSave / keysToCount)

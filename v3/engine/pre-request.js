@@ -2,6 +2,9 @@
 // ║  Hephaestus v3 — Pre-Request Engine                         v3.0.0      ║
 // ║  Хранится в collectionVariables["hephaestus.v3.pre"]                   ║
 // ║  Обновляется через setup/engine-update.js                               ║
+// ╠══════════════════════════════════════════════════════════════════════════╣
+// ║  © 2026 Богданов Игорь Александрович  bogdanov.ig.alex@gmail.com        ║
+// ║  https://github.com/bogdanov-igor/hephaestus-postman-framework          ║
 // ╚══════════════════════════════════════════════════════════════════════════╝
 // Итерация 1: configMerge · urlBuilder · auth · dateUtils · logger
 // Итерация 4: masking auth credentials в logger
