@@ -8,7 +8,7 @@
 // Управляется через collectionVariables["hephaestus.version"]
 const version = pm.collectionVariables.get("hephaestus.version") || "main";
 
-const REPO_RAW = "https://raw.githubusercontent.com/YOUR_ORG/hephaestus-postman-framework";
+const REPO_RAW = "https://raw.githubusercontent.com/bogdanov-igor/hephaestus-postman-framework";
 const ref = version === "main" ? "main" : `v${version}`;
 
 const ENGINE_FILES = [

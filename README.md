@@ -179,23 +179,22 @@ Framework должен:
 
 ```
 /
-├── README.md                         — задача и прогресс
+├── README.md                         — прогресс и структура репозитория
 ├── CHANGELOG.md                      — история изменений
-├── pre-request-script                — v2 ядро (legacy)
-├── pre-reuqest-script-in-method      — v2 конфиг метода (legacy)
-├── post-request-script               — v2 ядро (legacy)
-├── post-request-script-in-method     — v2 конфиг метода (legacy)
 └── v3/
     ├── README.md                     — архитектура v3
     ├── engine/
-    │   ├── pre-request.js            — движок pre-request (→ collectionVariables)
-    │   └── post-request.js           — движок post-request (→ collectionVariables)
+    │   ├── pre-request.js            — движок pre-request (→ hephaestus.v3.pre)
+    │   └── post-request.js           — движок post-request (→ hephaestus.v3.post)
     ├── templates/
-    │   ├── method.pre-request.js     — шаблон для вставки в метод
-    │   └── method.post-request.js    — шаблон для вставки в метод
-    └── setup/
-        ├── defaults.json             — шаблон hephaestus.defaults
-        ├── engine-update.js          — скрипт обновления движка из git
-        ├── snapshot-clear.js         — очистка снапшотов (все / по фильтру)
-        └── snapshot-view.js          — просмотр снапшотов в Console
+    │   ├── method.pre-request.js     — шаблон для вставки в метод (pre)
+    │   └── method.post-request.js    — шаблон для вставки в метод (post)
+    ├── setup/
+    │   ├── defaults.json             — шаблон hephaestus.defaults
+    │   ├── engine-update.js          — скрипт обновления движка из git
+    │   ├── snapshot-clear.js         — очистка снапшотов (все / по фильтру)
+    │   └── snapshot-view.js          — просмотр снапшотов в Console
+    └── collection/
+        ├── README.md                 — инструкция по импорту
+        └── hephaestus-template.postman_collection.json  ← ИМПОРТИРОВАТЬ В POSTMAN
 ```

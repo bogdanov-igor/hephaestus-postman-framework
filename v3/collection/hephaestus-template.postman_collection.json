@@ -1,0 +1,501 @@
+{
+  "info": {
+    "_postman_id": "hephaestus-v3-template-2026",
+    "name": "Hephaestus v3 :: Template",
+    "description": {
+      "content": "# 📚 Hephaestus v3 :: Template\n\nШаблонная коллекция на базе фреймворка **Hephaestus v3**.\n\n---\n\n## 🚀 Быстрый старт\n\n1. Привязать environment с переменными (`login.*`, `password.*`, `channel.*`)\n2. Заполнить `hephaestus.defaults` в переменных коллекции (JSON конфиг)\n3. Запустить `🛠️ Hephaestus System → 🔧 engine-update` → движок загружен\n4. Добавлять методы в `📦 Collection` по шаблону\n\n---\n\n## ⚙️ Правила\n\n- Движок обновляется только через `🔧 engine-update` — не редактировать вручную\n- Каждый метод содержит только `override` + `eval(...)` — бизнес-логика в движке\n- Используй **Postman Desktop** (LAN или VPN) — браузерная версия не поддерживается\n- Изменения в системной папке — только через автора коллекции\n\n---\n\n## 🔧 Переменные коллекции\n\n| Переменная | Описание |\n|---|---|\n| `hephaestus.collectionName` | Имя коллекции для ключей snapshot |\n| `hephaestus.defaults` | JSON конфиг по умолчанию |\n| `hephaestus.version` | Версия движка (`main` или `v3.x.x`) |\n| `hephaestus.v3.pre` | Код pre-request движка (авто) |\n| `hephaestus.v3.post` | Код post-request движка (авто) |\n| `hephaestus.snapshots` | Хранилище snapshot (авто) |\n| `prod.token` | Сессионный токен (авто) |\n\n---\n\n## 👨‍💼 Автор\n\n**Богданов Игорь Александрович**  \nОтдел инноваций, разработки архитектуры и решений  \nУправление эксплуатации и развития ИТ сервисов  \nДепартамент информационных технологий, Ucell  \n📧 igor.bogdanov@ucell.uz\n\n---\n\n## © Hephaestus v3.0.0 — 2026",
+      "type": "text/markdown"
+    },
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+
+  "variable": [
+    {
+      "key": "hephaestus.collectionName",
+      "value": "Template",
+      "type": "string",
+      "description": "Имя коллекции — используется как префикс в ключах snapshot"
+    },
+    {
+      "key": "hephaestus.version",
+      "value": "main",
+      "type": "string",
+      "description": "Версия движка для engine-update: 'main' или 'v3.1.0'"
+    },
+    {
+      "key": "hephaestus.defaults",
+      "value": "{\"baseUrl\":\"\",\"auth\":{\"enabled\":false,\"type\":\"none\"},\"dateFormat\":\"yyyy-MM-dd\",\"expectEmpty\":false,\"contentType\":\"json\",\"snapshot\":{\"enabled\":false,\"storage\":\"collection-vars\",\"mode\":\"non-strict\",\"autoSaveMissing\":true,\"checkPaths\":[],\"ignorePaths\":[]},\"schema\":{\"enabled\":false,\"definition\":null},\"secrets\":[\"token\",\"password\",\"pass\",\"secret\",\"key\",\"authorization\",\"session\"],\"ci\":false}",
+      "type": "string",
+      "description": "JSON конфиг по умолчанию — deep merge с override каждого метода"
+    },
+    {
+      "key": "hephaestus.v3.pre",
+      "value": "// Запустите 🔧 engine-update для загрузки движка",
+      "type": "string",
+      "description": "Код pre-request движка — загружается через engine-update"
+    },
+    {
+      "key": "hephaestus.v3.post",
+      "value": "// Запустите 🔧 engine-update для загрузки движка",
+      "type": "string",
+      "description": "Код post-request движка — загружается через engine-update"
+    },
+    {
+      "key": "hephaestus.snapshots",
+      "value": "{}",
+      "type": "string",
+      "description": "Хранилище snapshot — управляется движком автоматически"
+    },
+    {
+      "key": "hephaestus.engineRef",
+      "value": "",
+      "type": "string",
+      "description": "Текущая версия загруженного движка"
+    },
+    {
+      "key": "hephaestus.updatedAt",
+      "value": "",
+      "type": "string",
+      "description": "Дата последнего обновления движка"
+    },
+    {
+      "key": "hephaestus.snapshot.clearFilter",
+      "value": "",
+      "type": "string",
+      "description": "Фильтр для snapshot-clear: пусто = всё, 'Login' = только 'Login'"
+    },
+    {
+      "key": "hephaestus.snapshot.viewFilter",
+      "value": "",
+      "type": "string",
+      "description": "Фильтр для snapshot-view: пусто = все ключи, 'Login' = только 'Login'"
+    },
+    {
+      "key": "prod.token",
+      "value": "",
+      "type": "string",
+      "description": "Сессионный токен — устанавливается методом получения токена"
+    },
+    {
+      "key": "baseUrl",
+      "value": "",
+      "type": "string",
+      "description": "Текущий baseUrl — устанавливается движком из hephaestus.defaults"
+    }
+  ],
+
+  "item": [
+
+    {
+      "name": "🛠️ Hephaestus System",
+      "description": {
+        "content": "# 🛠️ Hephaestus System\n\nСистемные методы фреймворка. Управляют движком и снапшотами.\n\n> ⚠️ Не переименовывать и не удалять — используются инфраструктурой.\n\n---\n\n| Метод | Описание |\n|---|---|\n| `🔧 engine-update` | Загрузить / обновить движок из git |\n| `📋 snapshot-view` | Просмотреть сохранённые снапшоты в Console |\n| `🗑️ snapshot-clear` | Очистить снапшоты (все или по фильтру) |",
+        "type": "text/markdown"
+      },
+      "item": [
+
+        {
+          "name": "🔧 engine-update",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Hephaestus v3 — Engine Update",
+                  "// Загружает pre-request.js и post-request.js из git в collectionVariables",
+                  "",
+                  "const version = pm.collectionVariables.get('hephaestus.version') || 'main';",
+                  "const REPO_RAW = 'https://raw.githubusercontent.com/bogdanov-igor/hephaestus-postman-framework';",
+                  "const ref = version === 'main' ? 'main' : 'v' + version;",
+                  "",
+                  "const ENGINE_FILES = [",
+                  "    { key: 'hephaestus.v3.pre',  path: 'v3/engine/pre-request.js',  label: 'Pre-Request Engine'  },",
+                  "    { key: 'hephaestus.v3.post', path: 'v3/engine/post-request.js', label: 'Post-Request Engine' }",
+                  "];",
+                  "",
+                  "let completed = 0, failed = 0;",
+                  "",
+                  "ENGINE_FILES.forEach(function(file) {",
+                  "    pm.sendRequest(REPO_RAW + '/' + ref + '/' + file.path, function(err, res) {",
+                  "        if (err) {",
+                  "            failed++;",
+                  "            pm.test('❌ ' + file.label + ' — ошибка сети', function() { throw new Error(err.message); });",
+                  "            return;",
+                  "        }",
+                  "        if (res.code !== 200) {",
+                  "            failed++;",
+                  "            pm.test('❌ ' + file.label + ' — HTTP ' + res.code, function() { throw new Error('Файл не найден: ' + file.path + ' (ref: ' + ref + ')'); });",
+                  "            return;",
+                  "        }",
+                  "        pm.collectionVariables.set(file.key, res.text());",
+                  "        completed++;",
+                  "        pm.test('✅ ' + file.label + ' загружен (ref: ' + ref + ')', function() {",
+                  "            pm.expect(pm.collectionVariables.get(file.key)).to.be.a('string').and.have.length.above(0);",
+                  "        });",
+                  "        if (completed + failed === ENGINE_FILES.length) {",
+                  "            if (failed === 0) {",
+                  "                pm.collectionVariables.set('hephaestus.engineRef', ref);",
+                  "                pm.collectionVariables.set('hephaestus.updatedAt', new Date().toISOString());",
+                  "                console.log('🚀 Hephaestus engine обновлён: ref=' + ref + ', at=' + new Date().toISOString());",
+                  "            } else {",
+                  "                console.warn('⚠️ Обновлено с ошибками: ' + failed + '/' + ENGINE_FILES.length + ' файлов не загружены');",
+                  "            }",
+                  "        }",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://placeholder.hephaestus.io",
+              "protocol": "https",
+              "host": ["placeholder", "hephaestus", "io"]
+            },
+            "description": {
+              "content": "## 🔧 engine-update\n\nЗагружает актуальный движок Hephaestus v3 из git в `collectionVariables`.\n\n> Запускать при первой настройке и после обновления фреймворка.\n\n---\n\n### Управление версией\n\nПеред запуском установить в переменных коллекции:\n\n| Переменная | Значение | Описание |\n|---|---|---|\n| `hephaestus.version` | `main` | Последняя версия из ветки main |\n| `hephaestus.version` | `3.1.0` | Конкретная версия (тег) |\n\n---\n\n### Что загружается\n\n| Файл | Переменная коллекции |\n|---|---|\n| `v3/engine/pre-request.js` | `hephaestus.v3.pre` |\n| `v3/engine/post-request.js` | `hephaestus.v3.post` |",
+              "type": "text/markdown"
+            }
+          },
+          "response": []
+        },
+
+        {
+          "name": "📋 snapshot-view",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Hephaestus v3 — Snapshot View",
+                  "// Показывает содержимое hephaestus.snapshots в Console",
+                  "",
+                  "const viewFilter = pm.collectionVariables.get('hephaestus.snapshot.viewFilter') || '';",
+                  "",
+                  "let store = {};",
+                  "try {",
+                  "    const raw = pm.collectionVariables.get('hephaestus.snapshots');",
+                  "    store = raw ? JSON.parse(raw) : {};",
+                  "} catch (e) {",
+                  "    pm.test('📋 Snapshot View: ошибка чтения', function() { throw new Error(e.message); });",
+                  "}",
+                  "",
+                  "const allKeys   = Object.keys(store);",
+                  "const totalSize = JSON.stringify(store).length;",
+                  "const sizeKb    = (totalSize / 1024).toFixed(2);",
+                  "",
+                  "console.log([",
+                  "    '╔══════════════════════════════════════════════════════════════╗',",
+                  "    '║  📋 HEPHAESTUS — SNAPSHOT VIEW',",
+                  "    '╠══════════════════════════════════════════════════════════════╣',",
+                  "    '║  Всего снапшотов: ' + allKeys.length,",
+                  "    '║  Объём:           ' + sizeKb + ' KB / ~900 KB (лимит)',",
+                  "    viewFilter ? '║  Фильтр: \"' + viewFilter + '\"' : '║  Фильтр: нет (все снапшоты)',",
+                  "    '╚══════════════════════════════════════════════════════════════╝'",
+                  "].join('\\n'));",
+                  "",
+                  "if (allKeys.length === 0) {",
+                  "    pm.test('📋 Snapshot View: хранилище пустое', function() { pm.expect(true).to.be.true; });",
+                  "} else {",
+                  "    const targetKeys = viewFilter ? allKeys.filter(function(k) { return k.includes(viewFilter); }) : allKeys;",
+                  "    if (targetKeys.length === 0) {",
+                  "        pm.test('📋 Snapshot View: ничего не найдено по фильтру \"' + viewFilter + '\"', function() { pm.expect(true).to.be.true; });",
+                  "        console.log('Все ключи:\\n' + allKeys.map(function(k) { return '  • ' + k; }).join('\\n'));",
+                  "    } else {",
+                  "        pm.test('📋 Snapshot View: ✅ найдено ' + targetKeys.length + ' снапшотов', function() { pm.expect(true).to.be.true; });",
+                  "        targetKeys.forEach(function(key, idx) {",
+                  "            var snap = store[key];",
+                  "            console.log('────────────────────────────────────────────────────────────');",
+                  "            console.log([",
+                  "                '📸 [' + (idx + 1) + '/' + targetKeys.length + '] ' + key,",
+                  "                '   📅 Сохранён:   ' + (snap.savedAt || '—'),",
+                  "                '   🔢 Статус:     ' + (snap.statusCode || '—'),",
+                  "                '   📄 Формат:     ' + (snap.format || '—'),",
+                  "                '   🔍 Режим:      ' + (snap.mode || '—'),",
+                  "                '   📏 checkPaths: ' + ((snap.checkPaths && snap.checkPaths.length) ? snap.checkPaths.join(', ') : 'нет (full)'),",
+                  "                '   💾 Размер:     ' + (JSON.stringify(snap).length / 1024).toFixed(2) + ' KB'",
+                  "            ].join('\\n'));",
+                  "            if (viewFilter && snap.data) {",
+                  "                var dataStr = JSON.stringify(snap.data, null, 2);",
+                  "                console.log('   📤 Данные:\\n' + (dataStr.length > 800 ? dataStr.slice(0, 800) + '\\n  ...' : dataStr));",
+                  "            }",
+                  "        });",
+                  "        console.log('════════════════════════════════════════════════════════════');",
+                  "        console.log('💡 Для очистки: установи hephaestus.snapshot.clearFilter и запусти 🗑️ snapshot-clear');",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://placeholder.hephaestus.io",
+              "protocol": "https",
+              "host": ["placeholder", "hephaestus", "io"]
+            },
+            "description": {
+              "content": "## 📋 snapshot-view\n\nПоказывает содержимое `hephaestus.snapshots` в Console.\n\n> Только чтение — ничего не изменяет.\n\n---\n\n### Управление\n\n| Переменная | Значение | Результат |\n|---|---|---|\n| `hephaestus.snapshot.viewFilter` | *(пусто)* | Все снапшоты (только ключи + метаданные) |\n| `hephaestus.snapshot.viewFilter` | `Login` | Только снапшоты с «Login» в ключе + данные |",
+              "type": "text/markdown"
+            }
+          },
+          "response": []
+        },
+
+        {
+          "name": "🗑️ snapshot-clear",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Hephaestus v3 — Snapshot Clear",
+                  "// Очищает hephaestus.snapshots полностью или по фильтру",
+                  "",
+                  "const clearFilter = pm.collectionVariables.get('hephaestus.snapshot.clearFilter') || '';",
+                  "",
+                  "let store = {};",
+                  "try {",
+                  "    const raw = pm.collectionVariables.get('hephaestus.snapshots');",
+                  "    store = raw ? JSON.parse(raw) : {};",
+                  "} catch (e) {",
+                  "    store = {};",
+                  "}",
+                  "",
+                  "const allKeys = Object.keys(store);",
+                  "",
+                  "if (allKeys.length === 0) {",
+                  "    pm.test('🗑️ Snapshot Clear: хранилище уже пустое', function() { pm.expect(true).to.be.true; });",
+                  "    console.log('ℹ️ hephaestus.snapshots пустое — нечего удалять.');",
+                  "} else if (!clearFilter) {",
+                  "    pm.collectionVariables.set('hephaestus.snapshots', '{}');",
+                  "    pm.test('🗑️ Snapshot Clear: ✅ очищено ' + allKeys.length + ' снапшотов', function() { pm.expect(true).to.be.true; });",
+                  "    console.log([",
+                  "        '╔══════════════════════════════════════════════════════════════╗',",
+                  "        '║  🗑️ HEPHAESTUS — SNAPSHOT CLEAR',",
+                  "        '╠══════════════════════════════════════════════════════════════╣',",
+                  "        '║  Режим:   очистить всё',",
+                  "        '║  Удалено: ' + allKeys.length + ' снапшотов',",
+                  "        '╚══════════════════════════════════════════════════════════════╝'",
+                  "    ].join('\\n'));",
+                  "    console.log(allKeys.map(function(k) { return '  🗑️  ' + k; }).join('\\n'));",
+                  "} else {",
+                  "    const toRemove = allKeys.filter(function(k) { return k.includes(clearFilter); });",
+                  "    toRemove.forEach(function(k) { delete store[k]; });",
+                  "    pm.collectionVariables.set('hephaestus.snapshots', JSON.stringify(store));",
+                  "    if (toRemove.length > 0) {",
+                  "        pm.test('🗑️ Snapshot Clear: ✅ удалено ' + toRemove.length + ' (фильтр: \"' + clearFilter + '\")', function() { pm.expect(true).to.be.true; });",
+                  "        console.log([",
+                  "            '╔══════════════════════════════════════════════════════════════╗',",
+                  "            '║  🗑️ HEPHAESTUS — SNAPSHOT CLEAR',",
+                  "            '╠══════════════════════════════════════════════════════════════╣',",
+                  "            '║  Фильтр:  \"' + clearFilter + '\"',",
+                  "            '║  Удалено: ' + toRemove.length + ' из ' + allKeys.length,",
+                  "            '║  Осталось: ' + (allKeys.length - toRemove.length),",
+                  "            '╚══════════════════════════════════════════════════════════════╝'",
+                  "        ].join('\\n'));",
+                  "        console.log(toRemove.map(function(k) { return '  🗑️  ' + k; }).join('\\n'));",
+                  "    } else {",
+                  "        pm.test('🗑️ Snapshot Clear: ⚠️ ничего не найдено по фильтру \"' + clearFilter + '\"', function() { pm.expect(true).to.be.true; });",
+                  "        console.log('⚠️ По фильтру \"' + clearFilter + '\" снапшоты не найдены.');",
+                  "        console.log('📋 Все ключи:\\n' + allKeys.map(function(k) { return '  • ' + k; }).join('\\n'));",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://placeholder.hephaestus.io",
+              "protocol": "https",
+              "host": ["placeholder", "hephaestus", "io"]
+            },
+            "description": {
+              "content": "## 🗑️ snapshot-clear\n\nОчищает `hephaestus.snapshots` — полностью или по фильтру.\n\n---\n\n### Управление\n\n| Переменная | Значение | Результат |\n|---|---|---|\n| `hephaestus.snapshot.clearFilter` | *(пусто)* | Удалить **все** снапшоты |\n| `hephaestus.snapshot.clearFilter` | `Login` | Удалить только снапшоты с «Login» в ключе |\n| `hephaestus.snapshot.clearFilter` | `Template::200` | Удалить снапшоты коллекции Template со статусом 200 |\n\n---\n\n> Ключ снапшота: `{collectionName}::{requestName}::{statusCode}::{format}`",
+              "type": "text/markdown"
+            }
+          },
+          "response": []
+        }
+
+      ]
+    },
+
+    {
+      "name": "📦 Collection",
+      "description": {
+        "content": "# 📦 Collection\n\nРабочие методы API. Организованы по папкам — функциональным группам.\n\n---\n\n> Каждый метод содержит только секцию `override` + вызов движка.  \n> Движок (`hephaestus.v3.pre` / `hephaestus.v3.post`) управляет всей логикой.\n\n---\n\n## Структура папки\n\nКаждая папка — логическая группа методов (авторизация, пользователи, заказы и т.д.).\n\n**Именование методов:** `{HTTP} :: {Описание}`  \nПример: `GET :: Получение токена`, `POST :: Создание заявки`",
+        "type": "text/markdown"
+      },
+      "item": [
+
+        {
+          "name": "📁 Авторизация",
+          "description": {
+            "content": "# 📁 Авторизация\n\nМетоды авторизации и получения токена доступа.\n\n---\n\n| Параметр | Значение |\n|---|---|\n| Формат ответа | `xml` |\n| Auth | `variables` (login + channel + password) |\n| Токен | Сохраняется в `prod.token` (collectionVariables) |",
+            "type": "text/markdown"
+          },
+          "item": [
+
+            {
+              "name": "GET :: Получение токена",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// ── Override ──────────────────────────────────────────────────────",
+                      "const override = {",
+                      "    auth: {",
+                      "        enabled: true,",
+                      "        type: 'variables',",
+                      "        fields: {",
+                      "            'pmv-login':    '{{login.sbms.technical.main}}',",
+                      "            'pmv-channel':  '{{channel.sbms.technical.main}}',",
+                      "            'pmv-password': '{{password.sbms.technical.main}}'",
+                      "        }",
+                      "    }",
+                      "};",
+                      "",
+                      "// ── Engine ────────────────────────────────────────────────────────",
+                      "eval(pm.collectionVariables.get('hephaestus.v3.pre'));"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// ── Override ──────────────────────────────────────────────────────",
+                      "const override = {",
+                      "    contentType:  'xml',",
+                      "    expectEmpty:  false,",
+                      "    varsToSave: {",
+                      "        token: {",
+                      "            path:  'SELFCARE.SESSION_ID',",
+                      "            scope: 'collection',",
+                      "            name:  'prod.token'",
+                      "        }",
+                      "    }",
+                      "};",
+                      "",
+                      "// ── Engine ────────────────────────────────────────────────────────",
+                      "eval(pm.collectionVariables.get('hephaestus.v3.post'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/tokens-stub/get?login={{pmv-login}}&password={{pmv-password}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["tokens-stub", "get"],
+                  "query": [
+                    { "key": "login",    "value": "{{pmv-login}}" },
+                    { "key": "password", "value": "{{pmv-password}}" }
+                  ]
+                },
+                "description": {
+                  "content": "## GET /tokens-stub/get\n\nАвторизация пользователя и получение сессионного токена `SESSION_ID`.\n\n---\n\n### Параметры запроса\n\n| Параметр | Тип | Обязателен | Описание |\n|---|---|---|---|\n| `login` | string | ✅ | Логин пользователя (из `{{pmv-login}}`) |\n| `password` | string | ✅ | Пароль пользователя (из `{{pmv-password}}`) |\n\n---\n\n### Что сохраняется\n\n| Переменная | Путь в ответе | Область |\n|---|---|---|\n| `prod.token` | `SELFCARE.SESSION_ID` | collectionVariables |\n\n---\n\n### Пример ответа (XML)\n\n```xml\n<SELFCARE>\n    <SESSION_ID>e7f179a8a3a7cf83f2c86c191c57d6ff</SESSION_ID>\n</SELFCARE>\n```",
+                  "type": "text/markdown"
+                }
+              },
+              "response": []
+            },
+
+            {
+              "name": "GET :: Получение данных пользователя",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// ── Override ──────────────────────────────────────────────────────",
+                      "const override = {",
+                      "    auth: {",
+                      "        enabled: true,",
+                      "        type: 'bearer',",
+                      "        token: '{{prod.token}}'",
+                      "    }",
+                      "};",
+                      "",
+                      "// ── Engine ────────────────────────────────────────────────────────",
+                      "eval(pm.collectionVariables.get('hephaestus.v3.pre'));"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// ── Override ──────────────────────────────────────────────────────",
+                      "const override = {",
+                      "    contentType: 'json',",
+                      "    expectEmpty: false,",
+                      "    keysToFind: [",
+                      "        { path: 'data.id',     name: 'ID пользователя' },",
+                      "        { path: 'data.status', name: 'Статус',          expect: 'active' }",
+                      "    ],",
+                      "    varsToSave: {",
+                      "        userId: {",
+                      "            path:  'data.id',",
+                      "            scope: 'collection',",
+                      "            name:  'prod.userId'",
+                      "        }",
+                      "    },",
+                      "    snapshot: {",
+                      "        enabled:         true,",
+                      "        mode:            'non-strict',",
+                      "        autoSaveMissing: true,",
+                      "        checkPaths:      ['data.status', 'data.type'],",
+                      "        ignorePaths:     ['data.updatedAt', 'data.requestId']",
+                      "    }",
+                      "};",
+                      "",
+                      "// ── Engine ────────────────────────────────────────────────────────",
+                      "eval(pm.collectionVariables.get('hephaestus.v3.post'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/{{prod.userId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "users", "{{prod.userId}}"]
+                },
+                "description": {
+                  "content": "## GET /api/v1/users/{id}\n\nПолучение данных пользователя по ID. Требует Bearer токен.\n\n---\n\n### Параметры URL\n\n| Параметр | Тип | Обязателен | Описание |\n|---|---|---|---|\n| `id` | string | ✅ | ID пользователя (из `{{prod.userId}}`) |\n\n---\n\n### Что проверяется\n\n| Поле | Ожидание |\n|---|---|\n| `data.id` | Должно существовать |\n| `data.status` | Должно быть `\"active\"` |\n\n---\n\n### Snapshot\n\nВключён в режиме `non-strict`. Сравниваются поля:\n- `data.status`\n- `data.type`\n\nИгнорируются: `data.updatedAt`, `data.requestId`\n\n---\n\n### Пример ответа (JSON)\n\n```json\n{\n  \"data\": {\n    \"id\": \"usr-001\",\n    \"status\": \"active\",\n    \"type\": \"person\",\n    \"updatedAt\": \"2026-02-20T14:00:00Z\"\n  }\n}\n```",
+                  "type": "text/markdown"
+                }
+              },
+              "response": []
+            }
+
+          ]
+        }
+
+      ]
+    }
+
+  ]
+}

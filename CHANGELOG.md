@@ -4,7 +4,7 @@
 
 ---
 
-## [3.0.0] — 2026-02-20 — Итерация 1 ✅
+## [3.0.0] — 2026-02-20 — Финал ✅
 
 **Зачем:** v2 имел критические проблемы безопасности и архитектурные ограничения,
 которые блокировали развитие фреймворка как универсального инструмента.
@@ -60,6 +60,17 @@
 - `schema`: валидация через `tv4` (глобал Postman sandbox, JSON Schema draft-04/07)
 - logger.summary: секции snapshot и schema в итоговом блоке
 - CI JSON обновлён: включает snapshot и schema результаты
+
+### Финализация ✅ — (2026-02-20)
+- Удалены все legacy v2 файлы из корня репозитория
+- `engine-update.js`: URL обновлён на реальный репозиторий `bogdanov-igor/hephaestus-postman-framework`
+- `v3/collection/hephaestus-template.postman_collection.json`: полная Postman-коллекция для импорта
+  - Папка `🛠️ Hephaestus System`: engine-update, snapshot-view, snapshot-clear (скрипты встроены)
+  - Папка `📦 Collection → 📁 Авторизация`: два рабочих примера метода
+  - Все переменные коллекции преднастроены
+  - Документация в Postman Docs (markdown) для коллекции, папок и методов
+  - Единый стиль именования: `{HTTP} :: {Описание}`
+- `v3/collection/README.md`: инструкция по импорту и структуре
 
 ### Итерация 4 ✅ — реализовано (2026-02-20)
 - `pre-request.js` logger: маскирование auth-значений (basic pass, bearer token, header/variable values)
