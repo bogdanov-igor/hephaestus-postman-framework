@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/banner.png" alt="Hephaestus" width="100%"/>
+
 # ⚒️ Hephaestus
 
 **Модульный фреймворк автоматизации API-тестирования для Postman**
@@ -370,10 +372,7 @@ Hephaestus v3 **полностью совместим** с [Apidog](https://apid
 
 ## 👤 Автор
 
-**Богданов Игорь Александрович**  
-📞 [+998 90 175 38 36](tel:+998901753836)  
-✉️ [bogdanov.ig.alex@gmail.com](mailto:bogdanov.ig.alex@gmail.com)  
-🐙 [github.com/bogdanov-igor](https://github.com/bogdanov-igor)
+**Bogdanov Igor** · ✉️ [bogdanov.ig.alex@gmail.com](mailto:bogdanov.ig.alex@gmail.com)
 
 ---
 
@@ -382,5 +381,5 @@ Hephaestus v3 **полностью совместим** с [Apidog](https://apid
 Проект распространяется под лицензией **MIT** — см. [LICENSE](LICENSE).
 
 ```
-Copyright (c) 2026 Bogdanov Igor Alexandrovich
+Copyright (c) 2026 Bogdanov Igor
 ```

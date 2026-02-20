@@ -3,7 +3,7 @@
 // ║  Хранится в collectionVariables["hephaestus.v3.post"]                  ║
 // ║  Обновляется через setup/engine-update.js                               ║
 // ╠══════════════════════════════════════════════════════════════════════════╣
-// ║  © 2026 Богданов Игорь Александрович  bogdanov.ig.alex@gmail.com        ║
+// ║  © 2026 Bogdanov Igor  bogdanov.ig.alex@gmail.com                       ║
 // ║  https://github.com/bogdanov-igor/hephaestus-postman-framework          ║
 // ╚══════════════════════════════════════════════════════════════════════════╝
 // Итерация 1: configMerge · normalizeResponse · metrics · logger

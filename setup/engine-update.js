@@ -3,7 +3,7 @@
 // ║  Вставить в Pre-request Script метода "🔧 engine-update"                ║
 // ║  Запустить для загрузки/обновления движка из git в collectionVariables  ║
 // ╠══════════════════════════════════════════════════════════════════════════╣
-// ║  © 2026 Богданов Игорь Александрович  bogdanov.ig.alex@gmail.com        ║
+// ║  © 2026 Bogdanov Igor  bogdanov.ig.alex@gmail.com                       ║
 // ║  https://github.com/bogdanov-igor/hephaestus-postman-framework          ║
 // ╚══════════════════════════════════════════════════════════════════════════╝
 

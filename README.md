@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/banner.png" alt="Hephaestus" width="100%"/>
+
 # ⚒️ Hephaestus
 
 **Modular API testing automation framework for Postman**
@@ -369,10 +371,7 @@ See [CHANGELOG.md](CHANGELOG.md) for version history.
 
 ## 👤 Author
 
-**Bogdanov Igor Alexandrovich**  
-📞 [+998 90 175 38 36](tel:+998901753836)  
-✉️ [bogdanov.ig.alex@gmail.com](mailto:bogdanov.ig.alex@gmail.com)  
-🐙 [github.com/bogdanov-igor](https://github.com/bogdanov-igor)
+**Bogdanov Igor** · ✉️ [bogdanov.ig.alex@gmail.com](mailto:bogdanov.ig.alex@gmail.com)
 
 ---
 
@@ -381,5 +380,5 @@ See [CHANGELOG.md](CHANGELOG.md) for version history.
 Distributed under the **MIT License** — see [LICENSE](LICENSE).
 
 ```
-Copyright (c) 2026 Bogdanov Igor Alexandrovich
+Copyright (c) 2026 Bogdanov Igor
 ```
