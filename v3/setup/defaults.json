@@ -1,0 +1,41 @@
+{
+  "_comment": "Скопировать в collectionVariables['hephaestus.defaults']. Удалить _comment перед использованием.",
+
+  "baseUrl": "https://your-api.example.com",
+
+  "auth": {
+    "enabled": false,
+    "type": "none"
+    // type: "none" | "basic" | "bearer" | "headers" | "variables"
+    // "basic":     user, pass
+    // "bearer":    token
+    // "headers":   fields: { "Header-Name": "value" }
+    // "variables": fields: { "pmv-login": "{{login}}", ... }
+  },
+
+  "dateFormat": "yyyy-MM-dd",
+
+  "expectEmpty": false,
+  "contentType": "json",
+
+  "snapshot": {
+    "enabled": false,
+    "storage": "collection-vars",
+    "mode": "non-strict",
+    "autoSaveMissing": true,
+    "checkPaths": [],
+    "ignorePaths": []
+    // storage: "collection-vars" — один JSON-объект hephaestus.snapshots
+    // storage: "postman-api"     — через Postman API (нужны postman.api.key + postman.collection.uid в env)
+    // mode: "strict" | "non-strict"
+  },
+
+  "schema": {
+    "enabled": false,
+    "definition": null
+  },
+
+  "secrets": ["token", "password", "pass", "secret", "key", "authorization", "session"],
+
+  "ci": false
+}
