@@ -33,7 +33,7 @@
     },
     {
       "key": "hephaestus.defaults",
-      "value": "{\"baseUrl\":\"\",\"auth\":{\"enabled\":false,\"type\":\"none\"},\"dateFormat\":\"yyyy-MM-dd\",\"expectEmpty\":false,\"contentType\":\"json\",\"snapshot\":{\"enabled\":false,\"storage\":\"collection-vars\",\"mode\":\"non-strict\",\"autoSaveMissing\":true,\"checkPaths\":[],\"ignorePaths\":[]},\"schema\":{\"enabled\":false,\"definition\":null},\"secrets\":[\"token\",\"password\",\"pass\",\"secret\",\"key\",\"authorization\",\"session\"],\"ci\":false}",
+      "value": "{\"baseUrl\":\"\",\"defaultProtocol\":\"https\",\"auth\":{\"enabled\":false,\"type\":\"none\"},\"dateFormat\":\"yyyy-MM-dd\",\"expectEmpty\":false,\"contentType\":\"json\",\"snapshot\":{\"enabled\":false,\"storage\":\"collection-vars\",\"mode\":\"non-strict\",\"autoSaveMissing\":true,\"checkPaths\":[],\"ignorePaths\":[]},\"schema\":{\"enabled\":false,\"definition\":null},\"secrets\":[\"token\",\"password\",\"pass\",\"secret\",\"key\",\"authorization\",\"session\"],\"ci\":false}",
       "type": "string",
       "description": "JSON конфиг по умолчанию — deep merge с override каждого метода"
     },
@@ -204,7 +204,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"baseUrl\": \"\",\n\n  \"auth\": {\n    \"enabled\": false,\n    \"type\": \"none\"\n  },\n\n  \"contentType\": \"json\",\n  \"expectEmpty\": false,\n  \"dateFormat\": \"yyyy-MM-dd\",\n\n  \"snapshot\": {\n    \"enabled\": false,\n    \"mode\": \"non-strict\",\n    \"autoSaveMissing\": true,\n    \"checkPaths\": [],\n    \"ignorePaths\": []\n  },\n\n  \"schema\": {\n    \"enabled\": false,\n    \"definition\": null\n  },\n\n  \"secrets\": [\n    \"token\",\n    \"password\",\n    \"pass\",\n    \"secret\",\n    \"key\",\n    \"authorization\",\n    \"session\"\n  ],\n\n  \"ci\": false\n}",
+              "raw": "{\n  \"baseUrl\": \"\",\n  \"defaultProtocol\": \"https\",\n\n  \"auth\": {\n    \"enabled\": false,\n    \"type\": \"none\"\n  },\n\n  \"contentType\": \"json\",\n  \"expectEmpty\": false,\n  \"dateFormat\": \"yyyy-MM-dd\",\n\n  \"snapshot\": {\n    \"enabled\": false,\n    \"mode\": \"non-strict\",\n    \"autoSaveMissing\": true,\n    \"checkPaths\": [],\n    \"ignorePaths\": []\n  },\n\n  \"schema\": {\n    \"enabled\": false,\n    \"definition\": null\n  },\n\n  \"secrets\": [\n    \"token\",\n    \"password\",\n    \"pass\",\n    \"secret\",\n    \"key\",\n    \"authorization\",\n    \"session\"\n  ],\n\n  \"ci\": false\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -218,7 +218,7 @@
               "path": ["post"]
             },
             "description": {
-              "content": "## ⚙️ defaults\n\nОбновляет `hephaestus.defaults` из тела запроса. Редактируй JSON в **Body** и нажми **Send**.\n\n---\n\n### Поля конфигурации\n\n| Поле | Тип | Описание |\n|---|---|---|\n| `baseUrl` | string | Базовый URL API |\n| `auth.enabled` | boolean | Включить авторизацию |\n| `auth.type` | string | `none` / `basic` / `bearer` / `headers` / `variables` |\n| `contentType` | string | `json` / `xml` / `text` |\n| `expectEmpty` | boolean | Ожидать пустой ответ |\n| `snapshot.enabled` | boolean | Включить snapshot-регрессию |\n| `snapshot.mode` | string | `strict` / `non-strict` |\n| `snapshot.autoSaveMissing` | boolean | Сохранять baseline при первом запуске |\n| `schema.enabled` | boolean | Включить JSON Schema валидацию |\n| `secrets` | string[] | Ключи, маскируемые в логах |\n| `ci` | boolean | CI-режим (JSON вывод в логах) |\n\n---\n\n### После выполнения\n\n`hephaestus.defaults` в collectionVariables обновлён. Изменения применяются ко всем методам немедленно.\n\n---\n\n### Примечания\n\n- Каждый метод может переопределить любое поле через `override`\n- Основной запрос уходит на `postman-echo.com` — вся логика в Test script",
+              "content": "## ⚙️ defaults\n\nОбновляет `hephaestus.defaults` из тела запроса. Редактируй JSON в **Body** и нажми **Send**.\n\n---\n\n### Поля конфигурации\n\n| Поле | Тип | Описание |\n|---|---|---|\n| `baseUrl` | string | Базовый URL API (можно без протокола — подставится `defaultProtocol`) |\n| `defaultProtocol` | string | Протокол по умолчанию: `https` (default) или `http`. При `http` — предупреждение |\n| `auth.enabled` | boolean | Включить авторизацию |\n| `auth.type` | string | `none` / `basic` / `bearer` / `headers` / `variables` |\n| `contentType` | string | `json` / `xml` / `text` |\n| `expectEmpty` | boolean | Ожидать пустой ответ |\n| `snapshot.enabled` | boolean | Включить snapshot-регрессию |\n| `snapshot.mode` | string | `strict` / `non-strict` |\n| `snapshot.autoSaveMissing` | boolean | Сохранять baseline при первом запуске |\n| `schema.enabled` | boolean | Включить JSON Schema валидацию |\n| `secrets` | string[] | Ключи, маскируемые в логах |\n| `ci` | boolean | CI-режим (JSON вывод в логах) |\n\n---\n\n### После выполнения\n\n`hephaestus.defaults` в collectionVariables обновлён. Изменения применяются ко всем методам немедленно.\n\n---\n\n### Примечания\n\n- Каждый метод может переопределить любое поле через `override`\n- Основной запрос уходит на `postman-echo.com` — вся логика в Test script",
               "type": "text/markdown"
             }
           },

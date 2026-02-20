@@ -69,13 +69,29 @@
     // ════════════════════════════════════════════════════════════
     const urlBuilder = {
         run(ctx) {
-            const baseUrl = (ctx.config.baseUrl || '').replace(/\/$/, '');
+            const defaultProtocol = (ctx.config.defaultProtocol || 'https').replace(/:\/\/$/, '').toLowerCase();
+            let rawUrl = (ctx.config.baseUrl || '').trim().replace(/\/$/, '');
+
+            // Автоподстановка протокола, если не указан
+            if (rawUrl && !/^https?:\/\//i.test(rawUrl)) {
+                rawUrl = defaultProtocol + '://' + rawUrl;
+                console.log('🌐 urlBuilder: протокол не указан — подставлен "' + defaultProtocol + '://"');
+            }
+
             pm.test('🌐 URL: базовый адрес задан', () => {
-                pm.expect(baseUrl, '🚫 baseUrl не задан ни в defaults, ни в override').to.be.a('string').and.have.length.above(0);
-                pm.expect(baseUrl, '🚫 Некорректный формат URL').to.match(/^https?:\/\/.+/);
+                pm.expect(rawUrl, '🚫 baseUrl не задан ни в defaults, ни в override').to.be.a('string').and.have.length.above(0);
             });
-            pm.variables.set('baseUrl', baseUrl);
-            ctx.request.url = baseUrl;
+
+            // Предупреждение при http (не блокирует выполнение)
+            if (/^http:\/\//i.test(rawUrl)) {
+                pm.test('⚠️ URL: небезопасный протокол http', () => {
+                    console.warn('⚠️ baseUrl использует http:// — убедись, что это намеренно.');
+                    pm.expect(true).to.be.true;
+                });
+            }
+
+            pm.variables.set('baseUrl', rawUrl);
+            ctx.request.url = rawUrl;
         }
     };
 

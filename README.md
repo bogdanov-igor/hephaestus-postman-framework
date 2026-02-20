@@ -200,7 +200,8 @@ eval(pm.collectionVariables.get("hephaestus.v3.post"));
 
 | Поле | Тип | По умолчанию | Описание |
 |---|---|---|---|
-| `baseUrl` | string | `""` | Базовый URL API |
+| `baseUrl` | string | `""` | Базовый URL API (можно без протокола — подставится `defaultProtocol`) |
+| `defaultProtocol` | string | `"https"` | Протокол по умолчанию, если в `baseUrl` не указан. `"http"` — выдаст предупреждение |
 | `auth.enabled` | boolean | `false` | Включить авторизацию |
 | `auth.type` | string | `"none"` | Тип: `none`, `basic`, `bearer`, `headers`, `variables` |
 | `contentType` | string | `"json"` | Формат ответа: `json`, `xml`, `text` |

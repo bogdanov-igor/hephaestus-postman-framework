@@ -2,6 +2,7 @@
   "_comment": "Скопировать в collectionVariables['hephaestus.defaults']. Удалить _comment перед использованием.",
 
   "baseUrl": "https://your-api.example.com",
+  "defaultProtocol": "https",
 
   "auth": {
     "enabled": false,
