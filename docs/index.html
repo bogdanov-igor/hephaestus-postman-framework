@@ -13,12 +13,10 @@
 <meta property="og:url" content="https://bogdanov-igor.github.io/hephaestus-postman-framework/">
 <meta property="og:title" content="Hephaestus — API Testing Framework">
 <meta property="og:description" content="Modular API testing framework for Postman & Newman. 20+ assertion operators, snapshot regression, OAuth2, Docker, CI/CD. Zero config to start.">
-<meta property="og:image" content="https://bogdanov-igor.github.io/hephaestus-postman-framework/banner.png">
 <!-- Twitter Card -->
-<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Hephaestus — API Testing Framework">
 <meta name="twitter:description" content="Modular API testing for Postman & Newman. 20+ assertions, snapshots, OAuth2, Docker, CI/CD.">
-<meta name="twitter:image" content="https://bogdanov-igor.github.io/hephaestus-postman-framework/banner.png">
 <title>Hephaestus — API Testing Framework</title>
 <style>
 /* ── Design tokens ─────────────────────────────────────────── */
@@ -133,13 +131,8 @@ section{padding:96px 24px}
 .pipeline-section{background:linear-gradient(180deg,var(--bg) 0%,#0d0f14 100%)}
 .pipeline-label{font-size:.72rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px}
 /* Snake layout */
-.snake-track{display:flex;flex-direction:column;gap:0}
+.snake-track{display:flex;flex-direction:column;gap:20px}
 .snake-row{display:flex;align-items:center;flex-wrap:nowrap}
-.snake-row.ltr{flex-direction:row}
-.snake-row.rtl{flex-direction:row-reverse}
-.snake-connector{font-size:1.3rem;color:var(--accent);opacity:.6;padding:2px 0;line-height:1}
-.snake-connector.right{display:flex;justify-content:flex-end;padding-right:8px}
-.snake-connector.left{display:flex;justify-content:flex-start;padding-left:8px}
 .p-module{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:center;flex-shrink:0}
 .p-module .name{font-size:.74rem;font-weight:700;color:var(--text);font-family:var(--font-mono)}
 .p-module .desc{font-size:.62rem;color:var(--muted);margin-top:3px}
@@ -495,22 +488,22 @@ footer{padding:56px 24px 32px;border-top:1px solid var(--border)}
           <div class="p-arrow" style="color:var(--accent);opacity:.5;padding:0 6px">↓</div>
         </div>
 
-        <!-- Row 2: R ← L (visually right-to-left) -->
-        <div class="snake-row rtl">
+        <!-- Row 2: L → R, продолжение после assertShape -->
+        <div class="snake-row">
           <div class="p-arrow" style="color:var(--accent);opacity:.5;padding:0 6px">↓</div>
-          <div class="p-module"><div class="name">logger</div><div class="desc">summary</div></div>
-          <div class="p-arrow">→</div>
-          <div class="p-module"><div class="name">plugins</div><div class="desc">custom</div></div>
-          <div class="p-arrow">→</div>
-          <div class="p-module"><div class="name">schema (tv4)</div><div class="desc">JSON Schema</div></div>
-          <div class="p-arrow">→</div>
-          <div class="p-module accent"><div class="name">snapshot</div><div class="desc">regression</div></div>
-          <div class="p-arrow">→</div>
-          <div class="p-module"><div class="name">assertHeaders</div><div class="desc">headers</div></div>
+          <div class="p-module accent"><div class="name">assertOrder</div><div class="desc">sort order</div></div>
           <div class="p-arrow">→</div>
           <div class="p-module accent"><div class="name">assertUnique</div><div class="desc">no dupes</div></div>
           <div class="p-arrow">→</div>
-          <div class="p-module accent"><div class="name">assertOrder</div><div class="desc">sort order</div></div>
+          <div class="p-module"><div class="name">assertHeaders</div><div class="desc">headers</div></div>
+          <div class="p-arrow">→</div>
+          <div class="p-module accent"><div class="name">snapshot</div><div class="desc">regression</div></div>
+          <div class="p-arrow">→</div>
+          <div class="p-module"><div class="name">schema (tv4)</div><div class="desc">JSON Schema</div></div>
+          <div class="p-arrow">→</div>
+          <div class="p-module"><div class="name">plugins</div><div class="desc">custom</div></div>
+          <div class="p-arrow">→</div>
+          <div class="p-module"><div class="name">logger</div><div class="desc">summary</div></div>
         </div>
 
       </div>
