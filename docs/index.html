@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="description" content="Hephaestus — professional API testing framework for Postman & Newman. Modular engine, snapshot regression, 20+ assertion operators, Docker, CI/CD.">
+<title>Hephaestus — API Testing Framework</title>
+<style>
+/* ── Design tokens ─────────────────────────────────────────── */
+:root{
+  --bg:#0a0c10;
+  --bg-card:#111318;
+  --bg-code:#0d1117;
+  --border:#21262d;
+  --border-h:#f77f00;
+  --text:#e6edf3;
+  --muted:#8b949e;
+  --accent:#f77f00;
+  --accent2:#e8480a;
+  --blue:#58a6ff;
+  --green:#3fb950;
+  --red:#f85149;
+  --purple:#bc8cff;
+  --radius:10px;
+  --shadow:0 8px 32px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+a{color:var(--accent);text-decoration:none}a:hover{opacity:.85}
+code,pre{font-family:'SF Mono','Fira Code','Cascadia Code',monospace}
+
+/* ── Nav ───────────────────────────────────────────────────── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;backdrop-filter:blur(12px);background:rgba(10,12,16,.9);border-bottom:1px solid var(--border)}
+.nav-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:58px;display:flex;align-items:center;gap:32px}
+.nav-logo{font-size:1.1rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px}
+.nav-logo .fire{font-size:1.2rem}
+.nav-links{display:flex;gap:24px;margin-left:auto}
+.nav-links a{font-size:.85rem;color:var(--muted);transition:color .15s}
+.nav-links a:hover{color:var(--text)}
+.nav-cta{background:var(--accent);color:#fff!important;padding:7px 16px;border-radius:6px;font-weight:600;font-size:.82rem;transition:background .15s!important}
+.nav-cta:hover{background:var(--accent2)!important;opacity:1!important}
+.version-pill{font-size:.68rem;padding:2px 7px;border-radius:10px;background:rgba(247,127,0,.12);border:1px solid rgba(247,127,0,.3);color:var(--accent);font-weight:600}
+
+/* ── Hero ──────────────────────────────────────────────────── */
+.hero{min-height:100vh;display:flex;align-items:center;position:relative;overflow:hidden;padding:100px 24px 60px}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 60% 30%,rgba(247,127,0,.08) 0%,transparent 70%)}
+.hero-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;width:100%}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;padding:4px 12px;border-radius:20px;border:1px solid rgba(247,127,0,.3);color:var(--accent);background:rgba(247,127,0,.05);margin-bottom:20px;font-weight:600}
+.hero h1{font-size:3.4rem;font-weight:900;line-height:1.1;letter-spacing:-.02em;margin-bottom:20px}
+.hero h1 span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{font-size:1.1rem;color:var(--muted);max-width:480px;margin-bottom:36px;line-height:1.7}
+.hero-btns{display:flex;gap:14px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:8px;font-weight:600;font-size:.9rem;transition:all .15s;cursor:pointer;border:none}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 4px 20px rgba(247,127,0,.3)}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px)}
+.hero-stats{display:flex;gap:32px;margin-top:40px;padding-top:32px;border-top:1px solid var(--border)}
+.hero-stat span{display:block;font-size:1.6rem;font-weight:800;color:var(--text)}
+.hero-stat small{font-size:.75rem;color:var(--muted)}
+
+/* ── Code block hero ───────────────────────────────────────── */
+.code-window{background:var(--bg-code);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+.code-titlebar{background:#161b22;padding:12px 16px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border)}
+.dot{width:12px;height:12px;border-radius:50%}
+.dot-r{background:#f85149}.dot-y{background:#e3b341}.dot-g{background:#3fb950}
+.code-filename{font-size:.75rem;color:var(--muted);margin-left:8px}
+.code-body{padding:20px;font-size:.78rem;line-height:1.7;overflow-x:auto;max-height:440px;overflow-y:auto}
+.c-kw{color:#ff7b72}.c-fn{color:#d2a8ff}.c-str{color:#a5d6ff}.c-cmt{color:#8b949e;font-style:italic}
+.c-key{color:#79c0ff}.c-num{color:#f2cc60}.c-op{color:#e6edf3}.c-var{color:#ffa657}
+
+/* ── Sections ──────────────────────────────────────────────── */
+section{padding:96px 24px}
+.section-inner{max-width:1200px;margin:0 auto}
+.section-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:12px}
+.section-title{font-size:2.2rem;font-weight:800;line-height:1.2;margin-bottom:16px}
+.section-sub{font-size:1rem;color:var(--muted);max-width:560px;line-height:1.7}
+
+/* ── Feature grid ──────────────────────────────────────────── */
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:56px}
+.feat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;transition:border-color .2s,transform .2s}
+.feat-card:hover{border-color:var(--accent);transform:translateY(-3px)}
+.feat-icon{font-size:2rem;margin-bottom:16px}
+.feat-card h3{font-size:1rem;font-weight:700;margin-bottom:8px}
+.feat-card p{font-size:.83rem;color:var(--muted);line-height:1.6}
+.feat-tag{display:inline-block;margin-top:12px;font-size:.68rem;padding:2px 8px;border-radius:4px;background:rgba(247,127,0,.1);border:1px solid rgba(247,127,0,.2);color:var(--accent);font-weight:600}
+
+/* ── Pipeline ──────────────────────────────────────────────── */
+.pipeline-section{background:linear-gradient(180deg,var(--bg) 0%,#0e1016 100%)}
+.pipeline{display:flex;align-items:center;gap:0;margin-top:48px;overflow-x:auto;padding:8px 0 16px}
+.p-module{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;text-align:center;white-space:nowrap;flex-shrink:0}
+.p-module .name{font-size:.78rem;font-weight:700;color:var(--text)}
+.p-module .desc{font-size:.65rem;color:var(--muted);margin-top:3px}
+.p-arrow{color:var(--accent);font-size:1.2rem;padding:0 6px;flex-shrink:0}
+.p-module.accent{border-color:rgba(247,127,0,.4);background:rgba(247,127,0,.05)}
+
+/* ── Tools ─────────────────────────────────────────────────── */
+.tools-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:48px}
+.tool-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:border-color .2s}
+.tool-card:hover{border-color:var(--blue)}
+.tool-card .icon{font-size:1.5rem;margin-bottom:10px}
+.tool-card h4{font-size:.88rem;font-weight:700;margin-bottom:6px}
+.tool-card p{font-size:.75rem;color:var(--muted);line-height:1.5}
+.tool-card code{font-size:.7rem;color:var(--accent);background:rgba(247,127,0,.08);padding:1px 6px;border-radius:4px}
+
+/* ── Comparison ────────────────────────────────────────────── */
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:48px}
+.cmp-box{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:28px}
+.cmp-box.good{border-color:rgba(63,185,80,.3)}
+.cmp-box.bad{border-color:rgba(248,81,73,.2)}
+.cmp-title{font-size:.85rem;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.cmp-item{font-size:.82rem;color:var(--muted);padding:7px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.cmp-item:last-child{border-bottom:none}
+.ok{color:var(--green)}.no{color:var(--red)}.nd{color:var(--muted)}
+
+/* ── Examples tabs ─────────────────────────────────────────── */
+.examples-section{background:#0e1016}
+.tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:1px solid var(--border);padding-bottom:0}
+.tab{padding:10px 18px;font-size:.83rem;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.tab.active,.tab:hover{color:var(--text);border-bottom-color:var(--accent)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+
+/* ── CTA band ──────────────────────────────────────────────── */
+.cta-band{background:linear-gradient(135deg,rgba(247,127,0,.08),rgba(232,72,10,.04));border-top:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center;padding:80px 24px}
+.cta-band h2{font-size:2.4rem;font-weight:900;margin-bottom:16px}
+.cta-band p{color:var(--muted);font-size:1rem;margin-bottom:36px;max-width:480px;margin-left:auto;margin-right:auto}
+
+/* ── Footer ────────────────────────────────────────────────── */
+footer{padding:48px 24px;border-top:1px solid var(--border)}
+.footer-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr repeat(3,auto);gap:48px;align-items:start}
+.footer-brand p{font-size:.82rem;color:var(--muted);margin-top:8px;max-width:240px;line-height:1.6}
+.footer-col h4{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:12px}
+.footer-col a{display:block;font-size:.82rem;color:var(--muted);padding:3px 0;transition:color .12s}
+.footer-col a:hover{color:var(--text)}
+.footer-bottom{max-width:1200px;margin:32px auto 0;padding-top:24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted)}
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media(max-width:900px){
+  .hero-inner{grid-template-columns:1fr}.hero h1{font-size:2.4rem}
+  .features-grid{grid-template-columns:1fr 1fr}
+  .tools-grid{grid-template-columns:repeat(2,1fr)}
+  .compare-grid,.footer-inner{grid-template-columns:1fr}
+  .pipeline{flex-direction:column;align-items:flex-start}
+  .p-arrow{transform:rotate(90deg)}
+}
+@media(max-width:600px){
+  .features-grid,.tools-grid{grid-template-columns:1fr}
+  .nav-links{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ──────────────────────────────────────────────────── -->
+<nav>
+<div class="nav-inner">
+  <a href="index.html" class="nav-logo"><span class="fire">🔥</span>Hephaestus <span class="version-pill">v3.8</span></a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#pipeline">Pipeline</a>
+    <a href="#tools">Tools</a>
+    <a href="#examples">Examples</a>
+    <a href="config-reference.html">Config Ref</a>
+    <a href="quickstart.html" class="nav-cta">Get Started →</a>
+  </div>
+</div>
+</nav>
+
+<!-- ── HERO ─────────────────────────────────────────────────── -->
+<section class="hero">
+<div class="hero-inner">
+  <div>
+    <div class="hero-badge">✦ Open Source · MIT · v3.8.0</div>
+    <h1>API Testing,<br><span>Engineered.</span></h1>
+    <p>A modular, zero-dependency engine for Postman & Newman. Write tests once — get assertions, snapshots, docs, HTML reports, and CI integration automatically.</p>
+    <div class="hero-btns">
+      <a href="quickstart.html" class="btn btn-primary">🚀 Get Started</a>
+      <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework" class="btn btn-ghost">⭐ GitHub</a>
+      <a href="config-reference.html" class="btn btn-ghost">📖 Config Ref</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><span>20+</span><small>assertion operators</small></div>
+      <div class="hero-stat"><span>12</span><small>pipeline modules</small></div>
+      <div class="hero-stat"><span>10+</span><small>CLI tools</small></div>
+      <div class="hero-stat"><span>30</span><small>automated tests</small></div>
+    </div>
+  </div>
+
+  <div class="code-window">
+    <div class="code-titlebar">
+      <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+      <span class="code-filename">method.post-request.js</span>
+    </div>
+    <div class="code-body">
+<pre><span class="c-cmt">// Every request: just declare what you expect</span>
+<span class="c-kw">const</span> <span class="c-var">override</span> = {
+
+  <span class="c-key">expectedStatus</span>: <span class="c-num">200</span>,
+  <span class="c-key">maxResponseTime</span>: <span class="c-num">1500</span>,
+
+  <span class="c-cmt">// Structural shape check</span>
+  <span class="c-key">assertShape</span>: {
+    <span class="c-str">"data.id"</span>:     <span class="c-str">"number"</span>,
+    <span class="c-str">"data.name"</span>:   <span class="c-str">"string"</span>,
+    <span class="c-str">"data.items"</span>:  <span class="c-str">"array"</span>,
+    <span class="c-str">"error"</span>:       <span class="c-str">"absent"</span>,
+  },
+
+  <span class="c-cmt">// Rich assertion operators</span>
+  <span class="c-key">assertions</span>: {
+    <span class="c-str">"data.status"</span>: { <span class="c-key">eq</span>: <span class="c-str">"active"</span> },
+    <span class="c-str">"data.score"</span>:  { <span class="c-key">gte</span>: <span class="c-num">0</span>, <span class="c-key">lte</span>: <span class="c-num">100</span> },
+    <span class="c-str">"data.email"</span>:  { <span class="c-key">matches</span>: <span class="c-str">"@"</span> },
+  },
+
+  <span class="c-cmt">// Snapshot regression</span>
+  <span class="c-key">snapshot</span>: { <span class="c-key">enabled</span>: <span class="c-kw">true</span>, <span class="c-key">mode</span>: <span class="c-str">"non-strict"</span> },
+
+  <span class="c-cmt">// Save token for next request</span>
+  <span class="c-key">varsToSave</span>: {
+    <span class="c-key">token</span>: { <span class="c-key">path</span>: <span class="c-str">"data.accessToken"</span>, <span class="c-key">scope</span>: <span class="c-str">"collection"</span> }
+  }
+};
+
+<span class="c-fn">eval</span>(<span class="c-var">pm</span>.collectionVariables.<span class="c-fn">get</span>(<span class="c-str">"hephaestus.v3.post"</span>));</pre>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ── FEATURES ──────────────────────────────────────────────── -->
+<section id="features">
+<div class="section-inner">
+  <div class="section-label">What you get</div>
+  <div class="section-title">Everything in one engine</div>
+  <p class="section-sub">No more copy-pasting assertion boilerplate across hundreds of requests. One engine, every request, zero duplication.</p>
+
+  <div class="features-grid">
+    <div class="feat-card">
+      <div class="feat-icon">🔬</div>
+      <h3>20+ Assertion Operators</h3>
+      <p>exists · absent · eq · ne · gt · gte · lt · lte · type · minLen · maxLen · includes · matches · soft · when. Per-field or as a structural shape check.</p>
+      <span class="feat-tag">assertShape · assertions map</span>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">📸</div>
+      <h3>Snapshot Regression</h3>
+      <p>Save response baselines automatically. Strict or non-strict mode. ignorePaths for dynamic fields. Visual diff in console & browser viewer.</p>
+      <span class="feat-tag">snapshot · snapshot-viewer.html</span>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🔐</div>
+      <h3>Auth — All Patterns</h3>
+      <p>Basic, Bearer, custom headers/variables, OAuth2 client_credentials with auto-refresh & token cache. One line to switch.</p>
+      <span class="feat-tag">basic · bearer · oauth2cc</span>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🔢</div>
+      <h3>Array Validation</h3>
+      <p>assertEach validates every item in an array against rules. assertUnique checks for duplicates. assertOrder verifies sort direction.</p>
+      <span class="feat-tag">assertEach · assertUnique · assertOrder</span>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">⚡</div>
+      <h3>Retry & Resilience</h3>
+      <p>retryOnStatus auto-retries on 503/429. Assertion pipeline skipped on intermediate retries. Counter in pm.variables, auto-cleared.</p>
+      <span class="feat-tag">retryOnStatus</span>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🎲</div>
+      <h3>Random Test Data</h3>
+      <p>Built-in generators: uuid, email, str, int, float, bool, pick, date. Auto-injects into pm.variables via randomData config.</p>
+      <span class="feat-tag">ctx.random · randomData</span>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">📅</div>
+      <h3>Date Utilities</h3>
+      <p>today, tomorrow, startOfMonth, endOfMonth, today±7d, today±3m and more. Custom date variables injected as pm.variables.</p>
+      <span class="feat-tag">dateUtils · dates config</span>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🔒</div>
+      <h3>Secret Masking</h3>
+      <p>All sensitive fields auto-redacted in console logs. Configurable secret key patterns. URL masking. CI JSON never leaks tokens.</p>
+      <span class="feat-tag">secrets · ci</span>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🧩</div>
+      <h3>Plugin System</h3>
+      <p>Extend post-request with custom modules. Slack/Teams notifications, custom assertions, anything. Runs after core pipeline.</p>
+      <span class="feat-tag">hephaestus.plugins</span>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ── PIPELINE ──────────────────────────────────────────────── -->
+<section id="pipeline" class="pipeline-section">
+<div class="section-inner">
+  <div class="section-label">Architecture</div>
+  <div class="section-title">Modular pipeline, shared context</div>
+  <p class="section-sub">Every module receives the same <code>ctx</code> object. Override anything per-request. Defaults from collection variables.</p>
+
+  <div style="margin-top:40px">
+    <p style="font-size:.78rem;color:var(--muted);margin-bottom:12px;font-weight:600">PRE-REQUEST</p>
+    <div class="pipeline">
+      <div class="p-module"><div class="name">configMerge</div><div class="desc">defaults + override</div></div>
+      <div class="p-arrow">→</div>
+      <div class="p-module"><div class="name">envRequired</div><div class="desc">pre-flight check</div></div>
+      <div class="p-arrow">→</div>
+      <div class="p-module"><div class="name">iterationData</div><div class="desc">ctx.iteration</div></div>
+      <div class="p-arrow">→</div>
+      <div class="p-module accent"><div class="name">random</div><div class="desc">ctx.random</div></div>
+      <div class="p-arrow">→</div>
+      <div class="p-module"><div class="name">urlBuilder</div><div class="desc">{{baseUrl}}</div></div>
+      <div class="p-arrow">→</div>
+      <div class="p-module accent"><div class="name">auth</div><div class="desc">basic/bearer/oauth2cc</div></div>
+      <div class="p-arrow">→</div>
+      <div class="p-module"><div class="name">dateUtils</div><div class="desc">date variables</div></div>
+      <div class="p-arrow">→</div>
+      <div class="p-module"><div class="name">logger</div><div class="desc">console summary</div></div>
+    </div>
+
+    <p style="font-size:.78rem;color:var(--muted);margin-top:32px;margin-bottom:12px;font-weight:600">POST-REQUEST</p>
+    <div class="pipeline">
+      <div class="p-module"><div class="name">configMerge</div><div class="desc">merge config</div></div>
+      <div class="p-arrow">→</div>
+      <div class="p-module accent"><div class="name">retryOnStatus</div><div class="desc">auto-retry</div></div>
+      <div class="p-arrow">→</div>
+      <div class="p-module"><div class="name">normalizeResponse</div><div class="desc">parse body</div></div>
+      <div class="p-arrow">→</div>
+      <div class="p-module"><div class="name">metrics</div><div class="desc">status/time/size</div></div>
+      <div class="p-arrow">→</div>
+      <div class="p-module"><div class="name">extractor</div><div class="desc">ctx.api.get()</div></div>
+      <div class="p-arrow">→</div>
+      <div class="p-module accent"><div class="name">assertions</div><div class="desc">keysToFind · map</div></div>
+      <div class="p-arrow">→</div>
+      <div class="p-module accent"><div class="name">assertEach</div><div class="desc">array items</div></div>
+      <div class="p-arrow">→</div>
+      <div class="p-module accent"><div class="name">assertShape</div><div class="desc">type check</div></div>
+      <div class="p-arrow">→</div>
+      <div class="p-module accent"><div class="name">assertOrder</div><div class="desc">sort order</div></div>
+      <div class="p-arrow">→</div>
+      <div class="p-module accent"><div class="name">assertUnique</div><div class="desc">no duplicates</div></div>
+      <div class="p-arrow">→</div>
+      <div class="p-module"><div class="name">assertHeaders</div><div class="desc">response headers</div></div>
+      <div class="p-arrow">→</div>
+      <div class="p-module"><div class="name">snapshot</div><div class="desc">regression</div></div>
+      <div class="p-arrow">→</div>
+      <div class="p-module"><div class="name">schema (tv4)</div><div class="desc">JSON Schema</div></div>
+      <div class="p-arrow">→</div>
+      <div class="p-module"><div class="name">plugins</div><div class="desc">custom modules</div></div>
+      <div class="p-arrow">→</div>
+      <div class="p-module"><div class="name">logger</div><div class="desc">console summary</div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ── TOOLS ─────────────────────────────────────────────────── -->
+<section id="tools">
+<div class="section-inner">
+  <div class="section-label">Ecosystem</div>
+  <div class="section-title">CLI tools for every workflow</div>
+  <p class="section-sub">Everything runs with <code>npm run &lt;command&gt;</code>. No special setup, no global tools required.</p>
+
+  <div class="tools-grid">
+    <div class="tool-card">
+      <div class="icon">📝</div>
+      <h4>API Docs Generator</h4>
+      <p>Generates Markdown docs from your Postman collection. Your tests <em>are</em> your docs.</p>
+      <code>npm run docs -- col.json -o API.md</code>
+    </div>
+    <div class="tool-card">
+      <div class="icon">📊</div>
+      <h4>Run Summary</h4>
+      <p>Per-folder pass rates, top-5 slowest, most-failed assertions. Console or Markdown.</p>
+      <code>npm run summary -- results.json</code>
+    </div>
+    <div class="tool-card">
+      <div class="icon">🔍</div>
+      <h4>Run Comparator</h4>
+      <p>Diff two Newman runs. New failures, resolved, performance regressions. CI-friendly exit code.</p>
+      <code>npm run compare -- before.json after.json</code>
+    </div>
+    <div class="tool-card">
+      <div class="icon">👁️</div>
+      <h4>Watch Mode</h4>
+      <p>Auto re-run Newman on file change. Press R to force re-run. Like jest --watch for APIs.</p>
+      <code>npm run watch -- -c col.json</code>
+    </div>
+    <div class="tool-card">
+      <div class="icon">📄</div>
+      <h4>HTML Report</h4>
+      <p>Self-contained HTML report with charts, pass rates, and full request/assertion details.</p>
+      <code>npm run report -- results.json</code>
+    </div>
+    <div class="tool-card">
+      <div class="icon">📋</div>
+      <h4>JUnit XML</h4>
+      <p>Convert Newman JSON output to JUnit XML for Jenkins, GitLab, and other CI systems.</p>
+      <code>npm run ci-to-junit -- results.json</code>
+    </div>
+    <div class="tool-card">
+      <div class="icon">🚚</div>
+      <h4>Migration Tool</h4>
+      <p>Scan any Postman collection and classify requests. Shows what needs migration.</p>
+      <code>npm run migrate -- col.json</code>
+    </div>
+    <div class="tool-card">
+      <div class="icon">🧙</div>
+      <h4>Init Wizard</h4>
+      <p>Interactive setup: generates defaults.json and environment file template in seconds.</p>
+      <code>npm run init</code>
+    </div>
+    <div class="tool-card">
+      <div class="icon">📸</div>
+      <h4>Snapshot Viewer</h4>
+      <p>Visual browser UI for comparing response snapshots. Filter, diff, and inspect baselines.</p>
+      <a href="snapshot-viewer.html" style="font-size:.7rem;color:var(--accent)">Open Snapshot Viewer →</a>
+    </div>
+    <div class="tool-card">
+      <div class="icon">🐳</div>
+      <h4>Docker Runner</h4>
+      <p>Run Newman in Docker without a local Node.js install. Generates all reports.</p>
+      <code>bash scripts/docker-run.sh -c col.json</code>
+    </div>
+    <div class="tool-card">
+      <div class="icon">🔬</div>
+      <h4>npm test (30 tests)</h4>
+      <p>Automated test suite for all tooling scripts. Runs in CI on every push.</p>
+      <code>npm test</code>
+    </div>
+    <div class="tool-card">
+      <div class="icon">📖</div>
+      <h4>Config Reference</h4>
+      <p>Every config option with type, default, examples, and version. Searchable, dark-themed.</p>
+      <a href="config-reference.html" style="font-size:.7rem;color:var(--accent)">Open Config Reference →</a>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ── EXAMPLES ──────────────────────────────────────────────── -->
+<section id="examples" class="examples-section">
+<div class="section-inner">
+  <div class="section-label">Code Examples</div>
+  <div class="section-title">Real-world patterns</div>
+
+  <div class="tabs" id="tabs">
+    <div class="tab active" onclick="switchTab('t1')">Shape Check</div>
+    <div class="tab" onclick="switchTab('t2')">assertEach</div>
+    <div class="tab" onclick="switchTab('t3')">OAuth2 + Retry</div>
+    <div class="tab" onclick="switchTab('t4')">Data-driven</div>
+    <div class="tab" onclick="switchTab('t5')">CI Mode</div>
+  </div>
+
+  <div id="t1" class="tab-panel active">
+    <div class="code-window"><div class="code-titlebar"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-filename">GET /users/:id — structural check</span></div>
+    <div class="code-body"><pre><span class="c-kw">const</span> <span class="c-var">override</span> = {
+  <span class="c-key">expectedStatus</span>: <span class="c-num">200</span>,
+  <span class="c-key">maxResponseTime</span>: <span class="c-num">1000</span>,
+
+  <span class="c-cmt">// Quick structural type check — one line per field</span>
+  <span class="c-key">assertShape</span>: {
+    <span class="c-str">"data"</span>:          <span class="c-str">"object"</span>,
+    <span class="c-str">"data.id"</span>:       <span class="c-str">"number"</span>,
+    <span class="c-str">"data.name"</span>:     <span class="c-str">"string"</span>,
+    <span class="c-str">"data.email"</span>:    <span class="c-str">"string"</span>,
+    <span class="c-str">"data.roles"</span>:    <span class="c-str">"array"</span>,
+    <span class="c-str">"data.active"</span>:   <span class="c-str">"boolean"</span>,
+    <span class="c-str">"error"</span>:         <span class="c-str">"absent"</span>,   <span class="c-cmt">// must NOT be present</span>
+  },
+
+  <span class="c-cmt">// Detailed value assertions</span>
+  <span class="c-key">assertions</span>: {
+    <span class="c-str">"data.id"</span>:     { <span class="c-key">gt</span>: <span class="c-num">0</span> },
+    <span class="c-str">"data.email"</span>:  { <span class="c-key">matches</span>: <span class="c-str">"@"</span> },
+    <span class="c-str">"data.active"</span>: { <span class="c-key">eq</span>: <span class="c-kw">true</span> },
+    <span class="c-str">"data.roles"</span>:  { <span class="c-key">minLen</span>: <span class="c-num">1</span> },
+  },
+
+  <span class="c-key">snapshot</span>: { <span class="c-key">enabled</span>: <span class="c-kw">true</span>, <span class="c-key">mode</span>: <span class="c-str">"non-strict"</span>,
+    <span class="c-key">ignorePaths</span>: [<span class="c-str">"data.updatedAt"</span>] },
+};</pre></div></div>
+  </div>
+
+  <div id="t2" class="tab-panel">
+    <div class="code-window"><div class="code-titlebar"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-filename">GET /products — validate every array item</span></div>
+    <div class="code-body"><pre><span class="c-kw">const</span> <span class="c-var">override</span> = {
+  <span class="c-key">expectedStatus</span>: <span class="c-num">200</span>,
+
+  <span class="c-cmt">// Every product in data.items must satisfy these rules</span>
+  <span class="c-key">assertEach</span>: {
+    <span class="c-key">path</span>:     <span class="c-str">"data.items"</span>,
+    <span class="c-key">minCount</span>: <span class="c-num">1</span>,
+    <span class="c-key">maxCount</span>: <span class="c-num">100</span>,
+    <span class="c-key">rules</span>: {
+      <span class="c-str">"id"</span>:       { <span class="c-key">type</span>: <span class="c-str">"number"</span>, <span class="c-key">gt</span>: <span class="c-num">0</span> },
+      <span class="c-str">"name"</span>:     { <span class="c-key">type</span>: <span class="c-str">"string"</span>, <span class="c-key">minLen</span>: <span class="c-num">1</span> },
+      <span class="c-str">"price"</span>:    { <span class="c-key">type</span>: <span class="c-str">"number"</span>, <span class="c-key">gte</span>: <span class="c-num">0</span> },
+      <span class="c-str">"category"</span>: { <span class="c-key">type</span>: <span class="c-str">"string"</span> },
+      <span class="c-str">"active"</span>:   { <span class="c-key">eq</span>: <span class="c-kw">true</span>, <span class="c-key">soft</span>: <span class="c-kw">true</span> },  <span class="c-cmt">// soft — warn but don't fail</span>
+    }
+  },
+
+  <span class="c-cmt">// All IDs must be unique</span>
+  <span class="c-key">assertUnique</span>: { <span class="c-key">path</span>: <span class="c-str">"data.items"</span>, <span class="c-key">by</span>: <span class="c-str">"id"</span> },
+
+  <span class="c-cmt">// Products sorted by price ascending</span>
+  <span class="c-key">assertOrder</span>: {
+    <span class="c-key">path</span>: <span class="c-str">"data.items"</span>, <span class="c-key">by</span>: <span class="c-str">"price"</span>,
+    <span class="c-key">direction</span>: <span class="c-str">"asc"</span>, <span class="c-key">type</span>: <span class="c-str">"number"</span>
+  },
+};</pre></div></div>
+  </div>
+
+  <div id="t3" class="tab-panel">
+    <div class="code-window"><div class="code-titlebar"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-filename">POST /orders — OAuth2 + retry on 503</span></div>
+    <div class="code-body"><pre><span class="c-cmt">// pre-request.js</span>
+<span class="c-kw">const</span> <span class="c-var">override</span> = {
+  <span class="c-key">auth</span>: {
+    <span class="c-key">enabled</span>: <span class="c-kw">true</span>,
+    <span class="c-key">type</span>: <span class="c-str">"oauth2cc"</span>,
+    <span class="c-key">oauth2cc</span>: {
+      <span class="c-key">tokenUrl</span>:     <span class="c-str">"https://auth.example.com/oauth/token"</span>,
+      <span class="c-key">clientId</span>:     <span class="c-str">"{{oauth_client_id}}"</span>,
+      <span class="c-key">clientSecret</span>: <span class="c-str">"{{oauth_client_secret}}"</span>,
+      <span class="c-key">scope</span>:        <span class="c-str">"orders:write"</span>,
+    }
+  },
+  <span class="c-key">envRequired</span>: [<span class="c-str">"oauth_client_id"</span>, <span class="c-str">"oauth_client_secret"</span>],
+};
+
+<span class="c-cmt">// post-request.js</span>
+<span class="c-kw">const</span> <span class="c-var">override</span> = {
+  <span class="c-key">expectedStatus</span>: <span class="c-num">201</span>,
+
+  <span class="c-cmt">// Retry on service unavailable or rate limit</span>
+  <span class="c-key">retryOnStatus</span>: { <span class="c-key">statuses</span>: [<span class="c-num">503</span>, <span class="c-num">429</span>], <span class="c-key">maxRetries</span>: <span class="c-num">3</span> },
+
+  <span class="c-key">assertShape</span>: {
+    <span class="c-str">"order.id"</span>:     <span class="c-str">"number"</span>,
+    <span class="c-str">"order.status"</span>: <span class="c-str">"string"</span>,
+    <span class="c-str">"error"</span>:        <span class="c-str">"absent"</span>,
+  },
+
+  <span class="c-key">varsToSave</span>: {
+    <span class="c-key">orderId</span>: { <span class="c-key">path</span>: <span class="c-str">"order.id"</span>, <span class="c-key">scope</span>: <span class="c-str">"collection"</span>, <span class="c-key">name</span>: <span class="c-str">"lastOrderId"</span> }
+  }
+};</pre></div></div>
+  </div>
+
+  <div id="t4" class="tab-panel">
+    <div class="code-window"><div class="code-titlebar"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-filename">Data-driven + random data</span></div>
+    <div class="code-body"><pre><span class="c-cmt">// pre-request.js — random + iteration data</span>
+<span class="c-kw">const</span> <span class="c-var">override</span> = {
+  <span class="c-cmt">// Auto-generate random pm.variables</span>
+  <span class="c-key">randomData</span>: {
+    <span class="c-str">"email"</span>:   <span class="c-str">"random.email"</span>,       <span class="c-cmt">// → {{email}}</span>
+    <span class="c-str">"userId"</span>:  <span class="c-str">"random.int:1:9999"</span>,  <span class="c-cmt">// → {{userId}}</span>
+    <span class="c-str">"orderId"</span>: <span class="c-str">"random.uuid"</span>,        <span class="c-cmt">// → {{orderId}}</span>
+  },
+};
+
+<span class="c-cmt">// OR: Newman --iteration-data users.csv</span>
+<span class="c-cmt">// Use {{iter.email}}, {{iter.name}} etc. in URL/Body</span>
+<span class="c-cmt">// Access in scripts: ctx.iteration.data.email</span>
+
+<span class="c-cmt">// post-request.js</span>
+<span class="c-kw">const</span> <span class="c-var">override</span> = {
+  <span class="c-key">assertions</span>: {
+    <span class="c-cmt">// Conditional: only assert token when status 200</span>
+    <span class="c-str">"data.token"</span>: {
+      <span class="c-key">exists</span>: <span class="c-kw">true</span>,
+      <span class="c-key">when</span>: <span class="c-str">"ctx.response.code === 200"</span>
+    },
+  },
+  <span class="c-key">logLevel</span>: <span class="c-str">"minimal"</span>,  <span class="c-cmt">// one line per request in data-driven runs</span>
+};</pre></div></div>
+  </div>
+
+  <div id="t5" class="tab-panel">
+    <div class="code-window"><div class="code-titlebar"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-filename">CI/CD pipeline — GitHub Actions</span></div>
+    <div class="code-body"><pre><span class="c-cmt"># .github/workflows/api-tests.yml</span>
+<span class="c-key">name</span>: <span class="c-str">API Tests</span>
+<span class="c-key">on</span>: [push, pull_request]
+
+<span class="c-key">jobs</span>:
+  <span class="c-key">test</span>:
+    <span class="c-key">runs-on</span>: <span class="c-str">ubuntu-latest</span>
+    <span class="c-key">steps</span>:
+      - <span class="c-key">uses</span>: <span class="c-str">actions/checkout@v4</span>
+      - <span class="c-key">run</span>: <span class="c-str">npm install -g newman</span>
+      - <span class="c-key">run</span>: |
+          newman run collection.json \
+            -e environments/prod.json \
+            --reporter-json-export results.json \
+            -r json
+      - <span class="c-key">run</span>: <span class="c-str">node scripts/summary.js results.json</span>
+      - <span class="c-key">run</span>: <span class="c-str">node scripts/ci-to-junit.js results.json junit.xml</span>
+      - <span class="c-key">uses</span>: <span class="c-str">actions/upload-artifact@v4</span>
+        <span class="c-key">with</span>:
+          <span class="c-key">name</span>: <span class="c-str">api-test-results</span>
+          <span class="c-key">path</span>: <span class="c-str">results.json</span>
+      - <span class="c-key">run</span>: |
+          <span class="c-cmt"># Compare with last release baseline</span>
+          node scripts/compare.js baseline.json results.json</pre></div></div>
+  </div>
+</div>
+</section>
+
+<!-- ── COMPARE ──────────────────────────────────────────────── -->
+<section>
+<div class="section-inner">
+  <div class="section-label">Why Hephaestus</div>
+  <div class="section-title">Beyond vanilla Postman</div>
+  <p class="section-sub">You already know Postman. Hephaestus doesn't replace it — it supercharges it.</p>
+
+  <div class="compare-grid">
+    <div class="cmp-box bad">
+      <div class="cmp-title"><span class="no">●</span> Vanilla Postman scripts</div>
+      <div class="cmp-item"><span class="no">✗</span> Assertion boilerplate copy-pasted in every request</div>
+      <div class="cmp-item"><span class="no">✗</span> No consistent structure between team members</div>
+      <div class="cmp-item"><span class="no">✗</span> Auth logic duplicated per-request</div>
+      <div class="cmp-item"><span class="no">✗</span> No snapshot regression testing</div>
+      <div class="cmp-item"><span class="no">✗</span> No HTML reports without external tools</div>
+      <div class="cmp-item"><span class="no">✗</span> Secrets visible in console logs</div>
+      <div class="cmp-item"><span class="no">✗</span> No array item validation</div>
+      <div class="cmp-item"><span class="no">✗</span> CI integration requires custom scripting</div>
+    </div>
+    <div class="cmp-box good">
+      <div class="cmp-title"><span class="ok">●</span> With Hephaestus</div>
+      <div class="cmp-item"><span class="ok">✓</span> One engine, all requests — zero duplication</div>
+      <div class="cmp-item"><span class="ok">✓</span> Consistent declarative <code>override</code> pattern</div>
+      <div class="cmp-item"><span class="ok">✓</span> Auth configured once in defaults, overrideable per-request</div>
+      <div class="cmp-item"><span class="ok">✓</span> Snapshot baselines auto-saved, diffs in console</div>
+      <div class="cmp-item"><span class="ok">✓</span> Beautiful HTML report with <code>npm run report</code></div>
+      <div class="cmp-item"><span class="ok">✓</span> Auto-masking for token, password, secret, key</div>
+      <div class="cmp-item"><span class="ok">✓</span> assertEach, assertShape, assertOrder, assertUnique</div>
+      <div class="cmp-item"><span class="ok">✓</span> JUnit XML, GitHub Actions, Docker — ready to go</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ── CTA ──────────────────────────────────────────────────── -->
+<div class="cta-band">
+  <h2>Ready to ship better APIs?</h2>
+  <p>Get started in 5 minutes. Load the engine, write your first override, run it.</p>
+  <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+    <a href="quickstart.html" class="btn btn-primary" style="font-size:1rem;padding:14px 28px">🚀 Quick Start</a>
+    <a href="config-reference.html" class="btn btn-ghost" style="font-size:1rem;padding:14px 28px">📖 Config Reference</a>
+    <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework" class="btn btn-ghost" style="font-size:1rem;padding:14px 28px">⭐ Star on GitHub</a>
+  </div>
+</div>
+
+<!-- ── FOOTER ───────────────────────────────────────────────── -->
+<footer>
+<div class="footer-inner">
+  <div class="footer-brand">
+    <div style="font-size:1.1rem;font-weight:800">🔥 Hephaestus</div>
+    <p>Professional API testing framework for Postman & Newman. Open source, MIT licensed.</p>
+  </div>
+  <div class="footer-col">
+    <h4>Docs</h4>
+    <a href="quickstart.html">Quick Start</a>
+    <a href="config-reference.html">Config Reference</a>
+    <a href="features.html">All Features</a>
+    <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework/blob/main/docs/newman-ci.md">Newman + CI Guide</a>
+    <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework/blob/main/CHANGELOG.md">Changelog</a>
+  </div>
+  <div class="footer-col">
+    <h4>Tools</h4>
+    <a href="snapshot-viewer.html">Snapshot Viewer</a>
+    <a href="config-reference.html">Config Reference</a>
+    <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework/blob/main/scripts/docs.js">Docs Generator</a>
+    <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework/blob/main/scripts/compare.js">Run Comparator</a>
+  </div>
+  <div class="footer-col">
+    <h4>Project</h4>
+    <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework">GitHub</a>
+    <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework/blob/main/CONTRIBUTING.md">Contributing</a>
+    <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework/blob/main/SECURITY.md">Security</a>
+    <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework/issues">Issues</a>
+  </div>
+</div>
+<div class="footer-bottom">
+  <span>© 2026 Bogdanov Igor · MIT License</span>
+  <span>🔥 Hephaestus v3.8.0</span>
+</div>
+</footer>
+
+<script>
+function switchTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+  // find the tab by order
+  var tabs = document.querySelectorAll('.tab');
+  var map = { t1:0, t2:1, t3:2, t4:3, t5:4 };
+  if (map[id] !== undefined) tabs[map[id]].classList.add('active');
+}
+
+// Intersection Observer для nav highlights
+var observer = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) {
+    if (e.isIntersecting) {
+      document.querySelectorAll('.nav-links a:not(.nav-cta)').forEach(function(a) {
+        a.style.color = '';
+      });
+      var id = e.target.id;
+      var link = document.querySelector('.nav-links a[href="#' + id + '"]');
+      if (link) link.style.color = '#f77f00';
+    }
+  });
+}, { threshold: .3 });
+
+['features','pipeline','tools','examples'].forEach(function(id) {
+  var el = document.getElementById(id);
+  if (el) observer.observe(el);
+});
+</script>
+</body>
+</html>

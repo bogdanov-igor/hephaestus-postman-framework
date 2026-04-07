@@ -1,0 +1,45 @@
+{
+  "_comment": "Скопировать в collectionVariables['hephaestus.defaults']. Удалить _comment перед использованием.",
+
+  "baseUrl": "https://your-api.example.com",
+  "defaultProtocol": "https",
+
+  "auth": {
+    "enabled": false,
+    "type": "none"
+  },
+
+  "dateFormat": "yyyy-MM-dd",
+  "maxResponseTime": 1000,
+
+  "expectedStatus": [200, 201, 202],
+
+  "expectEmpty": false,
+  "contentType": "json",
+
+  "snapshot": {
+    "enabled": false,
+    "storage": "collection-vars",
+    "mode": "non-strict",
+    "autoSaveMissing": true,
+    "checkPaths": [],
+    "ignorePaths": []
+  },
+
+  "schema": {
+    "enabled": false,
+    "definition": null
+  },
+
+  "secrets": ["token", "password", "pass", "secret", "key", "authorization", "session"],
+
+  "envRequired": [],
+
+  "ci": false,
+
+  "logLevel": "normal",
+
+  "softFail": false,
+
+  "randomData": {}
+}

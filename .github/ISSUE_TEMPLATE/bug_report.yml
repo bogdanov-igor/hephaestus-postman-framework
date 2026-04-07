@@ -1,0 +1,82 @@
+name: Bug Report
+description: Report a bug or unexpected behavior in Hephaestus
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug. Please fill in as much detail as possible.
+
+  - type: input
+    id: version
+    attributes:
+      label: Hephaestus version
+      description: Check `hephaestus.version` in your collection variables
+      placeholder: "3.1.0 / main"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: client
+    attributes:
+      label: Client
+      options:
+        - Postman Desktop
+        - Postman Web
+        - Apidog
+        - Newman (CLI)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: Affected module
+      options:
+        - pre-request / urlBuilder
+        - pre-request / auth
+        - pre-request / dateUtils
+        - post-request / normalizeResponse
+        - post-request / assertions (keysToFind / varsToSave / keysToCount)
+        - post-request / maxResponseTime
+        - post-request / snapshot
+        - post-request / schema
+        - post-request / logger
+        - engine-update
+        - defaults / configuration
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug clearly
+      placeholder: "Expected X, got Y..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: override
+    attributes:
+      label: Override config (if applicable)
+      description: Paste your `override` object
+      render: javascript
+      placeholder: |
+        const override = {
+          auth: { ... },
+          keysToFind: [ ... ]
+        };
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console output / error message
+      description: Paste the relevant console output or test result
+      render: shell
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context

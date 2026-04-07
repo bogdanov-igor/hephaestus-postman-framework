@@ -1,0 +1,46 @@
+name: Engine Lint
+
+on:
+  push:
+    paths:
+      - "engine/**"
+      - "setup/**"
+      - "templates/**"
+      - "eslint.config.js"
+      - "package.json"
+  pull_request:
+    paths:
+      - "engine/**"
+      - "setup/**"
+      - "templates/**"
+      - "eslint.config.js"
+      - "package.json"
+
+jobs:
+  lint:
+    name: Lint & validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Syntax check (node --check)
+        run: npm run syntax
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Validate defaults.json
+        run: npm run validate:defaults
+
+      - name: Build checks (version sync + configMerge sync)
+        run: npm run build

@@ -1,0 +1,59 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea? Describe what you'd like to see in Hephaestus.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Engine — pre-request
+        - Engine — post-request
+        - Auth plugin
+        - dateUtils
+        - Snapshot
+        - Schema validation
+        - Logger / output
+        - Collection template
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What problem does this feature solve?
+      placeholder: "Currently I have to... It would be better if..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How do you imagine this working?
+      placeholder: "Add `X` option to the override config that does Y..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: example
+    attributes:
+      label: Example config / usage
+      render: javascript
+      placeholder: |
+        const override = {
+          newFeature: { ... }
+        };
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context

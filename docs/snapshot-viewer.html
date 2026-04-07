@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hephaestus — Snapshot Viewer</title>
+<style>
+  :root {
+    --bg:        #0d1117;
+    --bg-card:   #161b22;
+    --bg-input:  #1c2128;
+    --border:    #30363d;
+    --border-h:  #58a6ff;
+    --text:      #c9d1d9;
+    --muted:     #8b949e;
+    --accent:    #58a6ff;
+    --green:     #3fb950;
+    --yellow:    #d29922;
+    --red:       #f85149;
+    --purple:    #bc8cff;
+    --orange:    #ffa657;
+    --code-bg:   #0d1117;
+    --radius:    8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 16px 64px;
+  }
+
+  /* ── Header ─────────────────────────────────────────────────── */
+  header {
+    max-width: 100%;
+    padding: 14px 24px;
+    background: #161b22;
+    border-bottom: 1px solid var(--border);
+    margin: 0 0 0 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .logo { font-size: 1.5rem; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  .badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-weight: 500;
+  }
+  header p { flex-basis: 100%; font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
+
+  /* ── Input area ──────────────────────────────────────────────── */
+  .input-section {
+    max-width: 900px;
+    margin: 0 auto 24px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .input-section label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+  }
+  textarea {
+    width: 100%;
+    height: 120px;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.8rem;
+    padding: 10px 12px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  textarea:focus { border-color: var(--border-h); }
+  textarea::placeholder { color: var(--muted); }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  button {
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 8px 18px;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  button:active { transform: scale(0.97); }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-ghost:hover { border-color: var(--border-h); color: var(--accent); }
+  .btn-danger { background: transparent; border: 1px solid var(--red); color: var(--red); }
+  .btn-danger:hover { background: var(--red); color: #fff; }
+  .error-msg { font-size: 0.82rem; color: var(--red); margin-top: 8px; display: none; }
+
+  /* ── Stats bar ───────────────────────────────────────────────── */
+  #stats-bar {
+    max-width: 900px;
+    margin: 0 auto 20px;
+    display: none;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 18px;
+    min-width: 130px;
+    flex: 1;
+  }
+  .stat-card .val { font-size: 1.6rem; font-weight: 700; color: var(--accent); line-height: 1; }
+  .stat-card .lbl { font-size: 0.72rem; color: var(--muted); margin-top: 4px; font-weight: 500; text-transform: uppercase; }
+
+  /* Size gauge */
+  .gauge-wrap { flex: 2; min-width: 200px; }
+  .gauge-label { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--muted); margin-bottom: 6px; }
+  .gauge-bar { background: var(--border); border-radius: 4px; height: 8px; overflow: hidden; }
+  .gauge-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+
+  /* ── Filter row ──────────────────────────────────────────────── */
+  #filter-row {
+    max-width: 900px;
+    margin: 0 auto 16px;
+    display: none;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  #search {
+    flex: 1;
+    min-width: 200px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.85rem;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  #search:focus { border-color: var(--border-h); }
+  .filter-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(88,166,255,0.1); }
+  .filter-btn:hover { border-color: var(--border-h); }
+
+  /* ── Cards ───────────────────────────────────────────────────── */
+  #cards {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .card:hover { border-color: var(--border-h); }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    cursor: pointer;
+    user-select: none;
+    flex-wrap: wrap;
+  }
+  .card-header:hover { background: rgba(255,255,255,0.02); }
+
+  .status-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .card-name {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+    word-break: break-all;
+  }
+  .tag {
+    font-size: 0.68rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .tag-format { background: rgba(188,140,255,0.15); color: var(--purple); border: 1px solid rgba(188,140,255,0.3); }
+  .tag-mode   { background: rgba(88,166,255,0.1);   color: var(--accent); border: 1px solid rgba(88,166,255,0.2); }
+  .tag-size   { background: rgba(139,148,158,0.1);  color: var(--muted);  border: 1px solid var(--border); }
+  .tag-status { background: rgba(63,185,80,0.1);    color: var(--green);  border: 1px solid rgba(63,185,80,0.3); }
+
+  .chevron { color: var(--muted); font-size: 0.8rem; transition: transform 0.2s; flex-shrink: 0; }
+  .card.open .chevron { transform: rotate(90deg); }
+
+  .card-meta {
+    display: flex;
+    gap: 16px;
+    padding: 0 16px 10px;
+    font-size: 0.75rem;
+    color: var(--muted);
+    flex-wrap: wrap;
+  }
+  .card-meta span { display: flex; align-items: center; gap: 4px; }
+
+  /* Card body */
+  .card-body { display: none; border-top: 1px solid var(--border); }
+  .card.open .card-body { display: block; }
+
+  .card-section { padding: 12px 16px; }
+  .card-section + .card-section { border-top: 1px solid var(--border); }
+
+  .section-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  /* JSON viewer */
+  pre.json-view {
+    background: var(--code-bg);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.78rem;
+    line-height: 1.55;
+    overflow-x: auto;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  .j-key   { color: var(--accent); }
+  .j-str   { color: var(--green); }
+  .j-num   { color: var(--orange); }
+  .j-bool  { color: var(--purple); }
+  .j-null  { color: var(--muted); font-style: italic; }
+  .j-brace { color: var(--text); }
+
+  /* Paths list */
+  .paths-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .path-tag {
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(88,166,255,0.08);
+    border: 1px solid rgba(88,166,255,0.2);
+    color: var(--accent);
+    font-family: 'SF Mono', monospace;
+  }
+  .path-tag.ignore { background: rgba(248,81,73,0.08); border-color: rgba(248,81,73,0.2); color: var(--red); }
+
+  /* Empty state */
+  #empty {
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    display: none;
+  }
+  #empty .icon { font-size: 3rem; margin-bottom: 16px; }
+  #empty h3 { font-size: 1.1rem; color: var(--text); margin-bottom: 8px; }
+  #empty p { font-size: 0.85rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🔥 <span>Hephaestus</span> Snapshot Viewer</div>
+  <div class="badge">v3.8.0</div>
+  <div style="margin-left:auto;display:flex;gap:14px">
+    <a href="index.html" style="font-size:.78rem;color:var(--muted)">← Home</a>
+    <a href="quickstart.html" style="font-size:.78rem;color:var(--muted)">Quick Start</a>
+    <a href="config-reference.html" style="font-size:.78rem;color:var(--muted)">Config Ref</a>
+  </div>
+</header>
+<div style="padding:12px 24px;background:#161b22;border-bottom:1px solid var(--border);font-size:.84rem;color:var(--muted)">
+  Paste the value of <code style="color:#58a6ff">hephaestus.snapshots</code> collection variable below to inspect your snapshots.
+</div>
+
+<!-- Input -->
+<div class="input-section">
+  <label>hephaestus.snapshots JSON</label>
+  <textarea id="input" placeholder='{"GET::UserById::200::json": {"_saved":"2026-04-07T10:00:00Z", "data": {...}}, ...}'></textarea>
+  <div class="error-msg" id="err">Invalid JSON — please paste the raw value of hephaestus.snapshots.</div>
+  <div class="actions">
+    <button class="btn-primary" onclick="load()">▶ Load Snapshots</button>
+    <button class="btn-ghost" onclick="loadDemo()">Load Demo Data</button>
+    <button class="btn-danger" onclick="clear_()">Clear</button>
+  </div>
+</div>
+
+<!-- Stats bar -->
+<div id="stats-bar" style="display:none; max-width:900px; margin:0 auto 20px; display:flex; gap:12px; flex-wrap:wrap; align-items:stretch;">
+  <div class="stat-card"><div class="val" id="s-total">0</div><div class="lbl">Snapshots</div></div>
+  <div class="stat-card"><div class="val" id="s-formats">—</div><div class="lbl">Formats</div></div>
+  <div class="stat-card"><div class="val" id="s-oldest">—</div><div class="lbl">Oldest</div></div>
+  <div class="gauge-wrap stat-card">
+    <div class="gauge-label">
+      <span>Collection Variable Size</span>
+      <span id="s-size-label">0 / ~256 KB</span>
+    </div>
+    <div class="gauge-bar"><div class="gauge-fill" id="s-gauge" style="width:0%; background: var(--green);"></div></div>
+  </div>
+</div>
+
+<!-- Filter row -->
+<div id="filter-row" style="display:none; max-width:900px; margin:0 auto 16px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+  <input id="search" type="text" placeholder="Search by key, format, mode..." oninput="filter()">
+  <button class="filter-btn active" data-fmt="all" onclick="setFmt(this)">All</button>
+  <button class="filter-btn" data-fmt="json" onclick="setFmt(this)">JSON</button>
+  <button class="filter-btn" data-fmt="xml" onclick="setFmt(this)">XML</button>
+  <button class="filter-btn" data-fmt="text" onclick="setFmt(this)">Text</button>
+  <button class="filter-btn" data-fmt="strict" onclick="setFmt(this)">Strict</button>
+</div>
+
+<!-- Cards -->
+<div id="cards"></div>
+
+<!-- Empty state -->
+<div id="empty">
+  <div class="icon">📭</div>
+  <h3>No snapshots match your search</h3>
+  <p>Try clearing the filter or search for a different term.</p>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+
+var allCards = [];
+var currentFmt = 'all';
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function fmtBytes(n) {
+  if (n < 1024) return n + ' B';
+  if (n < 1048576) return (n/1024).toFixed(1) + ' KB';
+  return (n/1048576).toFixed(2) + ' MB';
+}
+
+function fmtDate(s) {
+  if (!s) return '—';
+  try {
+    var d = new Date(s);
+    return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }) +
+           ' ' + d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+  } catch(e) { return s; }
+}
+
+function relDate(s) {
+  if (!s) return '';
+  var diff = Date.now() - new Date(s).getTime();
+  var m = Math.floor(diff/60000);
+  if (m < 1)   return 'just now';
+  if (m < 60)  return m + 'm ago';
+  var h = Math.floor(m/60);
+  if (h < 24)  return h + 'h ago';
+  var d = Math.floor(h/24);
+  return d + 'd ago';
+}
+
+function statusColor(code) {
+  if (!code) return 'var(--muted)';
+  if (code < 300) return 'var(--green)';
+  if (code < 400) return 'var(--yellow)';
+  return 'var(--red)';
+}
+
+// ── JSON syntax highlighter ───────────────────────────────────────────────────
+
+function highlight(val, depth) {
+  depth = depth || 0;
+  if (val === null)             return '<span class="j-null">null</span>';
+  if (typeof val === 'boolean') return '<span class="j-bool">' + val + '</span>';
+  if (typeof val === 'number')  return '<span class="j-num">' + val + '</span>';
+  if (typeof val === 'string')  return '<span class="j-str">"' + esc(val) + '"</span>';
+
+  if (Array.isArray(val)) {
+    if (val.length === 0) return '<span class="j-brace">[]</span>';
+    var indent = '  '.repeat(depth+1);
+    var closing = '  '.repeat(depth);
+    var items = val.map(function(v) { return indent + highlight(v, depth+1); });
+    return '<span class="j-brace">[</span>\n' + items.join('<span class="j-brace">,</span>\n') + '\n' + closing + '<span class="j-brace">]</span>';
+  }
+
+  if (typeof val === 'object') {
+    var keys = Object.keys(val);
+    if (keys.length === 0) return '<span class="j-brace">{}</span>';
+    var indent2 = '  '.repeat(depth+1);
+    var closing2 = '  '.repeat(depth);
+    // Truncate deeply nested or large objects
+    if (depth >= 4 || keys.length > 50) {
+      return '<span class="j-brace">{</span><span class="j-null"> …' + keys.length + ' keys… </span><span class="j-brace">}</span>';
+    }
+    var pairs = keys.map(function(k) {
+      return indent2 + '<span class="j-key">"' + esc(k) + '"</span><span class="j-brace">: </span>' + highlight(val[k], depth+1);
+    });
+    return '<span class="j-brace">{</span>\n' + pairs.join('<span class="j-brace">,</span>\n') + '\n' + closing2 + '<span class="j-brace">}</span>';
+  }
+
+  return esc(String(val));
+}
+
+// ── Parse key ────────────────────────────────────────────────────────────────
+// Key format: "METHOD::Name::STATUS::format"  (Hephaestus snapshot key)
+
+function parseKey(key) {
+  var parts = key.split('::');
+  return {
+    method: parts[0] || '',
+    name:   parts[1] || key,
+    status: parseInt(parts[2]) || null,
+    format: parts[3] || 'json',
+  };
+}
+
+// ── Card builder ──────────────────────────────────────────────────────────────
+
+function buildCard(key, snap) {
+  var parsed = parseKey(key);
+  var saved  = snap._saved || snap._meta && snap._meta.saved || null;
+  var mode   = snap._meta && snap._meta.mode || snap._mode || 'non-strict';
+  var checkPaths  = snap._meta && snap._meta.checkPaths  || snap._checkPaths  || [];
+  var ignorePaths = snap._meta && snap._meta.ignorePaths || snap._ignorePaths || [];
+  var rawData = snap.data !== undefined ? snap.data : snap;
+
+  // Compute size
+  var rawJson = JSON.stringify(snap);
+  var byteSize = new TextEncoder ? new TextEncoder().encode(rawJson).length : rawJson.length;
+
+  // Build data object excluding internal meta keys
+  var displayData = {};
+  Object.keys(rawData).forEach(function(k) {
+    if (!k.startsWith('_')) displayData[k] = rawData[k];
+  });
+
+  var card = document.createElement('div');
+  card.className = 'card';
+  card.dataset.key    = key;
+  card.dataset.fmt    = parsed.format;
+  card.dataset.mode   = mode;
+  card.dataset.search = (key + ' ' + parsed.format + ' ' + mode).toLowerCase();
+
+  var headerHtml = [
+    '<div class="card-header" onclick="toggle(this.parentElement)">',
+    '  <div class="status-dot" style="background:' + statusColor(parsed.status) + '"></div>',
+    '  <div class="card-name">' + esc(parsed.name) + '</div>',
+    parsed.status  ? '<span class="tag tag-status">HTTP ' + parsed.status + '</span>' : '',
+    '<span class="tag tag-format">' + esc(parsed.format.toUpperCase()) + '</span>',
+    '<span class="tag tag-mode">' + esc(mode) + '</span>',
+    '<span class="tag tag-size">' + fmtBytes(byteSize) + '</span>',
+    '  <span class="chevron">▶</span>',
+    '</div>',
+    '<div class="card-meta">',
+    '  <span>🗓 ' + fmtDate(saved) + '</span>',
+    saved ? '<span>(' + relDate(saved) + ')</span>' : '',
+    parsed.method ? '<span>📡 ' + esc(parsed.method) + '</span>' : '',
+    '</div>',
+  ].join('');
+
+  var bodyParts = [];
+
+  // Data section
+  var dataHtml;
+  if (parsed.format === 'xml' || typeof displayData === 'string') {
+    dataHtml = '<pre class="json-view">' + esc(JSON.stringify(displayData, null, 2)) + '</pre>';
+  } else {
+    dataHtml = '<pre class="json-view">' + highlight(displayData, 0) + '</pre>';
+  }
+  bodyParts.push('<div class="card-section"><div class="section-label">Snapshot Data</div>' + dataHtml + '</div>');
+
+  // CheckPaths section
+  if (checkPaths && checkPaths.length > 0) {
+    var tagsHtml = checkPaths.map(function(p) {
+      return '<span class="path-tag">' + esc(p) + '</span>';
+    }).join('');
+    bodyParts.push('<div class="card-section"><div class="section-label">Check Paths (' + checkPaths.length + ')</div><div class="paths-list">' + tagsHtml + '</div></div>');
+  }
+
+  // IgnorePaths section
+  if (ignorePaths && ignorePaths.length > 0) {
+    var ignHtml = ignorePaths.map(function(p) {
+      return '<span class="path-tag ignore">' + esc(p) + '</span>';
+    }).join('');
+    bodyParts.push('<div class="card-section"><div class="section-label">Ignore Paths (' + ignorePaths.length + ')</div><div class="paths-list">' + ignHtml + '</div></div>');
+  }
+
+  // Key section
+  bodyParts.push('<div class="card-section"><div class="section-label">Full Key</div><pre class="json-view">' + esc(key) + '</pre></div>');
+
+  card.innerHTML = headerHtml + '<div class="card-body">' + bodyParts.join('') + '</div>';
+  return card;
+}
+
+// ── Load ──────────────────────────────────────────────────────────────────────
+
+function load() {
+  var raw = document.getElementById('input').value.trim();
+  if (!raw) return;
+
+  var data;
+  try {
+    data = JSON.parse(raw);
+  } catch(e) {
+    document.getElementById('err').style.display = 'block';
+    return;
+  }
+  document.getElementById('err').style.display = 'none';
+  render(data);
+}
+
+function render(data) {
+  var keys = Object.keys(data);
+  allCards = [];
+
+  var container = document.getElementById('cards');
+  container.innerHTML = '';
+
+  var formats = new Set();
+  var oldest  = null;
+  var totalBytes = JSON.stringify(data).length;
+
+  keys.forEach(function(k) {
+    var snap   = data[k];
+    var parsed = parseKey(k);
+    formats.add(parsed.format);
+
+    var saved = snap._saved || (snap._meta && snap._meta.saved);
+    if (saved) {
+      if (!oldest || new Date(saved) < new Date(oldest)) oldest = saved;
+    }
+
+    var card = buildCard(k, snap);
+    allCards.push(card);
+    container.appendChild(card);
+  });
+
+  // Stats
+  document.getElementById('s-total').textContent   = keys.length;
+  document.getElementById('s-formats').textContent = Array.from(formats).join(' / ') || '—';
+  document.getElementById('s-oldest').textContent  = oldest ? relDate(oldest) : '—';
+
+  // Size gauge (Postman collectionVariable limit ≈ 256 KB per variable)
+  var limitBytes = 256 * 1024;
+  var pct = Math.min(100, (totalBytes / limitBytes * 100));
+  var gaugeColor = pct < 70 ? 'var(--green)' : pct < 90 ? 'var(--yellow)' : 'var(--red)';
+  document.getElementById('s-gauge').style.width      = pct.toFixed(1) + '%';
+  document.getElementById('s-gauge').style.background = gaugeColor;
+  document.getElementById('s-size-label').textContent = fmtBytes(totalBytes) + ' / ~256 KB';
+
+  // Show UI
+  document.getElementById('stats-bar').style.display  = 'flex';
+  document.getElementById('filter-row').style.display = 'flex';
+
+  filter();
+}
+
+// ── Toggle ────────────────────────────────────────────────────────────────────
+
+function toggle(card) {
+  card.classList.toggle('open');
+}
+
+// ── Filter ────────────────────────────────────────────────────────────────────
+
+function filter() {
+  var q = (document.getElementById('search').value || '').toLowerCase();
+  var empty = document.getElementById('empty');
+  var visible = 0;
+
+  allCards.forEach(function(card) {
+    var matchFmt  = currentFmt === 'all' || card.dataset.fmt === currentFmt || card.dataset.mode === currentFmt;
+    var matchSearch = !q || card.dataset.search.indexOf(q) !== -1;
+    var show = matchFmt && matchSearch;
+    card.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+
+  empty.style.display = visible === 0 && allCards.length > 0 ? 'block' : 'none';
+}
+
+function setFmt(btn) {
+  document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  currentFmt = btn.dataset.fmt;
+  filter();
+}
+
+function clear_() {
+  document.getElementById('input').value = '';
+  document.getElementById('cards').innerHTML = '';
+  document.getElementById('stats-bar').style.display = 'none';
+  document.getElementById('filter-row').style.display = 'none';
+  document.getElementById('err').style.display = 'none';
+  document.getElementById('empty').style.display = 'none';
+  allCards = [];
+}
+
+// ── Demo data ─────────────────────────────────────────────────────────────────
+
+function loadDemo() {
+  var demo = {
+    "GET::GetUser::200::json": {
+      "_saved": new Date(Date.now() - 3600000).toISOString(),
+      "_meta": { "mode": "strict", "checkPaths": ["$.data.id", "$.data.email"], "ignorePaths": ["$.data.updatedAt"] },
+      "data": { "id": 42, "email": "john@example.com", "name": "John Doe", "role": "admin", "updatedAt": "2026-01-01T00:00:00Z" }
+    },
+    "POST::CreateToken::201::json": {
+      "_saved": new Date(Date.now() - 86400000).toISOString(),
+      "_meta": { "mode": "non-strict", "checkPaths": [], "ignorePaths": ["$.token", "$.expiresAt"] },
+      "data": { "token": "eyJhbGciOiJIUzI1NiJ9.REDACTED", "expiresAt": "2026-05-01T00:00:00Z", "tokenType": "Bearer" }
+    },
+    "GET::ListProducts::200::json": {
+      "_saved": new Date(Date.now() - 172800000).toISOString(),
+      "_meta": { "mode": "non-strict", "checkPaths": [], "ignorePaths": [] },
+      "data": {
+        "page": 1, "perPage": 20, "total": 147,
+        "items": [
+          { "id": 1, "sku": "PROD-001", "name": "Widget A", "price": 9.99 },
+          { "id": 2, "sku": "PROD-002", "name": "Widget B", "price": 19.99 }
+        ]
+      }
+    },
+    "GET::GetStatus::200::xml": {
+      "_saved": new Date(Date.now() - 7200000).toISOString(),
+      "_meta": { "mode": "strict", "checkPaths": [], "ignorePaths": [] },
+      "data": "<status><code>OK</code><timestamp>2026-04-07T10:00:00Z</timestamp></status>"
+    }
+  };
+  document.getElementById('input').value = JSON.stringify(demo, null, 2);
+  load();
+}
+</script>
+</body>
+</html>

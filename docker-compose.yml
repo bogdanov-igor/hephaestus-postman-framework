@@ -1,0 +1,49 @@
+# Hephaestus — Docker Compose  v3.6.0
+#
+# Запуск Newman тестов через Docker.
+#
+# Использование:
+#   docker-compose run --rm newman run \
+#     /data/collection.json \
+#     -e /data/environment.prod.json \
+#     --reporter-json-export /data/results.json \
+#     -r json,htmlextra
+#
+# Переменные для кастомизации:
+#   COLLECTION  — путь к коллекции (default: collection/hephaestus-template.postman_collection.json)
+#   ENVIRONMENT — путь к environment-файлу (default: environment.json)
+#   REPORT_DIR  — папка для отчётов (default: .)
+
+services:
+  newman:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: hephaestus-runner:3.6.0
+    volumes:
+      - .:/data
+    working_dir: /data
+    environment:
+      - NEWMAN_REPORTER_HTMLEXTRA_EXPORT=/data/report.html
+    # Default command — override via `docker-compose run newman run <args>`
+    command: ["--help"]
+
+  # Генерация HTML-отчёта после прогона (вызывай после newman)
+  report:
+    image: node:20-alpine
+    volumes:
+      - .:/data
+    working_dir: /data
+    entrypoint: ["node", "/data/scripts/generate-report.js"]
+    command: ["/data/results.json", "/data/hephaestus-report.html"]
+    profiles: ["report"]
+
+  # JUnit XML для CI (вызывай после newman)
+  junit:
+    image: node:20-alpine
+    volumes:
+      - .:/data
+    working_dir: /data
+    entrypoint: ["node", "/data/scripts/ci-to-junit.js"]
+    command: ["/data/results.json", "/data/junit-report.xml"]
+    profiles: ["junit"]

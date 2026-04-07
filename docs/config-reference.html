@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hephaestus Config Reference</title>
+<style>
+:root{--bg:#0d1117;--bg-card:#161b22;--bg-code:#0d1117;--border:#30363d;--border-h:#58a6ff;--text:#c9d1d9;--muted:#8b949e;--accent:#58a6ff;--green:#3fb950;--yellow:#d29922;--red:#f85149;--purple:#bc8cff;--orange:#ffa657;--radius:8px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+code,pre{font-family:'SF Mono','Fira Code',monospace}
+
+/* ─ Layout ─ */
+.layout{display:flex;flex:1;max-width:1200px;margin:0 auto;width:100%;padding:0 16px}
+
+/* ─ Sidebar ─ */
+nav{width:220px;flex-shrink:0;padding:24px 0 48px;position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid var(--border)}
+nav h3{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;padding:0 16px;margin-bottom:8px;margin-top:20px}
+nav h3:first-child{margin-top:0}
+nav a{display:block;padding:4px 16px;font-size:.82rem;color:var(--muted);border-left:2px solid transparent;transition:all .12s}
+nav a:hover,nav a.active{color:var(--text);border-left-color:var(--accent);background:rgba(88,166,255,.05);text-decoration:none}
+
+/* ─ Main ─ */
+main{flex:1;padding:24px 32px 80px;min-width:0}
+
+/* ─ Header ─ */
+header{padding:24px 16px 0;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;width:100%}
+.hdr-inner{display:flex;align-items:center;gap:12px;padding-bottom:16px;flex-wrap:wrap}
+.logo{font-size:1.3rem;font-weight:700}.logo span{color:var(--accent)}
+.badge{font-size:.7rem;padding:2px 8px;border-radius:20px;border:1px solid var(--border);color:var(--muted)}
+.search-wrap{margin-left:auto}
+#search{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.84rem;padding:7px 12px;outline:none;width:260px;transition:border-color .15s}
+#search:focus{border-color:var(--border-h)}
+#search::placeholder{color:var(--muted)}
+
+/* ─ Section ─ */
+.section{margin-bottom:56px}
+.section-title{font-size:1.15rem;font-weight:700;margin-bottom:20px;padding-bottom:8px;border-bottom:1px solid var(--border);scroll-margin-top:24px}
+.section-title .sec-badge{font-size:.65rem;padding:2px 7px;border-radius:4px;font-weight:600;margin-left:8px;vertical-align:middle}
+
+/* ─ Option card ─ */
+.opt{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;transition:border-color .15s}
+.opt:hover{border-color:var(--border-h)}
+.opt.hidden{display:none}
+.opt-head{padding:12px 16px;display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;cursor:pointer}
+.opt-name{font-size:.9rem;font-weight:700;color:var(--text);font-family:'SF Mono','Fira Code',monospace}
+.opt-type{font-size:.7rem;padding:2px 7px;border-radius:4px;font-weight:600;background:rgba(88,166,255,.1);color:var(--accent);border:1px solid rgba(88,166,255,.2);white-space:nowrap}
+.opt-since{font-size:.68rem;color:var(--muted);white-space:nowrap;margin-left:auto;align-self:center}
+.opt-desc{font-size:.83rem;color:var(--muted);margin-top:4px;flex-basis:100%;line-height:1.55}
+.opt-body{display:none;padding:0 16px 14px;border-top:1px solid var(--border)}
+.opt.open .opt-body{display:block}
+
+.default-row{display:flex;gap:8px;align-items:center;margin-bottom:10px;margin-top:10px;font-size:.78rem}
+.default-lbl{color:var(--muted);font-weight:600}
+.default-val{background:var(--bg-code);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-family:'SF Mono',monospace;font-size:.75rem;color:var(--orange)}
+
+pre.example{background:var(--bg-code);border:1px solid var(--border);border-radius:6px;padding:12px 14px;font-size:.76rem;line-height:1.55;overflow-x:auto;margin-top:8px}
+.kw{color:var(--purple)}
+.str{color:var(--green)}
+.num{color:var(--orange)}
+.cmt{color:var(--muted);font-style:italic}
+.key{color:var(--accent)}
+
+.values-list{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px}
+.vbadge{font-size:.72rem;padding:2px 8px;border-radius:4px;background:rgba(139,148,158,.1);border:1px solid var(--border);color:var(--text);font-family:'SF Mono',monospace}
+
+/* ─ Footer ─ */
+footer{text-align:center;padding:20px;font-size:.75rem;color:var(--muted);border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-inner">
+    <div class="logo">🔥 <span>Hephaestus</span> Config Reference</div>
+    <div class="badge">v3.8.0</div>
+    <div style="display:flex;gap:12px;margin-left:16px">
+      <a href="index.html" style="font-size:.78rem;color:var(--muted)">← Home</a>
+      <a href="quickstart.html" style="font-size:.78rem;color:var(--muted)">Quick Start</a>
+      <a href="features.html" style="font-size:.78rem;color:var(--muted)">Features</a>
+    </div>
+    <div class="search-wrap">
+      <input id="search" type="text" placeholder="Search options..." oninput="doSearch()" autocomplete="off">
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+<nav id="nav">
+  <h3>Connection</h3>
+  <a href="#connection">baseUrl</a>
+  <a href="#connection">defaultProtocol</a>
+  <h3>Validation</h3>
+  <a href="#validation">expectedStatus</a>
+  <a href="#validation">contentType</a>
+  <a href="#validation">expectEmpty</a>
+  <a href="#validation">maxResponseTime</a>
+  <h3>Auth</h3>
+  <a href="#auth">auth.type</a>
+  <a href="#auth">auth.enabled</a>
+  <a href="#auth">oauth2cc</a>
+  <h3>Date Utils</h3>
+  <a href="#dates">dateFormat</a>
+  <a href="#dates">dates</a>
+  <h3>Assertions</h3>
+  <a href="#assertions">keysToFind</a>
+  <a href="#assertions">varsToSave</a>
+  <a href="#assertions">keysToCount</a>
+  <a href="#assertions">assertions</a>
+  <a href="#assertions">assertEach</a>
+  <a href="#assertions">assertShape</a>
+  <a href="#assertions">assertOrder</a>
+  <h3>Headers</h3>
+  <a href="#headers">assertHeaders</a>
+  <h3>Snapshot</h3>
+  <a href="#snapshot">snapshot.enabled</a>
+  <a href="#snapshot">snapshot.mode</a>
+  <a href="#snapshot">snapshot.checkPaths</a>
+  <a href="#snapshot">snapshot.ignorePaths</a>
+  <h3>Schema</h3>
+  <a href="#schema">schema</a>
+  <h3>Plugins</h3>
+  <a href="#plugins">plugins</a>
+  <h3>Security & CI</h3>
+  <a href="#security">envRequired</a>
+  <a href="#security">secrets</a>
+  <a href="#security">ci</a>
+  <h3>v3.7 / v3.8</h3>
+  <a href="#new">retryOnStatus</a>
+  <a href="#new">softFail</a>
+  <a href="#new">logLevel</a>
+  <a href="#new">assertUnique</a>
+  <a href="#new">randomData</a>
+</nav>
+
+<main>
+
+<!-- ═══════════════════════════════════ CONNECTION ═════════════ -->
+<div class="section" id="connection">
+<div class="section-title">🌐 Connection</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">baseUrl</div>
+      <div class="opt-desc">Base URL for all requests. Used with <code>{{baseUrl}}</code> in request URLs.</div>
+    </div>
+    <span class="opt-type">string</span><span class="opt-since">v3.0</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">""</span></div>
+    <pre class="example"><span class="cmt">// hephaestus.defaults</span>
+{ <span class="key">"baseUrl"</span>: <span class="str">"https://api.example.com"</span> }
+
+<span class="cmt">// per-request override (different server)</span>
+<span class="kw">const</span> override = { <span class="key">baseUrl</span>: <span class="str">"https://auth.example.com"</span> };</pre>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">defaultProtocol</div>
+      <div class="opt-desc">Auto-prepended if <code>baseUrl</code> has no protocol. Values: <code>https</code> | <code>http</code>.</div>
+    </div>
+    <span class="opt-type">string</span><span class="opt-since">v3.0</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">"https"</span></div>
+    <div class="values-list"><span class="vbadge">https</span><span class="vbadge">http</span></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════ VALIDATION ═════════════ -->
+<div class="section" id="validation">
+<div class="section-title">✅ Response Validation</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">expectedStatus</div>
+      <div class="opt-desc">Expected HTTP status codes. Request passes if response code is in the list. Use for negative testing (e.g. assert 400).</div>
+    </div>
+    <span class="opt-type">number | number[]</span><span class="opt-since">v3.2</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">[200, 201, 202]</span></div>
+    <pre class="example"><span class="cmt">// Single status</span>
+<span class="kw">const</span> override = { <span class="key">expectedStatus</span>: <span class="num">204</span> };
+
+<span class="cmt">// Multiple statuses</span>
+<span class="kw">const</span> override = { <span class="key">expectedStatus</span>: [<span class="num">200</span>, <span class="num">201</span>] };
+
+<span class="cmt">// Negative testing</span>
+<span class="kw">const</span> override = { <span class="key">expectedStatus</span>: <span class="num">422</span> };</pre>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">contentType</div>
+      <div class="opt-desc">Expected response content type. Determines how the body is parsed.</div>
+    </div>
+    <span class="opt-type">string</span><span class="opt-since">v3.0</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">"json"</span></div>
+    <div class="values-list"><span class="vbadge">json</span><span class="vbadge">xml</span><span class="vbadge">text</span></div>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">expectEmpty</div>
+      <div class="opt-desc">Set to <code>true</code> for requests that return an empty body (e.g. 204 No Content). Skips body parsing.</div>
+    </div>
+    <span class="opt-type">boolean</span><span class="opt-since">v3.0</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">false</span></div>
+    <pre class="example"><span class="kw">const</span> override = { <span class="key">expectedStatus</span>: <span class="num">204</span>, <span class="key">expectEmpty</span>: <span class="kw">true</span> };</pre>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">maxResponseTime</div>
+      <div class="opt-desc">Maximum allowed response time in milliseconds. Fails the test if response takes longer.</div>
+    </div>
+    <span class="opt-type">number</span><span class="opt-since">v3.1</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">1000</span></div>
+    <pre class="example"><span class="kw">const</span> override = { <span class="key">maxResponseTime</span>: <span class="num">3000</span> }; <span class="cmt">// 3 seconds</span></pre>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════ AUTH ═══════════════════ -->
+<div class="section" id="auth">
+<div class="section-title">🔐 Authentication</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">auth.enabled</div>
+      <div class="opt-desc">Master switch for authentication. When <code>false</code>, the <code>auth</code> block is ignored entirely.</div>
+    </div>
+    <span class="opt-type">boolean</span><span class="opt-since">v3.0</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">false</span></div>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">auth.type</div>
+      <div class="opt-desc">Authentication mechanism to use. Each type has its own sub-config keys.</div>
+    </div>
+    <span class="opt-type">string</span><span class="opt-since">v3.0</span>
+  </div>
+  <div class="opt-body">
+    <div class="values-list">
+      <span class="vbadge">none</span><span class="vbadge">basic</span><span class="vbadge">bearer</span><span class="vbadge">headers</span><span class="vbadge">variables</span><span class="vbadge">oauth2cc</span>
+    </div>
+    <pre class="example"><span class="cmt">// Basic auth</span>
+<span class="kw">const</span> override = { <span class="key">auth</span>: { <span class="key">enabled</span>: <span class="kw">true</span>, <span class="key">type</span>: <span class="str">"basic"</span>, <span class="key">user</span>: <span class="str">"{{login}}"</span>, <span class="key">pass</span>: <span class="str">"{{password}}"</span> } };
+
+<span class="cmt">// Bearer</span>
+<span class="kw">const</span> override = { <span class="key">auth</span>: { <span class="key">enabled</span>: <span class="kw">true</span>, <span class="key">type</span>: <span class="str">"bearer"</span>, <span class="key">token</span>: <span class="str">"{{prod.token}}"</span> } };
+
+<span class="cmt">// OAuth2 client_credentials — auto-refresh</span>
+<span class="kw">const</span> override = { <span class="key">auth</span>: {
+    <span class="key">enabled</span>: <span class="kw">true</span>, <span class="key">type</span>: <span class="str">"oauth2cc"</span>,
+    <span class="key">oauth2cc</span>: {
+        <span class="key">tokenUrl</span>:     <span class="str">"https://auth.example.com/oauth/token"</span>,
+        <span class="key">clientId</span>:     <span class="str">"{{oauth_client_id}}"</span>,
+        <span class="key">clientSecret</span>: <span class="str">"{{oauth_client_secret}}"</span>,
+        <span class="key">scope</span>:        <span class="str">"api:read api:write"</span>
+    }
+} };</pre>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════ DATES ══════════════════ -->
+<div class="section" id="dates">
+<div class="section-title">📅 Date Utilities</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">dateFormat</div>
+      <div class="opt-desc">Format string for <code>{{currentDate}}</code> and custom date variables. Tokens: <code>yyyy MM dd hh mm ss</code>.</div>
+    </div>
+    <span class="opt-type">string</span><span class="opt-since">v3.0</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">"yyyy-MM-dd"</span></div>
+    <div class="values-list">
+      <span class="vbadge">yyyy-MM-dd</span><span class="vbadge">dd.MM.yyyy</span><span class="vbadge">yyyy-MM-dd'T'hh:mm:ss</span>
+    </div>
+    <p style="font-size:.8rem;color:var(--muted);margin-top:10px">Built-in variables (always available): <code>{{currentDate}}</code>, <code>{{monthsAgo1}}</code>, <code>{{monthsAgo3}}</code>, <code>{{monthsAgo6}}</code>, <code>{{monthsAgo12}}</code></p>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">dates</div>
+      <div class="opt-desc">Custom date variables computed at request time. Expressions: <code>today</code>, <code>today+7d</code>, <code>today-1m</code>, <code>startOfMonth</code>, etc.</div>
+    </div>
+    <span class="opt-type">object</span><span class="opt-since">v3.0</span>
+  </div>
+  <div class="opt-body">
+    <pre class="example"><span class="kw">const</span> override = {
+    <span class="key">dates</span>: {
+        <span class="key">"dateFrom"</span>: <span class="str">"startOfMonth"</span>,
+        <span class="key">"dateTo"</span>:   <span class="str">"endOfMonth"</span>,
+        <span class="key">"nextWeek"</span>: <span class="str">"today+7d"</span>,
+    }
+};
+<span class="cmt">// Use {{dateFrom}}, {{dateTo}}, {{nextWeek}} in request URL/body</span></pre>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:8px">Expressions: <code>today</code> · <code>yesterday</code> · <code>tomorrow</code> · <code>startOfMonth</code> · <code>endOfMonth</code> · <code>startOfNextMonth</code> · <code>startOfPrevMonth</code> · <code>startOfYear</code> · <code>today±Nd</code> · <code>today±Nw</code> · <code>today±Nm</code> · <code>today±Ny</code></p>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════ ASSERTIONS ════════════ -->
+<div class="section" id="assertions">
+<div class="section-title">🔬 Assertions</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">assertions</div>
+      <div class="opt-desc">Shorthand map of JSONPath assertions. Operators per field: <code>exists</code>, <code>absent</code>, <code>eq</code>, <code>ne</code>, <code>gt/gte/lt/lte</code>, <code>type</code>, <code>minLen/maxLen</code>, <code>includes</code>, <code>matches</code>, <code>soft</code>, <code>when</code>.</div>
+    </div>
+    <span class="opt-type">object</span><span class="opt-since">v3.4</span>
+  </div>
+  <div class="opt-body">
+    <pre class="example"><span class="kw">const</span> override = {
+    <span class="key">assertions</span>: {
+        <span class="key">"data.id"</span>:     { <span class="key">exists</span>: <span class="kw">true</span> },
+        <span class="key">"data.status"</span>: { <span class="key">eq</span>: <span class="str">"active"</span> },
+        <span class="key">"data.count"</span>:  { <span class="key">gte</span>: <span class="num">1</span>, <span class="key">lte</span>: <span class="num">100</span> },
+        <span class="key">"data.items"</span>:  { <span class="key">type</span>: <span class="str">"array"</span>, <span class="key">minLen</span>: <span class="num">1</span> },
+        <span class="key">"data.email"</span>:  { <span class="key">matches</span>: <span class="str">"@"</span> },
+        <span class="key">"meta.error"</span>:  { <span class="key">absent</span>: <span class="kw">true</span> },
+        <span class="key">"data.token"</span>:  { <span class="key">exists</span>: <span class="kw">true</span>, <span class="key">soft</span>: <span class="kw">true</span> },
+        <span class="key">"data.extra"</span>:  { <span class="key">exists</span>: <span class="kw">true</span>, <span class="key">when</span>: <span class="str">"ctx.api.status === 200"</span> },
+    }
+};</pre>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">assertEach</div>
+      <div class="opt-desc">Validates every element of an array against a rule set. Same operators as <code>assertions</code> map. Violations are aggregated into a single test.</div>
+    </div>
+    <span class="opt-type">object</span><span class="opt-since">v3.5</span>
+  </div>
+  <div class="opt-body">
+    <pre class="example"><span class="kw">const</span> override = {
+    <span class="key">assertEach</span>: {
+        <span class="key">path</span>:     <span class="str">"data.items"</span>,
+        <span class="key">minCount</span>: <span class="num">1</span>,
+        <span class="key">maxCount</span>: <span class="num">100</span>,
+        <span class="key">rules</span>: {
+            <span class="key">"id"</span>:     { <span class="key">type</span>: <span class="str">"number"</span>, <span class="key">gt</span>: <span class="num">0</span> },
+            <span class="key">"status"</span>: { <span class="key">eq</span>: <span class="str">"active"</span> },
+            <span class="key">"email"</span>:  { <span class="key">matches</span>: <span class="str">"@"</span>, <span class="key">soft</span>: <span class="kw">true</span> },
+        }
+    }
+};</pre>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">assertShape</div>
+      <div class="opt-desc">Quick structural type check — one line per field. Types: <code>string | number | boolean | object | array | null | any | absent</code>.</div>
+    </div>
+    <span class="opt-type">object</span><span class="opt-since">v3.6</span>
+  </div>
+  <div class="opt-body">
+    <pre class="example"><span class="kw">const</span> override = {
+    <span class="key">assertShape</span>: {
+        <span class="key">"data"</span>:          <span class="str">"object"</span>,
+        <span class="key">"data.id"</span>:       <span class="str">"number"</span>,
+        <span class="key">"data.name"</span>:     <span class="str">"string"</span>,
+        <span class="key">"data.items"</span>:    <span class="str">"array"</span>,
+        <span class="key">"data.active"</span>:   <span class="str">"boolean"</span>,
+        <span class="key">"meta"</span>:          <span class="str">"any"</span>,      <span class="cmt">// exists, any type</span>
+        <span class="key">"error"</span>:         <span class="str">"absent"</span>,   <span class="cmt">// must NOT be present</span>
+    }
+};</pre>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">assertOrder</div>
+      <div class="opt-desc">Asserts an array is sorted by a given field. Checks consecutive pairs.</div>
+    </div>
+    <span class="opt-type">object</span><span class="opt-since">v3.6</span>
+  </div>
+  <div class="opt-body">
+    <pre class="example"><span class="kw">const</span> override = {
+    <span class="key">assertOrder</span>: {
+        <span class="key">path</span>:      <span class="str">"data.items"</span>,
+        <span class="key">by</span>:        <span class="str">"createdAt"</span>,
+        <span class="key">direction</span>: <span class="str">"desc"</span>,     <span class="cmt">// "asc" | "desc"</span>
+        <span class="key">type</span>:      <span class="str">"date"</span>      <span class="cmt">// "string" | "number" | "date"</span>
+    }
+};</pre>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">keysToFind</div>
+      <div class="opt-desc">Array of field checks with optional <code>expect</code>, <code>transform</code>, <code>filter</code>, <code>ignoreCase</code>, <code>soft</code>, <code>when</code>.</div>
+    </div>
+    <span class="opt-type">array</span><span class="opt-since">v3.0</span>
+  </div>
+  <div class="opt-body">
+    <pre class="example"><span class="kw">const</span> override = {
+    <span class="key">keysToFind</span>: [
+        { <span class="key">path</span>: <span class="str">"data.id"</span>, <span class="key">name</span>: <span class="str">"User ID"</span> },
+        { <span class="key">path</span>: <span class="str">"data.status"</span>, <span class="key">expect</span>: <span class="str">"active"</span> },
+        { <span class="key">path</span>: <span class="str">"data.score"</span>, <span class="key">expect</span>: v => v >= <span class="num">0</span> },
+        { <span class="key">path</span>: <span class="str">"data.role"</span>, <span class="key">soft</span>: <span class="kw">true</span>, <span class="key">when</span>: <span class="str">"ctx.api.status !== 404"</span> },
+    ]
+};</pre>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">varsToSave</div>
+      <div class="opt-desc">Extract values from response and save to Postman variables.</div>
+    </div>
+    <span class="opt-type">object</span><span class="opt-since">v3.0</span>
+  </div>
+  <div class="opt-body">
+    <pre class="example"><span class="kw">const</span> override = {
+    <span class="key">varsToSave</span>: {
+        <span class="key">token</span>: { <span class="key">path</span>: <span class="str">"data.accessToken"</span>, <span class="key">scope</span>: <span class="str">"collection"</span>, <span class="key">name</span>: <span class="str">"prod.token"</span> },
+        <span class="key">userId</span>: { <span class="key">path</span>: <span class="str">"data.user.id"</span>, <span class="key">scope</span>: <span class="str">"environment"</span>, <span class="key">name</span>: <span class="str">"USER_ID"</span> },
+    }
+};</pre>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:8px">Scope values: <code>collection</code> (default) · <code>environment</code> · <code>local</code></p>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════ HEADERS ════════════════ -->
+<div class="section" id="headers">
+<div class="section-title">📨 Header Assertions</div>
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">assertHeaders</div>
+      <div class="opt-desc">Assert response headers — existence, content match, exact value, absence, or custom predicate.</div>
+    </div>
+    <span class="opt-type">array</span><span class="opt-since">v3.2</span>
+  </div>
+  <div class="opt-body">
+    <pre class="example"><span class="kw">const</span> override = {
+    <span class="key">assertHeaders</span>: [
+        { <span class="key">name</span>: <span class="str">"X-Request-Id"</span> },                               <span class="cmt">// exists</span>
+        { <span class="key">name</span>: <span class="str">"Content-Type"</span>, <span class="key">expect</span>: <span class="str">"application/json"</span> },  <span class="cmt">// contains</span>
+        { <span class="key">name</span>: <span class="str">"X-Version"</span>,    <span class="key">equals</span>: <span class="str">"v2"</span> },               <span class="cmt">// exact</span>
+        { <span class="key">name</span>: <span class="str">"X-Deprecated"</span>, <span class="key">absent</span>: <span class="kw">true</span> },              <span class="cmt">// must be absent</span>
+        { <span class="key">name</span>: <span class="str">"X-Rate-Limit"</span>, <span class="key">label</span>: <span class="str">"Rate limit > 0"</span>,
+          <span class="key">expect</span>: v => Number(v) > <span class="num">0</span> },                        <span class="cmt">// predicate</span>
+    ]
+};</pre>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════ SNAPSHOT ══════════════ -->
+<div class="section" id="snapshot">
+<div class="section-title">📸 Snapshot Regression</div>
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">snapshot</div>
+      <div class="opt-desc">Regression testing by comparing responses against saved baselines. Baseline saved automatically on first run.</div>
+    </div>
+    <span class="opt-type">object</span><span class="opt-since">v3.0</span>
+  </div>
+  <div class="opt-body">
+    <pre class="example"><span class="kw">const</span> override = {
+    <span class="key">snapshot</span>: {
+        <span class="key">enabled</span>:         <span class="kw">true</span>,
+        <span class="key">mode</span>:            <span class="str">"non-strict"</span>, <span class="cmt">// "strict" | "non-strict"</span>
+        <span class="key">autoSaveMissing</span>: <span class="kw">true</span>,         <span class="cmt">// save on first run</span>
+        <span class="key">checkPaths</span>:      [<span class="str">"data.status"</span>, <span class="str">"data.items[*].id"</span>],
+        <span class="key">ignorePaths</span>:     [<span class="str">"data.timestamp"</span>, <span class="str">"data.requestId"</span>],
+    }
+};</pre>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:8px"><strong>strict</strong> — full deep-equal comparison (with ignorePaths). <strong>non-strict</strong> — all baseline keys must be present in current response (allows new keys).</p>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:6px">Stored in <code>hephaestus.snapshots</code> collection variable. View with <a href="snapshot-viewer.html">Snapshot Viewer</a> or <code>📋 snapshot-view</code> request.</p>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════ SCHEMA ════════════════ -->
+<div class="section" id="schema">
+<div class="section-title">🔬 JSON Schema Validation</div>
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">schema</div>
+      <div class="opt-desc">Validate response body against a JSON Schema (draft-07) using the built-in <code>tv4</code> library.</div>
+    </div>
+    <span class="opt-type">object</span><span class="opt-since">v3.0</span>
+  </div>
+  <div class="opt-body">
+    <pre class="example"><span class="kw">const</span> override = {
+    <span class="key">schema</span>: {
+        <span class="key">enabled</span>: <span class="kw">true</span>,
+        <span class="key">definition</span>: {
+            <span class="key">type</span>: <span class="str">"object"</span>,
+            <span class="key">required</span>: [<span class="str">"id"</span>, <span class="str">"status"</span>],
+            <span class="key">properties</span>: {
+                <span class="key">id</span>:     { <span class="key">type</span>: <span class="str">"number"</span> },
+                <span class="key">status</span>: { <span class="key">type</span>: <span class="str">"string"</span>, <span class="key">enum</span>: [<span class="str">"active"</span>, <span class="str">"inactive"</span>] },
+            }
+        }
+    }
+};</pre>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════ PLUGINS ═══════════════ -->
+<div class="section" id="plugins">
+<div class="section-title">🧩 Plugin System</div>
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">hephaestus.plugins (collection variable)</div>
+      <div class="opt-desc">JSON array of plugin descriptors. Each plugin is a self-contained JS function executed after the main pipeline. See <a href="plugins/README.md">docs/plugins/</a> for ready-to-use examples.</div>
+    </div>
+    <span class="opt-type">JSON string</span><span class="opt-since">v3.2</span>
+  </div>
+  <div class="opt-body">
+    <pre class="example"><span class="cmt">// Set in collection Pre-request Script:</span>
+pm.collectionVariables.set(<span class="str">'hephaestus.plugins'</span>, JSON.stringify([
+    { <span class="key">name</span>: <span class="str">'slack-notifier'</span>, <span class="key">code</span>: pm.collectionVariables.get(<span class="str">'hephaestus.plugin.slack'</span>) },
+    { <span class="key">name</span>: <span class="str">'custom-assertions'</span>, <span class="key">code</span>: pm.collectionVariables.get(<span class="str">'hephaestus.plugin.custom'</span>) },
+]));
+
+<span class="cmt">// Plugin receives (ctx) with:</span>
+<span class="cmt">// ctx.api.body, ctx.api.status, ctx.api.headers, ctx.api.responseTime</span>
+<span class="cmt">// ctx.config, ctx.request, ctx.iteration, ctx._meta</span></pre>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════ SECURITY ══════════════ -->
+<div class="section" id="security">
+<div class="section-title">🔒 Security & CI</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">envRequired</div>
+      <div class="opt-desc">List of environment variable names that must be set before the request fires. Prevents cryptic failures from empty variables.</div>
+    </div>
+    <span class="opt-type">string[]</span><span class="opt-since">v3.5</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">[]</span></div>
+    <pre class="example"><span class="cmt">// In hephaestus.defaults (all requests):</span>
+{ <span class="key">"envRequired"</span>: [<span class="str">"BASE_URL"</span>, <span class="str">"OAUTH_CLIENT_ID"</span>] }
+
+<span class="cmt">// Per-request override:</span>
+<span class="kw">const</span> override = { <span class="key">envRequired</span>: [<span class="str">"PAYMENT_API_KEY"</span>] };</pre>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">secrets</div>
+      <div class="opt-desc">List of key substrings to mask in logs. Any variable whose name contains one of these strings is replaced with <code>***</code> in console output.</div>
+    </div>
+    <span class="opt-type">string[]</span><span class="opt-since">v3.0</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">["token", "password", "pass", "secret", "key", "authorization", "session"]</span></div>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">ci</div>
+      <div class="opt-desc">When <code>true</code>, emits a structured <code>[HEPHAESTUS_CI] {json}</code> line to console after each request. Used by <code>scripts/ci-to-junit.js</code> and CI pipelines.</div>
+    </div>
+    <span class="opt-type">boolean</span><span class="opt-since">v3.0</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">false</span></div>
+    <pre class="example"><span class="cmt">// Enable in defaults for CI runs:</span>
+{ <span class="key">"ci"</span>: <span class="kw">true</span> }
+
+<span class="cmt">// Or via Newman --env-var:</span>
+newman run col.json --env-var ci=true</pre>
+  </div>
+</div>
+</div>
+
+</main>
+</div>
+
+<!-- ═══════════════════════════════════ v3.7 / v3.8 ════════════ -->
+<div class="section" id="new">
+<div class="section-title">🆕 v3.7 — v3.8 Features</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">retryOnStatus</div>
+      <div class="opt-desc">Automatically retries the request when the response status matches. Assertion and snapshot pipeline is skipped on intermediate retries.</div>
+    </div>
+    <span class="opt-type">object</span><span class="opt-since">v3.7</span>
+  </div>
+  <div class="opt-body">
+    <pre class="example"><span class="kw">const</span> override = {
+    <span class="key">retryOnStatus</span>: {
+        <span class="key">statuses</span>:   [<span class="num">503</span>, <span class="num">429</span>],  <span class="cmt">// retry on these HTTP codes</span>
+        <span class="key">maxRetries</span>: <span class="num">3</span>             <span class="cmt">// default: 3</span>
+    }
+};</pre>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:8px">Counter stored in <code>pm.variables</code> (key: <code>hephaestus.retry.&lt;requestName&gt;</code>), auto-cleared on success or exhaustion.</p>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">softFail</div>
+      <div class="opt-desc">Global soft-fail mode. When <code>true</code>, ALL assertion failures (keysToFind, assertions, assertEach, assertShape, assertOrder, assertUnique) are logged to console but do NOT fail the test run. Ideal for smoke testing.</div>
+    </div>
+    <span class="opt-type">boolean</span><span class="opt-since">v3.8</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">false</span></div>
+    <pre class="example"><span class="cmt">// In hephaestus.defaults — smoke test mode:</span>
+{ <span class="key">"softFail"</span>: <span class="kw">true</span> }
+
+<span class="cmt">// Per-request override — just this request is soft:</span>
+<span class="kw">const</span> override = { <span class="key">softFail</span>: <span class="kw">true</span> };</pre>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">logLevel</div>
+      <div class="opt-desc">Controls console verbosity. CI JSON (<code>ci: true</code>) is always emitted regardless of <code>logLevel</code>.</div>
+    </div>
+    <span class="opt-type">string</span><span class="opt-since">v3.8</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">"normal"</span></div>
+    <div class="values-list">
+      <span class="vbadge">silent</span><span class="vbadge">minimal</span><span class="vbadge">normal</span><span class="vbadge">verbose</span>
+    </div>
+    <pre class="example"><span class="cmt">// silent  — no console output (CI JSON still written)</span>
+<span class="cmt">// minimal — one compact line per request: [H] GET Users → ✅ 200 | 123ms | 🔎×3</span>
+<span class="cmt">// normal  — full box layout (default)</span>
+<span class="cmt">// verbose — box + response headers (first 10)</span>
+{ <span class="key">"logLevel"</span>: <span class="str">"minimal"</span> }</pre>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">assertUnique</div>
+      <div class="opt-desc">Asserts all values at a path within an array are unique. Respects global <code>softFail</code>.</div>
+    </div>
+    <span class="opt-type">object</span><span class="opt-since">v3.8</span>
+  </div>
+  <div class="opt-body">
+    <pre class="example"><span class="kw">const</span> override = {
+    <span class="key">assertUnique</span>: {
+        <span class="key">path</span>:  <span class="str">"data.items"</span>,  <span class="cmt">// path to array</span>
+        <span class="key">by</span>:    <span class="str">"id"</span>,          <span class="cmt">// field to extract (optional — compares whole item if omitted)</span>
+        <span class="key">label</span>: <span class="str">"item IDs"</span>    <span class="cmt">// optional test label</span>
+    }
+};</pre>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">randomData</div>
+      <div class="opt-desc">Auto-populates <code>pm.variables</code> with random test data before the request. Use <code>{{varName}}</code> in URL, body, and headers.</div>
+    </div>
+    <span class="opt-type">object</span><span class="opt-since">v3.8</span>
+  </div>
+  <div class="opt-body">
+    <pre class="example"><span class="cmt">// In override or hephaestus.defaults:</span>
+<span class="kw">const</span> override = {
+    <span class="key">randomData</span>: {
+        <span class="key">email</span>:   <span class="str">"random.email"</span>,        <span class="cmt">// "user_a3f2@test.com"</span>
+        <span class="key">userId</span>:  <span class="str">"random.int:1:9999"</span>,   <span class="cmt">// "4287"</span>
+        <span class="key">token</span>:   <span class="str">"random.uuid"</span>,         <span class="cmt">// "550e8400-..."</span>
+        <span class="key">name</span>:    <span class="str">"random.str:12"</span>,       <span class="cmt">// "xk8mP2nQ7w3b"</span>
+        <span class="key">active</span>:  <span class="str">"random.bool"</span>,         <span class="cmt">// "true"</span>
+        <span class="key">dob</span>:     <span class="str">"random.date"</span>,         <span class="cmt">// "1994-07-21"</span>
+    }
+};
+<span class="cmt">// ctx.random also available directly in plugins:</span>
+<span class="cmt">// ctx.random.uuid(), .email(), .str(n), .int(min,max), .float(), .bool(), .pick(arr), .date()</span></pre>
+  </div>
+</div>
+</div>
+
+<footer>
+  Hephaestus v3.6.0 &nbsp;·&nbsp;
+  <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework">GitHub</a> &nbsp;·&nbsp;
+  <a href="index.html">← Back to docs</a>
+</footer>
+
+<script>
+function tog(card) {
+  card.classList.toggle('open');
+}
+
+function doSearch() {
+  var q = (document.getElementById('search').value || '').toLowerCase().trim();
+  var cards = document.querySelectorAll('.opt');
+  cards.forEach(function(c) {
+    if (!q) { c.classList.remove('hidden'); return; }
+    var text = c.textContent.toLowerCase();
+    c.classList.toggle('hidden', text.indexOf(q) === -1);
+  });
+  // Hide empty sections
+  document.querySelectorAll('.section').forEach(function(s) {
+    var visible = s.querySelectorAll('.opt:not(.hidden)').length;
+    s.style.display = visible === 0 && q ? 'none' : '';
+  });
+}
+
+// Highlight active nav link on scroll
+var sections = document.querySelectorAll('.section');
+var navLinks  = document.querySelectorAll('nav a');
+window.addEventListener('scroll', function() {
+  var scrollY = window.scrollY + 80;
+  sections.forEach(function(s) {
+    if (s.offsetTop <= scrollY && s.offsetTop + s.offsetHeight > scrollY) {
+      navLinks.forEach(function(a) { a.classList.remove('active'); });
+      var active = document.querySelector('nav a[href="#' + s.id + '"]');
+      if (active) active.classList.add('active');
+    }
+  });
+}, { passive: true });
+</script>
+</body>
+</html>

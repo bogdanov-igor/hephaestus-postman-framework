@@ -1,0 +1,77 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Validate release artifacts
+        run: |
+          echo "Validating release for v${{ steps.version.outputs.version }}..."
+
+          # Verify version matches engine
+          ENGINE_VERSION=$(grep "const VERSION = " engine/pre-request.js | sed "s/.*'\(.*\)'.*/\1/")
+          if [ "$ENGINE_VERSION" != "${{ steps.version.outputs.version }}" ]; then
+            echo "❌ Version mismatch: tag=${{ steps.version.outputs.version }}, engine=$ENGINE_VERSION"
+            exit 1
+          fi
+          echo "✅ Engine version: $ENGINE_VERSION"
+
+          # Verify package.json version
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "$PKG_VERSION" != "${{ steps.version.outputs.version }}" ]; then
+            echo "❌ package.json version mismatch: $PKG_VERSION"
+            exit 1
+          fi
+          echo "✅ package.json version: $PKG_VERSION"
+
+          # Validate defaults.json
+          node -e "JSON.parse(require('fs').readFileSync('setup/defaults.json','utf8')); console.log('✅ defaults.json valid')"
+
+          # Syntax check
+          npm install
+          npm run syntax
+
+      - name: Extract changelog for this version
+        id: changelog
+        run: |
+          VERSION="v${{ steps.version.outputs.version }}"
+          # Extract the changelog section for this version
+          CHANGELOG=$(awk "/^## \[${{ steps.version.outputs.version }}\]/,/^## \[/" CHANGELOG.md | head -n -1)
+          # Write to file to preserve newlines
+          echo "$CHANGELOG" > /tmp/release-notes.md
+          echo "Extracted changelog for $VERSION"
+          cat /tmp/release-notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "Hephaestus ${{ github.ref_name }}"
+          body_path: /tmp/release-notes.md
+          files: |
+            collection/hephaestus-template.postman_collection.json
+            setup/defaults.json
+          draft: false
+          prerelease: false
