@@ -132,15 +132,18 @@ section{padding:96px 24px}
 /* ── Pipeline ──────────────────────────────────────────────── */
 .pipeline-section{background:linear-gradient(180deg,var(--bg) 0%,#0d0f14 100%)}
 .pipeline-label{font-size:.72rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px}
-.pipeline-wrap{overflow-x:auto;padding-bottom:12px;margin:0 -4px;padding-left:4px}
-.pipeline-wrap::-webkit-scrollbar{height:4px}
-.pipeline-wrap::-webkit-scrollbar-track{background:transparent}
-.pipeline-wrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
-.pipeline{display:flex;align-items:center;gap:0;width:max-content}
+/* Snake layout */
+.snake-track{display:flex;flex-direction:column;gap:0}
+.snake-row{display:flex;align-items:center;flex-wrap:nowrap}
+.snake-row.ltr{flex-direction:row}
+.snake-row.rtl{flex-direction:row-reverse}
+.snake-connector{font-size:1.3rem;color:var(--accent);opacity:.6;padding:2px 0;line-height:1}
+.snake-connector.right{display:flex;justify-content:flex-end;padding-right:8px}
+.snake-connector.left{display:flex;justify-content:flex-start;padding-left:8px}
 .p-module{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:center;flex-shrink:0}
 .p-module .name{font-size:.74rem;font-weight:700;color:var(--text);font-family:var(--font-mono)}
 .p-module .desc{font-size:.62rem;color:var(--muted);margin-top:3px}
-.p-arrow{color:var(--accent);font-size:1rem;padding:0 5px;flex-shrink:0;opacity:.7}
+.p-arrow{color:var(--accent);font-size:.95rem;padding:0 4px;flex-shrink:0;opacity:.7}
 .p-module.accent{border-color:rgba(247,127,0,.4);background:rgba(247,127,0,.05)}
 
 /* ── Use Cases ─────────────────────────────────────────────── */
@@ -445,9 +448,11 @@ footer{padding:56px 24px 32px;border-top:1px solid var(--border)}
     <div class="section-title">Modular pipeline, shared context</div>
     <p class="section-sub">Every module receives the same <code>ctx</code> object. Override anything per-request. Defaults from <code>hephaestus.defaults</code> collection variable.</p>
     <div style="margin-top:44px">
+
+      <!-- PRE-REQUEST: single row -->
       <p class="pipeline-label">PRE-REQUEST</p>
-      <div class="pipeline-wrap">
-        <div class="pipeline">
+      <div class="snake-track" style="margin-bottom:36px">
+        <div class="snake-row ltr">
           <div class="p-module"><div class="name">configMerge</div><div class="desc">defaults + override</div></div>
           <div class="p-arrow">→</div>
           <div class="p-module"><div class="name">envRequired</div><div class="desc">pre-flight</div></div>
@@ -465,9 +470,13 @@ footer{padding:56px 24px 32px;border-top:1px solid var(--border)}
           <div class="p-module"><div class="name">logger</div><div class="desc">summary</div></div>
         </div>
       </div>
-      <p class="pipeline-label" style="margin-top:28px">POST-REQUEST</p>
-      <div class="pipeline-wrap">
-        <div class="pipeline">
+
+      <!-- POST-REQUEST: zigzag snake -->
+      <p class="pipeline-label">POST-REQUEST</p>
+      <div class="snake-track">
+
+        <!-- Row 1: L → R -->
+        <div class="snake-row ltr">
           <div class="p-module"><div class="name">configMerge</div><div class="desc">merge</div></div>
           <div class="p-arrow">→</div>
           <div class="p-module accent"><div class="name">retryOnStatus</div><div class="desc">auto-retry</div></div>
@@ -483,21 +492,28 @@ footer{padding:56px 24px 32px;border-top:1px solid var(--border)}
           <div class="p-module accent"><div class="name">assertEach</div><div class="desc">array items</div></div>
           <div class="p-arrow">→</div>
           <div class="p-module accent"><div class="name">assertShape</div><div class="desc">type check</div></div>
-          <div class="p-arrow">→</div>
-          <div class="p-module accent"><div class="name">assertOrder</div><div class="desc">sort order</div></div>
-          <div class="p-arrow">→</div>
-          <div class="p-module accent"><div class="name">assertUnique</div><div class="desc">no dupes</div></div>
-          <div class="p-arrow">→</div>
-          <div class="p-module"><div class="name">assertHeaders</div><div class="desc">headers</div></div>
-          <div class="p-arrow">→</div>
-          <div class="p-module"><div class="name">snapshot</div><div class="desc">regression</div></div>
-          <div class="p-arrow">→</div>
-          <div class="p-module"><div class="name">schema (tv4)</div><div class="desc">JSON Schema</div></div>
+        </div>
+
+        <!-- Turn: bend right → down -->
+        <div class="snake-connector right">↳</div>
+
+        <!-- Row 2: R ← L (visually right-to-left) -->
+        <div class="snake-row rtl">
+          <div class="p-module"><div class="name">logger</div><div class="desc">summary</div></div>
           <div class="p-arrow">→</div>
           <div class="p-module"><div class="name">plugins</div><div class="desc">custom</div></div>
           <div class="p-arrow">→</div>
-          <div class="p-module"><div class="name">logger</div><div class="desc">summary</div></div>
+          <div class="p-module"><div class="name">schema (tv4)</div><div class="desc">JSON Schema</div></div>
+          <div class="p-arrow">→</div>
+          <div class="p-module accent"><div class="name">snapshot</div><div class="desc">regression</div></div>
+          <div class="p-arrow">→</div>
+          <div class="p-module"><div class="name">assertHeaders</div><div class="desc">headers</div></div>
+          <div class="p-arrow">→</div>
+          <div class="p-module accent"><div class="name">assertUnique</div><div class="desc">no dupes</div></div>
+          <div class="p-arrow">→</div>
+          <div class="p-module accent"><div class="name">assertOrder</div><div class="desc">sort order</div></div>
         </div>
+
       </div>
     </div>
   </div>

@@ -30,16 +30,15 @@
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
-    padding: 24px 16px 64px;
+    padding: 0;
   }
 
   /* ── Header ─────────────────────────────────────────────────── */
   header {
-    max-width: 100%;
+    width: 100%;
     padding: 14px 24px;
     background: #161b22;
     border-bottom: 1px solid var(--border);
-    margin: 0 0 0 0;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -56,6 +55,11 @@
     font-weight: 500;
   }
   header p { flex-basis: 100%; font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
+
+  /* ── Page content wrapper ────────────────────────────────────── */
+  .page-content {
+    padding: 24px 16px 64px;
+  }
 
   /* ── Input area ──────────────────────────────────────────────── */
   .input-section {
@@ -190,6 +194,17 @@
     flex-direction: column;
     gap: 12px;
   }
+  #empty {
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    display: none;
+  }
+  #empty .icon { font-size: 3rem; margin-bottom: 16px; }
+  #empty h3 { font-size: 1.1rem; color: var(--text); margin-bottom: 8px; }
+  #empty p { font-size: 0.85rem; }
   .card {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -288,7 +303,7 @@
     font-size: 0.72rem;
     padding: 2px 8px;
     border-radius: 4px;
-    background: rgba(88,166,255,0.08);
+    background: rgba(247,127,0,0.06);
     border: 1px solid rgba(247,127,0,0.2);
     color: var(--accent);
     font-family: 'SF Mono', monospace;
@@ -323,6 +338,8 @@
 <div style="padding:12px 24px;background:#161b22;border-bottom:1px solid var(--border);font-size:.84rem;color:var(--muted)">
   Paste the value of <code style="color:var(--accent)">hephaestus.snapshots</code> collection variable below to inspect your snapshots.
 </div>
+
+<div class="page-content">
 
 <!-- Input -->
 <div class="input-section">
@@ -369,6 +386,8 @@
   <h3>No snapshots match your search</h3>
   <p>Try clearing the filter or search for a different term.</p>
 </div>
+
+</div><!-- /page-content -->
 
 <script>
 // ── State ─────────────────────────────────────────────────────────────────────
