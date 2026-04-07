@@ -9,11 +9,11 @@
     --bg:        #0d1117;
     --bg-card:   #161b22;
     --bg-input:  #1c2128;
-    --border:    #30363d;
-    --border-h:  #58a6ff;
-    --text:      #c9d1d9;
+    --border:    #21262d;
+    --border-h:  #f77f00;
+    --text:      #e6edf3;
     --muted:     #8b949e;
-    --accent:    #58a6ff;
+    --accent:    #f77f00;
     --green:     #3fb950;
     --yellow:    #d29922;
     --red:       #f85149;
@@ -109,7 +109,7 @@
     transition: opacity 0.15s, transform 0.1s;
   }
   button:active { transform: scale(0.97); }
-  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary { background: var(--accent); color: #fff; }
   .btn-primary:hover { opacity: 0.85; }
   .btn-ghost {
     background: transparent;
@@ -179,7 +179,7 @@
     cursor: pointer;
     transition: all 0.15s;
   }
-  .filter-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(88,166,255,0.1); }
+  .filter-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(247,127,0,0.08); }
   .filter-btn:hover { border-color: var(--border-h); }
 
   /* ── Cards ───────────────────────────────────────────────────── */
@@ -230,7 +230,7 @@
     white-space: nowrap;
   }
   .tag-format { background: rgba(188,140,255,0.15); color: var(--purple); border: 1px solid rgba(188,140,255,0.3); }
-  .tag-mode   { background: rgba(88,166,255,0.1);   color: var(--accent); border: 1px solid rgba(88,166,255,0.2); }
+  .tag-mode   { background: rgba(247,127,0,0.08);   color: var(--accent); border: 1px solid rgba(247,127,0,0.2); }
   .tag-size   { background: rgba(139,148,158,0.1);  color: var(--muted);  border: 1px solid var(--border); }
   .tag-status { background: rgba(63,185,80,0.1);    color: var(--green);  border: 1px solid rgba(63,185,80,0.3); }
 
@@ -289,7 +289,7 @@
     padding: 2px 8px;
     border-radius: 4px;
     background: rgba(88,166,255,0.08);
-    border: 1px solid rgba(88,166,255,0.2);
+    border: 1px solid rgba(247,127,0,0.2);
     color: var(--accent);
     font-family: 'SF Mono', monospace;
   }
@@ -321,7 +321,7 @@
   </div>
 </header>
 <div style="padding:12px 24px;background:#161b22;border-bottom:1px solid var(--border);font-size:.84rem;color:var(--muted)">
-  Paste the value of <code style="color:#58a6ff">hephaestus.snapshots</code> collection variable below to inspect your snapshots.
+  Paste the value of <code style="color:var(--accent)">hephaestus.snapshots</code> collection variable below to inspect your snapshots.
 </div>
 
 <!-- Input -->
