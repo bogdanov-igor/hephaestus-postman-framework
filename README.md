@@ -261,6 +261,9 @@ Masking is applied to **log output only** — actual saved values are never alte
 | Module | Description |
 |---|---|
 | `configMerge` | Deep merge: `hephaestus.defaults` + `override` → `ctx.config` |
+| `envRequired` | Validates that required environment variables are set |
+| `iterationData` | Loads iteration data from `pm.iterationData` into `ctx.iteration` |
+| `random` | Generates random test data (`randomData` config) into `pm.variables` |
 | `urlBuilder` | Sets `pm.variables.baseUrl`; auto-prepends `defaultProtocol` if missing |
 | `auth` | Auth plugin — applies the selected type to the outgoing request |
 | `dateUtils` | Computes dates (today, tomorrow, etc.) into `pm.variables` |
@@ -271,10 +274,16 @@ Masking is applied to **log output only** — actual saved values are never alte
 | Module | Description |
 |---|---|
 | `configMerge` | Re-merges config for test-side access |
+| `iterationData` | Loads iteration data from `pm.iterationData` into `ctx.iteration` |
 | `normalizeResponse` | Parses JSON / XML (xml2js) / text → `ctx.response` |
+| `retryOnStatus` | Retries the request on matching HTTP status codes (e.g. 503, 429) |
 | `metrics` | Records response time and body size |
 | `extractor` | Initializes `ctx.api` — Extract API with `get/find/all/count/save` |
 | `assertions` | `keysToFind` (soft), `varsToSave`, `keysToCount`, `maxResponseTime` |
+| `assertEach` | Asserts a condition for every item in an array path |
+| `assertShape` | Validates that every item in an array matches a shape schema |
+| `assertOrder` | Asserts the order of items in an array by a given field |
+| `assertUnique` | Asserts all values at a path within an array are unique |
 | `assertHeaders` | Validates response headers: exists, contains, equals, absent |
 | `snapshot` | Compares to baseline or saves on `autoSaveMissing`; diff shown in log |
 | `schema` | Validates response body against a JSON Schema via `tv4` |
@@ -956,7 +965,7 @@ See [CHANGELOG.md](CHANGELOG.md) for version history.
 
 ## 👤 Author
 
-**Bogdanov Igor** · ✉️ [bogdanov.ig.alex@gmail.com](mailto:bogdanov.ig.alex@gmail.com)
+**Bogdanov Igor** · ✉️ [bogdanov.ig.alex@gmail.com](mailto:bogdanov.ig.alex@gmail.com) · 💼 [LinkedIn](https://www.linkedin.com/in/i-a-bogdanov/)
 
 ---
 

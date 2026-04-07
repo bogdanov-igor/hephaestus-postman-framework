@@ -261,6 +261,9 @@ auth: {
 | Модуль | Описание |
 |---|---|
 | `configMerge` | Deep merge: `hephaestus.defaults` + `override` → `ctx.config` |
+| `envRequired` | Проверяет наличие обязательных переменных окружения |
+| `iterationData` | Загружает данные итерации из `pm.iterationData` в `ctx.iteration` |
+| `random` | Генерирует случайные тестовые данные (`randomData` конфиг) в `pm.variables` |
 | `urlBuilder` | Устанавливает `pm.variables.baseUrl`; автоподставляет `defaultProtocol` |
 | `auth` | Auth-плагин — применяет выбранный тип к запросу |
 | `dateUtils` | Вычисляет даты (today, tomorrow и др.) в `pm.variables` |
@@ -271,10 +274,16 @@ auth: {
 | Модуль | Описание |
 |---|---|
 | `configMerge` | Повторный merge для доступа к конфигу в тестах |
+| `iterationData` | Загружает данные итерации из `pm.iterationData` в `ctx.iteration` |
 | `normalizeResponse` | Парсит JSON / XML (xml2js) / text → `ctx.response` |
+| `retryOnStatus` | Повторяет запрос при совпадении HTTP-статуса (напр. 503, 429) |
 | `metrics` | Фиксирует время ответа и размер тела |
 | `extractor` | Инициализирует `ctx.api` — Extract API с `get/find/all/count/save` |
 | `assertions` | `keysToFind` (soft), `varsToSave`, `keysToCount`, `maxResponseTime` |
+| `assertEach` | Проверяет условие для каждого элемента массива по пути |
+| `assertShape` | Валидирует соответствие каждого элемента массива заданной форме |
+| `assertOrder` | Проверяет порядок элементов массива по указанному полю |
+| `assertUnique` | Проверяет уникальность значений по пути в массиве |
 | `assertHeaders` | Проверяет заголовки ответа: наличие, значение, точное совпадение, отсутствие |
 | `snapshot` | Сравнивает с baseline или сохраняет при `autoSaveMissing`; diff в логе |
 | `schema` | Валидирует тело ответа по JSON Schema через `tv4` |
@@ -805,7 +814,7 @@ const rowNum = ctx.iteration.index + 1;       // номер итерации (с
 
 ## 👤 Автор
 
-**Bogdanov Igor** · ✉️ [bogdanov.ig.alex@gmail.com](mailto:bogdanov.ig.alex@gmail.com)
+**Bogdanov Igor** · ✉️ [bogdanov.ig.alex@gmail.com](mailto:bogdanov.ig.alex@gmail.com) · 💼 [LinkedIn](https://www.linkedin.com/in/i-a-bogdanov/)
 
 ---
 
