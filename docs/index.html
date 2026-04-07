@@ -13,10 +13,12 @@
 <meta property="og:url" content="https://bogdanov-igor.github.io/hephaestus-postman-framework/">
 <meta property="og:title" content="Hephaestus — API Testing Framework">
 <meta property="og:description" content="Modular API testing framework for Postman & Newman. 20+ assertion operators, snapshot regression, OAuth2, Docker, CI/CD. Zero config to start.">
+<meta property="og:image" content="https://bogdanov-igor.github.io/hephaestus-postman-framework/banner.png">
 <!-- Twitter Card -->
-<meta name="twitter:card" content="summary">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Hephaestus — API Testing Framework">
 <meta name="twitter:description" content="Modular API testing for Postman & Newman. 20+ assertions, snapshots, OAuth2, Docker, CI/CD.">
+<meta name="twitter:image" content="https://bogdanov-igor.github.io/hephaestus-postman-framework/banner.png">
 <title>Hephaestus — API Testing Framework</title>
 <style>
 /* ── Design tokens ─────────────────────────────────────────── */
@@ -485,12 +487,12 @@ footer{padding:56px 24px 32px;border-top:1px solid var(--border)}
           <div class="p-module accent"><div class="name">assertEach</div><div class="desc">array items</div></div>
           <div class="p-arrow">→</div>
           <div class="p-module accent"><div class="name">assertShape</div><div class="desc">type check</div></div>
-          <div class="p-arrow" style="color:var(--accent);opacity:.5;padding:0 6px">↓</div>
+          <div class="p-arrow" style="color:var(--accent);opacity:.5;padding:0 6px">←</div>
         </div>
 
-        <!-- Row 2: L → R, продолжение после assertShape -->
-        <div class="snake-row">
-          <div class="p-arrow" style="color:var(--accent);opacity:.5;padding:0 6px">↓</div>
+        <!-- Row 2: прижата вправо, продолжение после assertShape -->
+        <div class="snake-row" style="justify-content:flex-end">
+          <div class="p-arrow" style="color:var(--accent);opacity:.5;padding:0 6px">←</div>
           <div class="p-module accent"><div class="name">assertOrder</div><div class="desc">sort order</div></div>
           <div class="p-arrow">→</div>
           <div class="p-module accent"><div class="name">assertUnique</div><div class="desc">no dupes</div></div>
