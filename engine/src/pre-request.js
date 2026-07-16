@@ -52,6 +52,7 @@ import { configMerge } from './shared/config-merge.js';
         }
     };
 
+    /** @type {import('./types.js').Ctx} */
     const ctx = {
         config: {},
         request: {

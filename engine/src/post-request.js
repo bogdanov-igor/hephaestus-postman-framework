@@ -36,6 +36,7 @@ import { configMerge } from './shared/config-merge.js';
     // ════════════════════════════════════════════════════════════
     // CTX
     // ════════════════════════════════════════════════════════════
+    /** @type {import('./types.js').Ctx} */
     const ctx = {
         config: {},
         request: {
