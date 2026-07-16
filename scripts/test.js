@@ -561,6 +561,46 @@ test('openapi converts path params + pre-fills override (expectedStatus + inline
     assert(override.schema && override.schema.definition && override.schema.definition.properties && override.schema.definition.properties.id, '$ref schema should be inlined');
 });
 
+test('openapi handles flush-style YAML (same-indent lists, server vars, response $ref)', function() {
+    const flushYaml = path.join(TMP, 'flush.yaml');
+    const flushOut  = path.join(TMP, 'flush-collection.json');
+    fs.writeFileSync(flushYaml, [
+        'openapi: 3.0.0',
+        'info:',
+        '  title: Flush API',
+        'servers:',
+        '- url: https://{host}/v1',
+        '  variables:',
+        '    host:',
+        '      default: api.example.com',
+        'paths:',
+        '  /pets:',
+        '    get:',
+        '      tags: [pets]',
+        '      responses:',
+        "        '200':",
+        "          $ref: '#/components/responses/Ok'",
+        'components:',
+        '  responses:',
+        '    Ok:',
+        '      content:',
+        '        application/json:',
+        '          schema:',
+        '            type: object',
+        '            properties:',
+        '              id:',
+        '                type: integer'
+    ].join('\n'));
+    run(NODE + ' "' + path.join(ROOT, 'scripts/openapi-import.js') + '" "' + flushYaml + '" -o "' + flushOut + '"');
+    const col = JSON.parse(fs.readFileSync(flushOut, 'utf8'));
+    assertContains(col.variable.find(function(v) { return v.key === 'baseUrl'; }).value, 'api.example.com', 'server var {host} should expand to its default');
+    const folder = col.item.find(function(f) { return f.name === 'pets'; });
+    assert(folder && folder.item.length === 1, 'flush server/tags should yield 1 request in the pets folder');
+    const src = folder.item[0].event.find(function(e) { return e.listen === 'test'; }).script.exec.join('\n');
+    const override = JSON.parse(src.match(/const override = ([\s\S]*?);\n/)[1]);
+    assert(override.schema && override.schema.definition && override.schema.definition.properties && override.schema.definition.properties.id, 'response-level $ref schema should be inlined');
+});
+
 // ─── Cleanup ─────────────────────────────────────────────────────────────────
 
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch(e) { /* ignore */ }
