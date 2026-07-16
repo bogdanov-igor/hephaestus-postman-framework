@@ -758,6 +758,34 @@ node scripts/generate-report.js results.json report.html
 
 ---
 
+## ⚒️ CLI — команда `hephaestus`
+
+Все Node-инструменты доступны одной командой — без клонирования репозитория:
+
+```bash
+# через npx (без установки)
+npx hephaestus-postman-framework report results.json
+
+# или после установки пакета
+npm i -D hephaestus-postman-framework
+npx hephaestus report results.json
+```
+
+| Команда | Что делает |
+|---|---|
+| `hephaestus summary <results.json>` | Сводка прогона Newman (консоль/Markdown) |
+| `hephaestus compare <before> <after>` | Дифф двух прогонов — CI-гейт регрессий (exit 1) |
+| `hephaestus report <results.json> [out.html]` | Самодостаточный HTML-отчёт |
+| `hephaestus junit <results.json> [out.xml]` | Newman JSON → JUnit XML (`-` читает stdin) |
+| `hephaestus migrate <collection.json>` | Классификация состояния миграции коллекции |
+| `hephaestus docs <collection.json>` | Генерация API-документации из коллекции |
+| `hephaestus init` | Интерактивный мастер конфигурации |
+| `hephaestus watch -c <collection.json>` | Перезапуск Newman при изменении файлов |
+
+Exit-коды пробрасываются, поэтому `compare`/`summary` работают как CI-гейты. Полный список — `hephaestus --help`. Те же инструменты работают и как `npm run <name>` внутри репозитория.
+
+---
+
 ## 🛠 Инструменты экосистемы (v3.3)
 
 | Инструмент | Описание |

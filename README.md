@@ -900,6 +900,34 @@ pm.test("Echo: id matches", () => pm.expect(received.id).to.eql(sent.id));
 
 ---
 
+## ⚒️ CLI — the `hephaestus` command
+
+All Node tools are also available through a single command — no repo clone needed:
+
+```bash
+# via npx (no install)
+npx hephaestus-postman-framework report results.json
+
+# or after installing the package
+npm i -D hephaestus-postman-framework
+npx hephaestus report results.json
+```
+
+| Command | Does |
+|---|---|
+| `hephaestus summary <results.json>` | Console/Markdown summary of a Newman run |
+| `hephaestus compare <before> <after>` | Diff two runs — CI regression gate (exit 1 on regression) |
+| `hephaestus report <results.json> [out.html]` | Self-contained HTML report |
+| `hephaestus junit <results.json> [out.xml]` | Newman JSON → JUnit XML (`-` reads stdin) |
+| `hephaestus migrate <collection.json>` | Classify a collection's migration state |
+| `hephaestus docs <collection.json>` | Generate API docs from a collection |
+| `hephaestus init` | Interactive config/environment wizard |
+| `hephaestus watch -c <collection.json>` | Re-run Newman on file changes |
+
+Exit codes propagate, so `compare`/`summary` work as CI gates. Run `hephaestus --help` for the full list. The same tools also work as `npm run <name>` inside the repo.
+
+---
+
 ## 🛠 Ecosystem Tools (v3.3)
 
 | Tool | Description |
