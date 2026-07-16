@@ -164,14 +164,14 @@ const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'))
 
 test('package.json version matches engine pre-request VERSION', function() {
     const pre = fs.readFileSync(path.join(ROOT, 'engine/pre-request.js'), 'utf8');
-    const match = pre.match(/const VERSION = '([^']+)'/);
+    const match = pre.match(/(?:const|let|var)\s+VERSION\s*=\s*["']([^"']+)["']/);
     assert(match, 'VERSION not found in pre-request.js');
     assert(match[1] === pkg.version, 'pre-request VERSION ' + match[1] + ' !== package.json ' + pkg.version);
 });
 
 test('package.json version matches engine post-request VERSION', function() {
     const post = fs.readFileSync(path.join(ROOT, 'engine/post-request.js'), 'utf8');
-    const match = post.match(/const VERSION = '([^']+)'/);
+    const match = post.match(/(?:const|let|var)\s+VERSION\s*=\s*["']([^"']+)["']/);
     assert(match, 'VERSION not found in post-request.js');
     assert(match[1] === pkg.version, 'post-request VERSION ' + match[1] + ' !== package.json ' + pkg.version);
 });

@@ -15,7 +15,9 @@
     "syntax": "node --check engine/pre-request.js && node --check engine/post-request.js && node --check setup/engine-update.js && node --check setup/snapshot-clear.js && node --check setup/snapshot-view.js && node --check templates/method.pre-request.js && node --check templates/method.post-request.js",
     "validate:defaults": "node -e \"JSON.parse(require('fs').readFileSync('setup/defaults.json','utf8')); console.log('✅ defaults.json valid')\"",
     "build": "node scripts/build.js",
-    "test": "node scripts/test.js",
+    "build:emit": "node scripts/build.js --emit",
+    "test": "node scripts/test.js && node scripts/test-engine.js",
+    "test:engine": "node scripts/test-engine.js",
     "migrate": "node scripts/migrate.js",
     "docs": "node scripts/docs.js",
     "summary": "node scripts/summary.js",
@@ -26,7 +28,9 @@
     "report": "node scripts/generate-report.js"
   },
   "devDependencies": {
-    "eslint": "^9.0.0"
+    "esbuild": "0.28.1",
+    "eslint": "^9.0.0",
+    "newman": "^6.2.2"
   },
   "engines": {
     "node": ">=18"

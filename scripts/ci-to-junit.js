@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Hephaestus — Newman JSON → JUnit XML converter  v3.3.0
+ * Hephaestus — Newman JSON → JUnit XML converter  v3.8.0
  *
  * Converts Newman's JSON reporter output to JUnit XML for CI dashboards
  * (Jenkins, GitHub Actions test summary, GitLab, Azure DevOps).

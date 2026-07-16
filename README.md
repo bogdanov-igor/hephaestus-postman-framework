@@ -43,7 +43,7 @@ Each request in a collection contains only a minimal `override` config. All logi
 | 🔄 **Pipeline architecture** | Orchestrator drives a module chain through a shared `ctx` object |
 | ⚙️ **Defaults + Override** | Collection-level config merged with per-request overrides |
 | 📸 **Snapshot regression** | Automatic baseline, strict/non-strict modes, checkPaths/ignorePaths, diff preview |
-| 🔐 **Auth plugin** | `none`, `basic`, `bearer`, `headers`, `variables` — configurable per request |
+| 🔐 **Auth plugin** | `none`, `basic`, `bearer`, `headers`, `variables`, `oauth2cc` — configurable per request |
 | 🔍 **Extract API** | `ctx.api.get()`, `.find()`, `.all()`, `.count()`, `.save()` — JSON and XML |
 | ✅ **Assertions** | `keysToFind` (with `soft` mode), `varsToSave`, `keysToCount`, `maxResponseTime` |
 | 📨 **Header assertions** | `assertHeaders` — check existence, value, exact match, absence of response headers |
@@ -203,7 +203,7 @@ eval(pm.collectionVariables.get("hephaestus.v3.post"));
 | `baseUrl` | string | `""` | API base URL — protocol can be omitted, it will be prepended |
 | `defaultProtocol` | string | `"https"` | Default protocol when `baseUrl` has none. `"http"` triggers a warning |
 | `auth.enabled` | boolean | `false` | Enable authentication |
-| `auth.type` | string | `"none"` | Auth type: `none`, `basic`, `bearer`, `headers`, `variables` |
+| `auth.type` | string | `"none"` | Auth type: `none`, `basic`, `bearer`, `headers`, `variables`, `oauth2cc` (see [OAuth2](#-oauth2-client_credentials-v34)) |
 | `contentType` | string | `"json"` | Expected response format: `json`, `xml`, `text` |
 | `expectEmpty` | boolean | `false` | Expect an empty response body |
 | `expectedStatus` | number \| number[] | `[200,201,202]` | Expected HTTP status code(s). Use for negative testing: `400`, `[404, 422]` |

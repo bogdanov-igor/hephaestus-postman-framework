@@ -43,7 +43,7 @@
 | 🔄 **Pipeline-архитектура** | Orchestrator управляет цепочкой модулей через единый объект `ctx` |
 | ⚙️ **Defaults + Override** | Конфиг на уровне коллекции + переопределение на уровне метода |
 | 📸 **Snapshot-регрессия** | Автоматический baseline, strict/non-strict режимы, diff-preview в логе |
-| 🔐 **Auth-плагин** | `none`, `basic`, `bearer`, `headers`, `variables` — настраивается per-request |
+| 🔐 **Auth-плагин** | `none`, `basic`, `bearer`, `headers`, `variables`, `oauth2cc` — настраивается per-request |
 | 🔍 **Extract API** | `ctx.api.get()`, `.find()`, `.all()`, `.count()`, `.save()` — JSON и XML |
 | ✅ **Assertions** | `keysToFind` (soft-режим), `varsToSave`, `keysToCount`, `maxResponseTime` |
 | 📨 **Header assertions** | `assertHeaders` — проверка наличия, значения, точного совпадения и отсутствия заголовков |
@@ -203,7 +203,7 @@ eval(pm.collectionVariables.get("hephaestus.v3.post"));
 | `baseUrl` | string | `""` | Базовый URL API — протокол можно не указывать, подставится автоматически |
 | `defaultProtocol` | string | `"https"` | Протокол по умолчанию, если в `baseUrl` не указан. `"http"` — выдаст предупреждение |
 | `auth.enabled` | boolean | `false` | Включить авторизацию |
-| `auth.type` | string | `"none"` | Тип: `none`, `basic`, `bearer`, `headers`, `variables` |
+| `auth.type` | string | `"none"` | Тип: `none`, `basic`, `bearer`, `headers`, `variables`, `oauth2cc` (см. [OAuth2](#-oauth2-client_credentials-v34)) |
 | `contentType` | string | `"json"` | Ожидаемый формат ответа: `json`, `xml`, `text` |
 | `expectEmpty` | boolean | `false` | Ожидать пустой ответ |
 | `expectedStatus` | number \| number[] | `[200,201,202]` | Ожидаемые HTTP-статусы. Для негативного тестирования: `400`, `[404, 422]` |

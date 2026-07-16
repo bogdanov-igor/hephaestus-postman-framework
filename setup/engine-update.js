@@ -6,9 +6,13 @@
 // ║  © 2026 Bogdanov Igor  bogdanov.ig.alex@gmail.com                       ║
 // ║  https://github.com/bogdanov-igor/hephaestus-postman-framework          ║
 // ╚══════════════════════════════════════════════════════════════════════════╝
-
+//
+// Примечание: шаблонная коллекция поставляется с УЖЕ вшитым движком
+// (см. `npm run build:emit`), поэтому этот метод нужен только для ОБНОВЛЕНИЯ
+// движка до другой версии, а не для первого запуска.
+//
 // ── Конфигурация ──────────────────────────────────────────────────────────
-// hephaestus.version     — "main" или "3.1.0" (тег без "v")
+// hephaestus.version     — "main" или "3.8.0" (тег без "v")
 // hephaestus.githubToken — GitHub PAT (classic или fine-grained)
 //                          Публичный репо: оставить пустым
 //                          Приватный репо: токен с доступом к Contents (read)
@@ -27,6 +31,7 @@ const ENGINE_FILES = [
     { key: "hephaestus.v3.pre",  path: "engine/pre-request.js",  label: "Pre-Request Engine"  },
     { key: "hephaestus.v3.post", path: "engine/post-request.js", label: "Post-Request Engine" }
 ];
+const CHECKSUMS_PATH = "engine/checksums.json";
 
 // Приватный репо → GitHub API (поддерживает classic и fine-grained PAT)
 // Публичный репо → raw.githubusercontent.com (без токена)
@@ -36,16 +41,12 @@ console.log(useApi
     : "ℹ️ Загрузка через raw.githubusercontent.com (публичный репо)"
 );
 
-var completed = 0;
-var failed    = 0;
-
-ENGINE_FILES.forEach(function(file) {
-    var request;
-
+// Собирает конфиг pm.sendRequest для файла репозитория по его пути.
+function buildRequest(filePath) {
     if (useApi) {
         // GitHub Contents API: возвращает сырой файл при Accept: application/vnd.github.raw
-        request = {
-            url:    "https://api.github.com/repos/" + REPO_OWNER + "/" + REPO_NAME + "/contents/" + file.path + "?ref=" + ref,
+        return {
+            url:    "https://api.github.com/repos/" + REPO_OWNER + "/" + REPO_NAME + "/contents/" + filePath + "?ref=" + ref,
             method: "GET",
             header: {
                 "Authorization": "Bearer " + token,
@@ -53,99 +54,170 @@ ENGINE_FILES.forEach(function(file) {
                 "X-GitHub-Api-Version": "2022-11-28"
             }
         };
+    }
+    return {
+        url:    "https://raw.githubusercontent.com/" + REPO_OWNER + "/" + REPO_NAME + "/" + ref + "/" + filePath,
+        method: "GET",
+        header: {}
+    };
+}
+
+// ── Шаг 1: манифест целостности (best-effort) ─────────────────────────────
+// Сначала тянем engine/checksums.json. Если он доступен — сверяем sha256 каждого
+// файла движка перед сохранением. Если недоступен (старый ref без манифеста) —
+// апдейт продолжается без проверки (обратная совместимость).
+pm.sendRequest(buildRequest(CHECKSUMS_PATH), function(err, res) {
+    var expectedHashes = null;
+
+    if (!err && res && res.code === 200) {
+        try {
+            var manifest = JSON.parse(res.text());
+            if (manifest && manifest.files && manifest.algorithm === "sha256") {
+                expectedHashes = manifest.files;
+                console.log("🔒 Манифест целостности загружен — sha256, v" + (manifest.version || "?"));
+            } else {
+                console.warn("⚠️ Манифест целостности в неизвестном формате — проверка пропущена");
+            }
+        } catch (e) {
+            console.warn("⚠️ Манифест целостности повреждён (невалидный JSON) — проверка пропущена");
+        }
     } else {
-        request = {
-            url:    "https://raw.githubusercontent.com/" + REPO_OWNER + "/" + REPO_NAME + "/" + ref + "/" + file.path,
-            method: "GET",
-            header: {}
-        };
+        console.warn("⚠️ Манифест целостности недоступен для ref '" + ref + "' — проверка пропущена");
     }
 
-    pm.sendRequest(request, function(err, res) {
-        if (err) {
-            failed++;
-            pm.test("❌ " + file.label + " — сетевая ошибка", function() {
-                throw new Error(err.message);
-            });
-            return;
-        }
-
-        if (res.code === 401) {
-            failed++;
-            pm.test("❌ " + file.label + " — HTTP 401 Unauthorized", function() {
-                throw new Error(
-                    "Токен недействителен или истёк.\n" +
-                    "Проверь: hephaestus.githubToken задан верно и не истёк."
-                );
-            });
-            return;
-        }
-
-        if (res.code === 403) {
-            failed++;
-            pm.test("❌ " + file.label + " — HTTP 403 Forbidden", function() {
-                throw new Error(
-                    "Нет прав на чтение репозитория.\n" +
-                    "Fine-grained token: добавь разрешение Contents → Read-only для репо " + REPO_NAME + ".\n" +
-                    "Classic token: нужен scope 'repo'."
-                );
-            });
-            return;
-        }
-
-        if (res.code === 404) {
-            failed++;
-            pm.test("❌ " + file.label + " — HTTP 404", function() {
-                throw new Error(
-                    "Файл не найден: " + file.path + " (ref: " + ref + ").\n" +
-                    "Проверь: hephaestus.version задан верно."
-                );
-            });
-            return;
-        }
-
-        if (res.code !== 200) {
-            failed++;
-            pm.test("❌ " + file.label + " — HTTP " + res.code, function() {
-                throw new Error("Неожиданный ответ: HTTP " + res.code);
-            });
-            return;
-        }
-
-        var code = res.text();
-        var sizeKb = (code.length / 1024).toFixed(1);
-
-        // Верификация: убеждаемся что загруженный код содержит VERSION-константу
-        var versionMatch = code.match(/const VERSION\s*=\s*'([^']+)'/);
-        var loadedVersion = versionMatch ? versionMatch[1] : null;
-
-        pm.collectionVariables.set(file.key, code);
-        completed++;
-
-        pm.test("✅ " + file.label + " загружен" + (loadedVersion ? " v" + loadedVersion : "") + " (" + sizeKb + " KB, ref: " + ref + ")", function() {
-            pm.expect(code).to.be.a("string").and.have.length.above(0);
-            if (!loadedVersion) {
-                throw new Error("VERSION-константа не найдена в загруженном коде — возможно повреждённый файл");
-            }
-        });
-
-        if (completed + failed === ENGINE_FILES.length) {
-            if (failed === 0) {
-                pm.collectionVariables.set("hephaestus.engineRef",    ref);
-                pm.collectionVariables.set("hephaestus.engineVersion", loadedVersion || ref);
-                pm.collectionVariables.set("hephaestus.updatedAt",    new Date().toISOString());
-                console.log([
-                    "╔══════════════════════════════════════════════════════════════╗",
-                    "║  🚀 HEPHAESTUS — ENGINE UPDATE COMPLETE                    ║",
-                    "╠══════════════════════════════════════════════════════════════╣",
-                    "║  Ref:     " + ref,
-                    "║  Version: " + (loadedVersion || "—"),
-                    "║  Updated: " + new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC",
-                    "╚══════════════════════════════════════════════════════════════╝"
-                ].join("\n"));
-            } else {
-                console.warn("⚠️ Обновление с ошибками: " + failed + "/" + ENGINE_FILES.length + " файлов не загружены");
-            }
-        }
-    });
+    downloadEngine(expectedHashes);
 });
+
+// ── Шаг 2: загрузка и верификация файлов движка ───────────────────────────
+function downloadEngine(expectedHashes) {
+    var completed = 0;
+    var failed    = 0;
+
+    function maybeFinish(loadedVersion) {
+        if (completed + failed !== ENGINE_FILES.length) return;
+        if (failed === 0) {
+            pm.collectionVariables.set("hephaestus.engineRef",     ref);
+            pm.collectionVariables.set("hephaestus.engineVersion", loadedVersion || ref);
+            pm.collectionVariables.set("hephaestus.updatedAt",     new Date().toISOString());
+            console.log([
+                "╔══════════════════════════════════════════════════════════════╗",
+                "║  🚀 HEPHAESTUS — ENGINE UPDATE COMPLETE                    ║",
+                "╠══════════════════════════════════════════════════════════════╣",
+                "║  Ref:       " + ref,
+                "║  Version:   " + (loadedVersion || "—"),
+                "║  Integrity: " + (expectedHashes ? "sha256 ✅" : "не проверялась"),
+                "║  Updated:   " + new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC",
+                "╚══════════════════════════════════════════════════════════════╝"
+            ].join("\n"));
+        } else {
+            console.warn("⚠️ Обновление с ошибками: " + failed + "/" + ENGINE_FILES.length + " файлов не загружены/не прошли проверку");
+        }
+    }
+
+    ENGINE_FILES.forEach(function(file) {
+        pm.sendRequest(buildRequest(file.path), function(err, res) {
+            if (err) {
+                failed++;
+                pm.test("❌ " + file.label + " — сетевая ошибка", function() {
+                    throw new Error(err.message);
+                });
+                maybeFinish(null);
+                return;
+            }
+
+            if (res.code === 401) {
+                failed++;
+                pm.test("❌ " + file.label + " — HTTP 401 Unauthorized", function() {
+                    throw new Error(
+                        "Токен недействителен или истёк.\n" +
+                        "Проверь: hephaestus.githubToken задан верно и не истёк."
+                    );
+                });
+                maybeFinish(null);
+                return;
+            }
+
+            if (res.code === 403) {
+                failed++;
+                pm.test("❌ " + file.label + " — HTTP 403 Forbidden", function() {
+                    throw new Error(
+                        "Нет прав на чтение репозитория.\n" +
+                        "Fine-grained token: добавь разрешение Contents → Read-only для репо " + REPO_NAME + ".\n" +
+                        "Classic token: нужен scope 'repo'."
+                    );
+                });
+                maybeFinish(null);
+                return;
+            }
+
+            if (res.code === 404) {
+                failed++;
+                pm.test("❌ " + file.label + " — HTTP 404", function() {
+                    throw new Error(
+                        "Файл не найден: " + file.path + " (ref: " + ref + ").\n" +
+                        "Проверь: hephaestus.version задан верно."
+                    );
+                });
+                maybeFinish(null);
+                return;
+            }
+
+            if (res.code !== 200) {
+                failed++;
+                pm.test("❌ " + file.label + " — HTTP " + res.code, function() {
+                    throw new Error("Неожиданный ответ: HTTP " + res.code);
+                });
+                maybeFinish(null);
+                return;
+            }
+
+            var code   = res.text();
+            var sizeKb = (code.length / 1024).toFixed(1);
+
+            // Проверка целостности: sha256 загруженного кода против манифеста.
+            if (expectedHashes && expectedHashes[file.path]) {
+                if (typeof CryptoJS === "undefined") {
+                    console.warn("⚠️ CryptoJS недоступен — проверка целостности " + file.label + " пропущена");
+                } else {
+                    var actual   = CryptoJS.SHA256(code).toString();
+                    var expected = expectedHashes[file.path];
+                    if (actual !== expected) {
+                        failed++;
+                        pm.test("❌ " + file.label + " — нарушена целостность (sha256 mismatch)", function() {
+                            throw new Error(
+                                "Хэш не совпал: ожидался " + expected.slice(0, 12) + "…, получен " + actual.slice(0, 12) + "….\n" +
+                                "Файл повреждён или подменён — код НЕ сохранён."
+                            );
+                        });
+                        maybeFinish(null);
+                        return;
+                    }
+                }
+            }
+
+            // Верификация: убеждаемся что загруженный код содержит VERSION-константу.
+            // Кавычко-агностично: esbuild-бандл использует двойные кавычки.
+            var versionMatch  = code.match(/(?:const|let|var)\s+VERSION\s*=\s*["']([^"']+)["']/);
+            var loadedVersion = versionMatch ? versionMatch[1] : null;
+
+            if (!loadedVersion) {
+                failed++;
+                pm.test("❌ " + file.label + " — VERSION-константа не найдена (повреждённый файл?)", function() {
+                    throw new Error("VERSION-константа не найдена в загруженном коде — код НЕ сохранён");
+                });
+                maybeFinish(null);
+                return;
+            }
+
+            pm.collectionVariables.set(file.key, code);
+            completed++;
+
+            var intMark = (expectedHashes && expectedHashes[file.path]) ? " 🔒" : "";
+            pm.test("✅ " + file.label + " загружен v" + loadedVersion + intMark + " (" + sizeKb + " KB, ref: " + ref + ")", function() {
+                pm.expect(code).to.be.a("string").and.have.length.above(0);
+            });
+
+            maybeFinish(loadedVersion);
+        });
+    });
+}
