@@ -382,10 +382,10 @@
     }, en: function() {
       return "\u{1F4F8} Snapshot: \u{1F534} baseline overwritten (record)";
     } },
-    "snapshot.postmanApiUnimpl": { ru: function() {
-      return 'snapshot: storage "postman-api" \u0435\u0449\u0451 \u043D\u0435 \u0440\u0435\u0430\u043B\u0438\u0437\u043E\u0432\u0430\u043D';
+    "snapshot.postmanApiFallback": { ru: function() {
+      return 'snapshot: storage "postman-api" \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D offline \u2014 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0435\u0442\u0441\u044F collection-vars';
     }, en: function() {
-      return 'snapshot: storage "postman-api" is not implemented yet';
+      return 'snapshot: storage "postman-api" is unavailable offline \u2014 falling back to collection-vars';
     } },
     "snapshot.missingTest": { ru: function() {
       return "\u{1F4F8} Snapshot: \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D (autoSaveMissing \u043E\u0442\u043A\u043B\u044E\u0447\u0451\u043D)";
@@ -707,6 +707,46 @@
     }
   };
 
+  // engine/src/shared/iteration-data.js
+  var iterationData = {
+    run(ctx, inject) {
+      var data = {};
+      try {
+        if (typeof pm.iterationData !== "undefined" && pm.iterationData) {
+          data = (pm.iterationData.toObject ? pm.iterationData.toObject() : {}) || {};
+        }
+      } catch (e) {
+      }
+      ctx.iteration = {
+        index: pm.info.iteration || 0,
+        count: pm.info.iterationCount || 1,
+        data,
+        get: function(key) {
+          try {
+            return pm.iterationData ? pm.iterationData.get(key) : void 0;
+          } catch (e) {
+            return void 0;
+          }
+        }
+      };
+      if (inject) {
+        Object.keys(data).forEach(function(key) {
+          var val = data[key];
+          pm.variables.set("iter." + key, val !== null && val !== void 0 ? String(val) : "");
+        });
+      }
+    }
+  };
+
+  // engine/src/shared/mask.js
+  function isSensitive(key, secrets) {
+    if (!secrets || secrets.length === 0) return false;
+    const k = String(key).toLowerCase();
+    return secrets.some(function(s) {
+      return k.includes(String(s).toLowerCase());
+    });
+  }
+
   // engine/src/pre-request.js
   (function hephaestusPreRequest() {
     const VERSION = "3.9.0";
@@ -777,33 +817,6 @@
           );
         });
         ctx2._meta.errors.push(t(ctx2, "envRequired.missingPush", missing, envName));
-      }
-    };
-    const iterationData = {
-      run(ctx2) {
-        var data = {};
-        try {
-          if (typeof pm.iterationData !== "undefined" && pm.iterationData) {
-            data = (pm.iterationData.toObject ? pm.iterationData.toObject() : {}) || {};
-          }
-        } catch (e) {
-        }
-        ctx2.iteration = {
-          index: pm.info.iteration || 0,
-          count: pm.info.iterationCount || 1,
-          data,
-          get: function(key) {
-            try {
-              return pm.iterationData ? pm.iterationData.get(key) : void 0;
-            } catch (e) {
-              return void 0;
-            }
-          }
-        };
-        Object.keys(data).forEach(function(key) {
-          var val = data[key];
-          pm.variables.set("iter." + key, val !== null && val !== void 0 ? String(val) : "");
-        });
       }
     };
     const random = {
@@ -1063,11 +1076,11 @@
         const keep = Math.max(1, Math.floor(str.length * 0.2));
         return str.slice(0, keep) + "***MASKED***" + str.slice(-keep);
       },
-      // Проверяет, нужно ли маскировать значение по имени ключа
+      // Нужно ли маскировать значение по имени ключа.
+      // Делегирует в общий shared/mask.js (substring — fail-safe для redaction:
+      // лучше замаскировать лишнее в логе, чем утечь секрет).
       _isSensitive(key, secrets) {
-        if (!secrets || secrets.length === 0) return false;
-        const k = key.toLowerCase();
-        return secrets.some((s) => k.includes(s.toLowerCase()));
+        return isSensitive(key, secrets);
       },
       // Рекурсивно маскирует чувствительные поля объекта
       _maskObj(obj, secrets) {
@@ -1145,7 +1158,7 @@
     try {
       configMerge.run(ctx, _override);
       envRequired.run(ctx);
-      iterationData.run(ctx);
+      iterationData.run(ctx, true);
       random.run(ctx);
       urlBuilder.run(ctx);
       auth.run(ctx);

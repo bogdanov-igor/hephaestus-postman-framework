@@ -461,10 +461,10 @@
         }, en: function() {
           return "\u{1F4F8} Snapshot: \u{1F534} baseline overwritten (record)";
         } },
-        "snapshot.postmanApiUnimpl": { ru: function() {
-          return 'snapshot: storage "postman-api" \u0435\u0449\u0451 \u043D\u0435 \u0440\u0435\u0430\u043B\u0438\u0437\u043E\u0432\u0430\u043D';
+        "snapshot.postmanApiFallback": { ru: function() {
+          return 'snapshot: storage "postman-api" \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D offline \u2014 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0435\u0442\u0441\u044F collection-vars';
         }, en: function() {
-          return 'snapshot: storage "postman-api" is not implemented yet';
+          return 'snapshot: storage "postman-api" is unavailable offline \u2014 falling back to collection-vars';
         } },
         "snapshot.missingTest": { ru: function() {
           return "\u{1F4F8} Snapshot: \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D (autoSaveMissing \u043E\u0442\u043A\u043B\u044E\u0447\u0451\u043D)";
@@ -787,10 +787,61 @@
     }
   });
 
+  // engine/src/shared/iteration-data.js
+  var iterationData;
+  var init_iteration_data = __esm({
+    "engine/src/shared/iteration-data.js"() {
+      iterationData = {
+        run(ctx2, inject) {
+          var data = {};
+          try {
+            if (typeof pm.iterationData !== "undefined" && pm.iterationData) {
+              data = (pm.iterationData.toObject ? pm.iterationData.toObject() : {}) || {};
+            }
+          } catch (e2) {
+          }
+          ctx2.iteration = {
+            index: pm.info.iteration || 0,
+            count: pm.info.iterationCount || 1,
+            data,
+            get: function(key) {
+              try {
+                return pm.iterationData ? pm.iterationData.get(key) : void 0;
+              } catch (e2) {
+                return void 0;
+              }
+            }
+          };
+          if (inject) {
+            Object.keys(data).forEach(function(key) {
+              var val = data[key];
+              pm.variables.set("iter." + key, val !== null && val !== void 0 ? String(val) : "");
+            });
+          }
+        }
+      };
+    }
+  });
+
+  // engine/src/shared/mask.js
+  function isSensitive(key, secrets) {
+    if (!secrets || secrets.length === 0) return false;
+    const k = String(key).toLowerCase();
+    return secrets.some(function(s) {
+      return k.includes(String(s).toLowerCase());
+    });
+  }
+  var init_mask = __esm({
+    "engine/src/shared/mask.js"() {
+    }
+  });
+
   // engine/src/post-request.js
   var require_post_request = __commonJS({
     "engine/src/post-request.js"(exports, module) {
       init_config_merge();
+      init_iteration_data();
+      init_mask();
       init_i18n();
       (function hephaestusPostRequest() {
         const VERSION = "3.9.0";
@@ -833,29 +884,6 @@
               schema: null
               // { valid, errors }
             }
-          }
-        };
-        const iterationData = {
-          run(ctx2) {
-            var data = {};
-            try {
-              if (typeof pm.iterationData !== "undefined" && pm.iterationData) {
-                data = (pm.iterationData.toObject ? pm.iterationData.toObject() : {}) || {};
-              }
-            } catch (e2) {
-            }
-            ctx2.iteration = {
-              index: pm.info.iteration || 0,
-              count: pm.info.iterationCount || 1,
-              data,
-              get: function(key) {
-                try {
-                  return pm.iterationData ? pm.iterationData.get(key) : void 0;
-                } catch (e2) {
-                  return void 0;
-                }
-              }
-            };
           }
         };
         const normalizeResponse = {
@@ -1793,9 +1821,9 @@
               return;
             }
             const storage = cfg.storage || "collection-vars";
-            if (storage === "postman-api") {
-              ctx2._meta.errors.push(t(ctx2, "snapshot.postmanApiUnimpl"));
-              return;
+            if (storage === "postman-api" && !pm.collectionVariables.get("hephaestus.snapshotApiWarned")) {
+              pm.collectionVariables.set("hephaestus.snapshotApiWarned", "1");
+              ctx2._meta.errors.push(t(ctx2, "snapshot.postmanApiFallback"));
             }
             const key = this._key(ctx2);
             const store = this._loadStore();
@@ -2002,6 +2030,10 @@
             const keep = Math.max(1, Math.floor(str.length * 0.2));
             return str.slice(0, keep) + "***MASKED***" + str.slice(-keep);
           },
+          // Нужно ли маскировать значение по имени ключа — общий shared/mask.js.
+          _isSensitive(key, secrets) {
+            return isSensitive(key, secrets);
+          },
           // Маскирует query-параметры URL, чьи ключи совпадают с secrets
           _maskUrl(url, secrets) {
             if (!url || !secrets || !secrets.length) return url;
@@ -2014,10 +2046,7 @@
                 if (ei === -1) return param;
                 const key = param.slice(0, ei);
                 const val = param.slice(ei + 1);
-                const kl = key.toLowerCase();
-                if (secrets.some(function(s) {
-                  return kl.includes(s.toLowerCase());
-                })) {
+                if (this._isSensitive(key, secrets)) {
                   return key + "=" + this._maskStr(val);
                 }
                 return param;
@@ -2036,7 +2065,7 @@
               const walk = (o) => {
                 if (typeof o !== "object" || o === null) return;
                 Object.keys(o).forEach((k) => {
-                  if (secrets.some((s) => k.toLowerCase().includes(s.toLowerCase()))) {
+                  if (this._isSensitive(k, secrets)) {
                     if (typeof o[k] === "string") o[k] = this._maskStr(o[k]);
                   } else {
                     walk(o[k]);

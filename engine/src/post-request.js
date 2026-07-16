@@ -11,6 +11,8 @@
 // retryOnStatus · assertEach · assertShape · assertOrder · assertUnique · assertHeaders · snapshot · schema (tv4) · plugins · logger
 
 import { configMerge } from './shared/config-merge.js';
+import { iterationData } from './shared/iteration-data.js';
+import { isSensitive } from './shared/mask.js';
 import { t, statusLabel } from './shared/i18n.js';
 
 (function hephaestusPostRequest() {
@@ -71,30 +73,8 @@ import { t, statusLabel } from './shared/i18n.js';
     // ════════════════════════════════════════════════════════════
 // configMerge → импортируется из ./shared/config-merge.js (esbuild inline)
 
-    // ════════════════════════════════════════════════════════════
-    // MODULE: iterationData  [SHARED — синхронизировать с pre-request.js]
-    //
-    // Идентичен pre-request. В post-request не инжектирует pm.variables —
-    // запрос уже отправлен, но ctx.iteration доступен для плагинов и assertions.
-    // ════════════════════════════════════════════════════════════
-    const iterationData = {
-        run(ctx) {
-            var data = {};
-            try {
-                if (typeof pm.iterationData !== 'undefined' && pm.iterationData) {
-                    data = (pm.iterationData.toObject ? pm.iterationData.toObject() : {}) || {};
-                }
-            } catch(e) { /* iterationData недоступен */ }
-            ctx.iteration = {
-                index: pm.info.iteration || 0,
-                count: pm.info.iterationCount || 1,
-                data:  data,
-                get: function(key) {
-                    try { return pm.iterationData ? pm.iterationData.get(key) : undefined; } catch(e) { return undefined; }
-                }
-            };
-        }
-    };
+    // iterationData → импортируется из ./shared/iteration-data.js (esbuild inline)
+    // post-request вызывает run(ctx) без inject — запрос уже отправлен.
 
     // ════════════════════════════════════════════════════════════
     // MODULE: normalizeResponse
@@ -983,8 +963,9 @@ import { t, statusLabel } from './shared/i18n.js';
     // ignorePaths — пути, которые исключаются из сравнения
     // autoSaveMissing — если снапшот не найден, сохранить как baseline
     //
-    // storage: "collection-vars" (default)
-    //          "postman-api" — TODO: через pm.sendRequest к api.getpostman.com
+    // storage: "collection-vars" (default; единственный backend)
+    //          "postman-api" — недоступен offline: предупреждает один раз
+    //                          и откатывается на collection-vars
     // ════════════════════════════════════════════════════════════
     const snapshot = {
 
@@ -1143,11 +1124,14 @@ import { t, statusLabel } from './shared/i18n.js';
 
             const storage = cfg.storage || 'collection-vars';
 
-            if (storage === 'postman-api') {
-                // TODO Итерация 4+: pm.sendRequest к api.getpostman.com
-                // Требует: postman.api.key + postman.collection.uid в environment
-                ctx._meta.errors.push(t(ctx, 'snapshot.postmanApiUnimpl'));
-                return;
+            // storage: "postman-api" потребовал бы pm.sendRequest → api.getpostman.com
+            // + Postman API key — сетевую/ключевую зависимость, нарушающую принцип
+            // offline-first. Вместо half-broken no-op (тихо пропустить проверку и
+            // создать ложное ощущение защиты) — честно откатываемся на collection-vars
+            // и предупреждаем ОДИН раз за прогон. Дальше идёт обычный путь ниже.
+            if (storage === 'postman-api' && !pm.collectionVariables.get('hephaestus.snapshotApiWarned')) {
+                pm.collectionVariables.set('hephaestus.snapshotApiWarned', '1');
+                ctx._meta.errors.push(t(ctx, 'snapshot.postmanApiFallback'));
             }
 
             const key         = this._key(ctx);
@@ -1439,6 +1423,11 @@ import { t, statusLabel } from './shared/i18n.js';
             return str.slice(0, keep) + '***MASKED***' + str.slice(-keep);
         },
 
+        // Нужно ли маскировать значение по имени ключа — общий shared/mask.js.
+        _isSensitive(key, secrets) {
+            return isSensitive(key, secrets);
+        },
+
         // Маскирует query-параметры URL, чьи ключи совпадают с secrets
         _maskUrl(url, secrets) {
             if (!url || !secrets || !secrets.length) return url;
@@ -1451,8 +1440,7 @@ import { t, statusLabel } from './shared/i18n.js';
                     if (ei === -1) return param;
                     const key = param.slice(0, ei);
                     const val = param.slice(ei + 1);
-                    const kl  = key.toLowerCase();
-                    if (secrets.some(function(s) { return kl.includes(s.toLowerCase()); })) {
+                    if (this._isSensitive(key, secrets)) {
                         return key + '=' + this._maskStr(val);
                     }
                     return param;
@@ -1470,7 +1458,7 @@ import { t, statusLabel } from './shared/i18n.js';
                 const walk = (o) => {
                     if (typeof o !== 'object' || o === null) return;
                     Object.keys(o).forEach(k => {
-                        if (secrets.some(s => k.toLowerCase().includes(s.toLowerCase()))) {
+                        if (this._isSensitive(k, secrets)) {
                             if (typeof o[k] === 'string') o[k] = this._maskStr(o[k]);
                         } else { walk(o[k]); }
                     });

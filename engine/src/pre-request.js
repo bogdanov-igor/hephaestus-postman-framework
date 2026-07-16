@@ -9,6 +9,8 @@
 // configMerge · envRequired · iterationData · random · urlBuilder · auth · dateUtils (flexible) · logger
 
 import { configMerge } from './shared/config-merge.js';
+import { iterationData } from './shared/iteration-data.js';
+import { isSensitive } from './shared/mask.js';
 import { t } from './shared/i18n.js';
 
 (function hephaestusPreRequest() {
@@ -114,46 +116,8 @@ import { t } from './shared/i18n.js';
         }
     };
 
-    // ════════════════════════════════════════════════════════════
-    // MODULE: iterationData
-    //
-    // Экспонирует данные текущей итерации Newman в ctx.iteration.
-    // Доступен при запуске через Newman с --iteration-data file.csv/json.
-    //
-    // ctx.iteration:
-    //   index — текущая итерация (0-based)
-    //   count — всего итераций
-    //   data  — текущая строка как объект { field: value }
-    //   get(key) — значение поля по ключу
-    //
-    // Автоматически устанавливает pm.variables("iter.fieldName") = value
-    // Используй {{iter.email}}, {{iter.userId}} в URL / Body / Headers
-    // ════════════════════════════════════════════════════════════
-    const iterationData = {
-        run(ctx) {
-            var data = {};
-            try {
-                if (typeof pm.iterationData !== 'undefined' && pm.iterationData) {
-                    data = (pm.iterationData.toObject ? pm.iterationData.toObject() : {}) || {};
-                }
-            } catch(e) { /* iterationData недоступен в этом контексте */ }
-
-            ctx.iteration = {
-                index: pm.info.iteration || 0,
-                count: pm.info.iterationCount || 1,
-                data:  data,
-                get: function(key) {
-                    try { return pm.iterationData ? pm.iterationData.get(key) : undefined; } catch(e) { return undefined; }
-                }
-            };
-
-            // Инжектируем поля как pm.variables("iter.key") для {{iter.key}} в запросах
-            Object.keys(data).forEach(function(key) {
-                var val = data[key];
-                pm.variables.set('iter.' + key, val !== null && val !== undefined ? String(val) : '');
-            });
-        }
-    };
+    // iterationData → импортируется из ./shared/iteration-data.js (esbuild inline)
+    // pre-request вызывает run(ctx, true) — инжектит pm.variables("iter.key").
 
     // ════════════════════════════════════════════════════════════
     // MODULE: random
@@ -473,11 +437,11 @@ import { t } from './shared/i18n.js';
             return str.slice(0, keep) + '***MASKED***' + str.slice(-keep);
         },
 
-        // Проверяет, нужно ли маскировать значение по имени ключа
+        // Нужно ли маскировать значение по имени ключа.
+        // Делегирует в общий shared/mask.js (substring — fail-safe для redaction:
+        // лучше замаскировать лишнее в логе, чем утечь секрет).
         _isSensitive(key, secrets) {
-            if (!secrets || secrets.length === 0) return false;
-            const k = key.toLowerCase();
-            return secrets.some(s => k.includes(s.toLowerCase()));
+            return isSensitive(key, secrets);
         },
 
         // Рекурсивно маскирует чувствительные поля объекта
@@ -582,7 +546,7 @@ import { t } from './shared/i18n.js';
     try {
         configMerge.run(ctx, _override);
         envRequired.run(ctx);
-        iterationData.run(ctx);
+        iterationData.run(ctx, true);
         random.run(ctx);     // генерирует pm.variables из randomData config
         urlBuilder.run(ctx);
         auth.run(ctx);       // реальные значения → в заголовки/переменные

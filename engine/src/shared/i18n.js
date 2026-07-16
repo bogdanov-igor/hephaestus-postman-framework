@@ -129,7 +129,7 @@ const M = {
     'snapshot.storeSizeWarn': { ru: function() { return 'Используй checkPaths для сокращения или очисти через snapshot-clear метод.'; }, en: function() { return 'Use checkPaths to shorten it or clear it via the snapshot-clear method.'; } },
     'snapshot.recordWarn': { ru: function(rkey) { return '📸 snapshotRecord: baseline перезаписан для "' + rkey + '" — не забудь убрать флаг record (иначе регрессии не ловятся)'; }, en: function(rkey) { return '📸 snapshotRecord: baseline overwritten for "' + rkey + '" — don\'t forget to remove the record flag (otherwise regressions will not be caught)'; } },
     'snapshot.recordTest': { ru: function() { return '📸 Snapshot: 🔴 baseline перезаписан (record)'; }, en: function() { return '📸 Snapshot: 🔴 baseline overwritten (record)'; } },
-    'snapshot.postmanApiUnimpl': { ru: function() { return 'snapshot: storage "postman-api" ещё не реализован'; }, en: function() { return 'snapshot: storage "postman-api" is not implemented yet'; } },
+    'snapshot.postmanApiFallback': { ru: function() { return 'snapshot: storage "postman-api" недоступен offline — используется collection-vars'; }, en: function() { return 'snapshot: storage "postman-api" is unavailable offline — falling back to collection-vars'; } },
     'snapshot.missingTest': { ru: function() { return '📸 Snapshot: не найден (autoSaveMissing отключён)'; }, en: function() { return '📸 Snapshot: not found (autoSaveMissing disabled)'; } },
     'snapshot.missingMsg': { ru: function(key) { return '🚫 Снапшот "' + key + '" не найден'; }, en: function(key) { return '🚫 Snapshot "' + key + '" not found'; } },
     'snapshot.savedTest': { ru: function() { return '📸 Snapshot: ✅ baseline сохранён'; }, en: function() { return '📸 Snapshot: ✅ baseline saved'; } },

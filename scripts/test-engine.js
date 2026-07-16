@@ -275,6 +275,16 @@ function buildCollection(preSrc, postSrc, baseUrl) {
                 locale: 'en',
                 securityAudit: { enabled: true }
             })
+        },
+        {
+            // storage:'postman-api' is unavailable offline — it must warn once
+            // (ctx._meta.errors → CI 'errors') and FALL BACK to collection-vars so
+            // the snapshot still saves a baseline (savedTest), not silently no-op.
+            name: 'snapshot-postman-api-fallback',
+            request: { method: 'GET', url: baseUrl + '/obj' },
+            event: methodScripts({}, {
+                snapshot: { enabled: true, storage: 'postman-api', mode: 'non-strict', autoSaveMissing: true }
+            })
         }
     ];
 

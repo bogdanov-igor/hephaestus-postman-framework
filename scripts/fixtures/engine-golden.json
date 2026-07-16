@@ -836,6 +836,46 @@
       "ok": true
     },
     {
+      "item": "snapshot-postman-api-fallback",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "snapshot-postman-api-fallback",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "snapshot-postman-api-fallback",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "snapshot-postman-api-fallback",
+      "name": "📸 Snapshot: ✅ baseline сохранён",
+      "ok": true
+    },
+    {
+      "item": "snapshot-postman-api-fallback",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "snapshot-postman-api-fallback",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "snapshot-postman-api-fallback",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "snapshot-postman-api-fallback",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
       "item": "snapshot-record",
       "name": "⚠️ URL: небезопасный протокол http",
       "ok": true
@@ -1220,6 +1260,25 @@
         "ok": true
       },
       "errors": []
+    },
+    "snapshot-postman-api-fallback": {
+      "request": "snapshot-postman-api-fallback",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": {
+        "status": "saved",
+        "key": "EngineTest::snapshot-postman-api-fallback::200::json"
+      },
+      "schema": null,
+      "security": null,
+      "errors": [
+        "snapshot: storage \"postman-api\" недоступен offline — используется collection-vars"
+      ]
     },
     "snapshot-record": {
       "request": "snapshot-record",
