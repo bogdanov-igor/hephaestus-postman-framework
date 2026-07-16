@@ -311,6 +311,81 @@
       "ok": true
     },
     {
+      "item": "security-audit",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🛡️ Заголовок безопасности: content-security-policy",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🛡️ Заголовок безопасности: strict-transport-security",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🛡️ Заголовок безопасности: x-content-type-options",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🛡️ Заголовок безопасности: x-frame-options",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🛡️ Нет раскрытия сервера: server",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🛡️ Нет раскрытия сервера: x-aspnet-version",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🛡️ Нет раскрытия сервера: x-powered-by",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🛡️ Нет утечек отладки в теле ответа",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
       "item": "snapshot-save",
       "name": "⚠️ URL: небезопасный протокол http",
       "ok": true
@@ -495,6 +570,19 @@
       "schema": {
         "valid": true
       },
+      "errors": []
+    },
+    "security-audit": {
+      "request": "security-audit",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
       "errors": []
     },
     "snapshot-save": {

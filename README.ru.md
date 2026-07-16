@@ -464,6 +464,31 @@ const override = {
 
 ---
 
+## 🛡️ Аудит безопасности
+
+Пассивные проверки безопасности ответа (opt-in) — ловит отсутствие защитных
+заголовков, раскрытие версии сервера, утечки стектрейсов/отладки в теле и
+небезопасный CORS. Включается per-request или глобально в `hephaestus.defaults`:
+
+```javascript
+const override = {
+    securityAudit: {
+        enabled: true,
+        // у всех списков есть разумные дефолты — переопределяй по необходимости:
+        requireHeaders: ["strict-transport-security", "content-security-policy",
+                         "x-frame-options", "x-content-type-options"],
+        forbidHeaders:  ["server", "x-powered-by"],          // раскрытие версии
+        forbidBodyPatterns: ["SQLSTATE", "stack trace", "Traceback"],
+        checkCors: true,   // wildcard Access-Control-Allow-Origin + credentials
+        soft: false        // findings как предупреждения вместо провалов
+    }
+};
+```
+
+Каждая проверка — отдельный `🛡️` тест, поэтому нарушение политики заголовков валит прогон в CI.
+
+---
+
 ## 📸 Snapshot-регрессия
 
 Snapshot хранится в `hephaestus.snapshots` (collectionVariables) как JSON-объект.

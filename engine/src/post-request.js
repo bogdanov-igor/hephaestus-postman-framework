@@ -1325,6 +1325,89 @@ import { configMerge } from './shared/config-merge.js';
     };
 
     // ════════════════════════════════════════════════════════════
+    // MODULE: securityAudit
+    //
+    // Пассивный аудит безопасности ответа. Opt-in через config:
+    //   securityAudit: {
+    //     enabled: true,
+    //     requireHeaders: [...],       // защитные заголовки должны присутствовать
+    //     forbidHeaders:  [...],       // заголовки раскрытия сервера должны отсутствовать
+    //     forbidBodyPatterns: [...],   // стектрейсы / отладка не должны утекать в тело
+    //     checkCors: true,             // wildcard ACAO вместе с Allow-Credentials
+    //     soft: false                  // findings как предупреждения (passing tests)
+    //   }
+    // Пропущенные списки берутся из _defaults.
+    // ════════════════════════════════════════════════════════════
+    const securityAudit = {
+        _defaults: {
+            requireHeaders: ['strict-transport-security', 'content-security-policy', 'x-frame-options', 'x-content-type-options'],
+            forbidHeaders:  ['server', 'x-powered-by', 'x-aspnet-version'],
+            forbidBodyPatterns: ['SQLSTATE', 'stack trace', 'Traceback (most recent call last)', 'ORA-0', 'db error', 'Warning: mysql'],
+            checkCors: true
+        },
+        _headerVal(name) {
+            try { return pm.response.headers.get(name); } catch(e) { return undefined; }
+        },
+        run(ctx) {
+            const cfg = ctx.config.securityAudit;
+            if (!cfg || !cfg.enabled) return;
+
+            const soft = cfg.soft === true || !!ctx.config.softFail;
+            const self = this;
+            const findings = [];
+
+            function secTest(label, ok, detail) {
+                const name = (soft ? '🛡️ [soft] ' : '🛡️ ') + label;
+                if (soft) {
+                    pm.test(name, function() {
+                        if (!ok) console.warn('🛡️ [soft] ' + label + ': ' + detail);
+                        pm.expect(true).to.be.true;
+                    });
+                } else {
+                    pm.test(name, function() { pm.expect(ok, '🚫 ' + detail).to.be.true; });
+                }
+            }
+
+            // 1. Обязательные защитные заголовки присутствуют
+            (cfg.requireHeaders || self._defaults.requireHeaders).forEach(function(h) {
+                const v = self._headerVal(h);
+                const present = typeof v === 'string' && v.length > 0;
+                if (!present) findings.push({ type: 'missing-header', name: h });
+                secTest('Заголовок безопасности: ' + h, present, 'отсутствует защитный заголовок "' + h + '"');
+            });
+
+            // 2. Заголовки раскрытия сервера отсутствуют
+            (cfg.forbidHeaders || self._defaults.forbidHeaders).forEach(function(h) {
+                const v = self._headerVal(h);
+                const disclosed = typeof v === 'string' && v.length > 0;
+                if (disclosed) findings.push({ type: 'disclosure-header', name: h, value: v });
+                secTest('Нет раскрытия сервера: ' + h, !disclosed, 'заголовок "' + h + '" раскрывает "' + v + '"');
+            });
+
+            // 3. Нет отладочной информации / стектрейсов в теле
+            const patterns = cfg.forbidBodyPatterns || self._defaults.forbidBodyPatterns;
+            const raw = (ctx.response && ctx.response.raw) ? String(ctx.response.raw) : '';
+            if (raw && patterns && patterns.length) {
+                const hit = patterns.filter(function(p) { return raw.indexOf(p) !== -1; });
+                if (hit.length) findings.push({ type: 'body-leak', patterns: hit });
+                secTest('Нет утечек отладки в теле ответа', hit.length === 0, 'найдены утечки: ' + hit.join(', '));
+            }
+
+            // 4. Небезопасный CORS: wildcard-origin вместе с credentials
+            if (cfg.checkCors !== false) {
+                const acao = self._headerVal('access-control-allow-origin');
+                const acac = self._headerVal('access-control-allow-credentials');
+                if (acao === '*' && String(acac).toLowerCase() === 'true') {
+                    findings.push({ type: 'insecure-cors' });
+                    secTest('CORS: нет wildcard-origin с credentials', false, 'Access-Control-Allow-Origin: * вместе с Allow-Credentials: true');
+                }
+            }
+
+            ctx._meta.results.security = { findings: findings, ok: findings.length === 0 };
+        }
+    };
+
+    // ════════════════════════════════════════════════════════════
     // MODULE: logger
     // ════════════════════════════════════════════════════════════
     const logger = {
@@ -1552,6 +1635,7 @@ import { configMerge } from './shared/config-merge.js';
             assertHeaders.run(ctx);
             snapshot.run(ctx);
             schema.run(ctx);
+            securityAudit.run(ctx);
             plugins.run(ctx);
             logger.summary(ctx);
         }

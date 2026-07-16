@@ -1195,6 +1195,71 @@
             });
           }
         };
+        const securityAudit = {
+          _defaults: {
+            requireHeaders: ["strict-transport-security", "content-security-policy", "x-frame-options", "x-content-type-options"],
+            forbidHeaders: ["server", "x-powered-by", "x-aspnet-version"],
+            forbidBodyPatterns: ["SQLSTATE", "stack trace", "Traceback (most recent call last)", "ORA-0", "db error", "Warning: mysql"],
+            checkCors: true
+          },
+          _headerVal(name2) {
+            try {
+              return pm.response.headers.get(name2);
+            } catch (e2) {
+              return void 0;
+            }
+          },
+          run(ctx2) {
+            const cfg = ctx2.config.securityAudit;
+            if (!cfg || !cfg.enabled) return;
+            const soft2 = cfg.soft === true || !!ctx2.config.softFail;
+            const self = this;
+            const findings = [];
+            function secTest(label2, ok, detail) {
+              const name2 = (soft2 ? "\u{1F6E1}\uFE0F [soft] " : "\u{1F6E1}\uFE0F ") + label2;
+              if (soft2) {
+                pm.test(name2, function() {
+                  if (!ok) console.warn("\u{1F6E1}\uFE0F [soft] " + label2 + ": " + detail);
+                  pm.expect(true).to.be.true;
+                });
+              } else {
+                pm.test(name2, function() {
+                  pm.expect(ok, "\u{1F6AB} " + detail).to.be.true;
+                });
+              }
+            }
+            (cfg.requireHeaders || self._defaults.requireHeaders).forEach(function(h) {
+              const v2 = self._headerVal(h);
+              const present = typeof v2 === "string" && v2.length > 0;
+              if (!present) findings.push({ type: "missing-header", name: h });
+              secTest("\u0417\u0430\u0433\u043E\u043B\u043E\u0432\u043E\u043A \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u0438: " + h, present, '\u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442 \u0437\u0430\u0449\u0438\u0442\u043D\u044B\u0439 \u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043E\u043A "' + h + '"');
+            });
+            (cfg.forbidHeaders || self._defaults.forbidHeaders).forEach(function(h) {
+              const v2 = self._headerVal(h);
+              const disclosed = typeof v2 === "string" && v2.length > 0;
+              if (disclosed) findings.push({ type: "disclosure-header", name: h, value: v2 });
+              secTest("\u041D\u0435\u0442 \u0440\u0430\u0441\u043A\u0440\u044B\u0442\u0438\u044F \u0441\u0435\u0440\u0432\u0435\u0440\u0430: " + h, !disclosed, '\u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043E\u043A "' + h + '" \u0440\u0430\u0441\u043A\u0440\u044B\u0432\u0430\u0435\u0442 "' + v2 + '"');
+            });
+            const patterns = cfg.forbidBodyPatterns || self._defaults.forbidBodyPatterns;
+            const raw2 = ctx2.response && ctx2.response.raw ? String(ctx2.response.raw) : "";
+            if (raw2 && patterns && patterns.length) {
+              const hit = patterns.filter(function(p2) {
+                return raw2.indexOf(p2) !== -1;
+              });
+              if (hit.length) findings.push({ type: "body-leak", patterns: hit });
+              secTest("\u041D\u0435\u0442 \u0443\u0442\u0435\u0447\u0435\u043A \u043E\u0442\u043B\u0430\u0434\u043A\u0438 \u0432 \u0442\u0435\u043B\u0435 \u043E\u0442\u0432\u0435\u0442\u0430", hit.length === 0, "\u043D\u0430\u0439\u0434\u0435\u043D\u044B \u0443\u0442\u0435\u0447\u043A\u0438: " + hit.join(", "));
+            }
+            if (cfg.checkCors !== false) {
+              const acao = self._headerVal("access-control-allow-origin");
+              const acac = self._headerVal("access-control-allow-credentials");
+              if (acao === "*" && String(acac).toLowerCase() === "true") {
+                findings.push({ type: "insecure-cors" });
+                secTest("CORS: \u043D\u0435\u0442 wildcard-origin \u0441 credentials", false, "Access-Control-Allow-Origin: * \u0432\u043C\u0435\u0441\u0442\u0435 \u0441 Allow-Credentials: true");
+              }
+            }
+            ctx2._meta.results.security = { findings, ok: findings.length === 0 };
+          }
+        };
         const logger = {
           _maskStr(str) {
             if (!str || typeof str !== "string" || str.length < 6) return "***";
@@ -1397,6 +1462,7 @@
             assertHeaders.run(ctx);
             snapshot.run(ctx);
             schema.run(ctx);
+            securityAudit.run(ctx);
             plugins.run(ctx);
             logger.summary(ctx);
           }

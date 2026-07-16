@@ -413,6 +413,31 @@ assertHeaders: [
 
 ---
 
+## 🛡️ Security Audit
+
+Opt-in passive security checks on the response — flags missing protective
+headers, server version disclosure, debug/stack-trace leaks in the body, and
+insecure CORS. Enable per request or globally in `hephaestus.defaults`:
+
+```javascript
+const override = {
+    securityAudit: {
+        enabled: true,
+        // every list has sane defaults — override only what you need:
+        requireHeaders: ["strict-transport-security", "content-security-policy",
+                         "x-frame-options", "x-content-type-options"],
+        forbidHeaders:  ["server", "x-powered-by"],          // version disclosure
+        forbidBodyPatterns: ["SQLSTATE", "stack trace", "Traceback"],
+        checkCors: true,   // wildcard Access-Control-Allow-Origin + credentials
+        soft: false        // findings as warnings instead of failures
+    }
+};
+```
+
+Each check emits a `🛡️` test, so a failing header policy fails the run in CI.
+
+---
+
 ## 🔌 Plugin System
 
 Extend the engine without forking. Plugins are JS scripts stored in `collectionVariables` and executed after all built-in modules.

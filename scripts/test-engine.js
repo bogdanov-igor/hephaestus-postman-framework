@@ -58,6 +58,14 @@ function startMockServer() {
         if (url === '/echo-auth') {
             return json({ authorization: req.headers['authorization'] || '' });
         }
+        if (url === '/secure') {
+            return json({ ok: true }, 200, {
+                'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+                'Content-Security-Policy':   "default-src 'self'",
+                'X-Frame-Options':           'DENY',
+                'X-Content-Type-Options':    'nosniff'
+            });
+        }
         return json({ error: 'not found' }, 404);
     });
     return new Promise(function (resolve) {
@@ -172,6 +180,13 @@ function buildCollection(preSrc, postSrc, baseUrl) {
             request: { method: 'GET', url: baseUrl + '/obj' },
             event: methodScripts({}, {
                 snapshot: { enabled: true, mode: 'non-strict', autoSaveMissing: true }
+            })
+        },
+        {
+            name: 'security-audit',
+            request: { method: 'GET', url: baseUrl + '/secure' },
+            event: methodScripts({}, {
+                securityAudit: { enabled: true }
             })
         }
     ];
