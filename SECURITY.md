@@ -4,9 +4,9 @@
 
 | Version | Supported |
 |---|---|
-| 3.2.x | ✅ |
-| 3.1.x | ⚠️ Critical fixes only |
-| < 3.1 | ❌ |
+| 3.9.x | ✅ |
+| 3.8.x | ⚠️ Critical fixes only |
+| < 3.8 | ❌ |
 
 ## Reporting a Vulnerability
 
@@ -35,6 +35,11 @@ Hephaestus masks sensitive values in logs. Keys matching words in `secrets` conf
 ### `eval()` usage
 
 The engine is loaded into `collectionVariables` as a string and executed via `eval()`. This is intentional and required by the Postman sandbox architecture.
+
+**Integrity & distribution (v3.8+):**
+
+- The shipped template collection is **self-contained** — the engine is embedded at build time (`npm run build:emit`), so a fresh import runs **offline** with no network fetch. `🔧 engine-update` is only needed to *upgrade* the engine.
+- When `🔧 engine-update` does fetch from GitHub, the downloaded code is verified against `engine/checksums.json` (**SHA-256**, computed in-sandbox via `CryptoJS`). A hash mismatch aborts the update and the code is **not** stored. This guards against corrupted/truncated downloads and casual tampering. Note: it is *not* a defense against an attacker who fully controls the source repository — release signing is planned.
 
 **Recommendations:**
 - Only load the engine from the **official repository** (`bogdanov-igor/hephaestus-postman-framework`)

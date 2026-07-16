@@ -1,17 +1,18 @@
 #!/usr/bin/env node
 /**
- * Hephaestus — Newman Run Summary  v3.7.0
+ * Hephaestus — Newman Run Summary  v3.9.0
  *
  * Generates a rich human-readable summary from a Newman JSON results file.
  * Shows overall stats, per-folder breakdown, slowest endpoints, and
  * most-failed assertions.
  *
  * Usage:
- *   node scripts/summary.js <results.json> [--md] [--no-color]
+ *   node scripts/summary.js <results.json> [--md] [--no-color] [--sla=<ms>]
  *
  * Options:
  *   --md        Output Markdown instead of console table
  *   --no-color  Disable terminal colors
+ *   --sla=<ms>  SLA threshold — fails (exit 1) if response-time p95 exceeds <ms>
  */
 
 'use strict';
@@ -25,9 +26,15 @@ const args      = process.argv.slice(2);
 const inputFile = args.find(function(a) { return !a.startsWith('-'); });
 const mdMode    = args.includes('--md');
 const noColor   = args.includes('--no-color') || mdMode;
+const slaArg    = args.find(function(a) { return a.indexOf('--sla=') === 0; });
+const slaMs     = slaArg ? parseInt(slaArg.slice(6), 10) : null;
+const slaOn     = typeof slaMs === 'number' && !isNaN(slaMs) && slaMs > 0;
+if (slaArg && !slaOn) {
+    console.error('⚠️  Invalid --sla value "' + slaArg.slice(6) + '" — SLA gate disabled (expected a positive number of ms).');
+}
 
 if (!inputFile) {
-    console.error('Usage: node scripts/summary.js <results.json> [--md] [--no-color]');
+    console.error('Usage: node scripts/summary.js <results.json> [--md] [--no-color] [--sla=<ms>]');
     process.exit(1);
 }
 
@@ -101,6 +108,35 @@ requests.forEach(function(r) {
 
 const slowest = requests.slice().sort(function(a, b) { return b.time - a.time; }).slice(0, 5);
 
+// ─── Response-time percentiles + SLA ──────────────────────────────────────────
+
+const times = requests
+    .map(function(r) { return r.time; })
+    // exclude 0 (failed / no-response executions) so they don't deflate percentiles
+    .filter(function(t) { return typeof t === 'number' && t > 0; })
+    .sort(function(a, b) { return a - b; });
+
+function percentile(sorted, p) {
+    if (!sorted.length) return 0;
+    const idx = Math.min(sorted.length - 1, Math.max(0, Math.ceil((p / 100) * sorted.length) - 1));
+    return sorted[idx];
+}
+
+const pct = {
+    min: times.length ? times[0] : 0,
+    p50: percentile(times, 50),
+    p90: percentile(times, 90),
+    p95: percentile(times, 95),
+    p99: percentile(times, 99),
+    max: times.length ? times[times.length - 1] : 0,
+    avg: times.length ? Math.round(times.reduce(function(s, t) { return s + t; }, 0) / times.length) : 0
+};
+
+const slaBreaches = slaOn
+    ? requests.filter(function(r) { return r.time > slaMs; }).sort(function(a, b) { return b.time - a.time; })
+    : [];
+const slaFailed = slaOn && pct.p95 > slaMs;
+
 // ─── Most-failed assertions ───────────────────────────────────────────────────
 
 const failMap = {};
@@ -130,6 +166,10 @@ const collectionName = colInfo.name || path.basename(inputFile, '.json');
 const envName        = data.environment && data.environment.name || '—';
 
 // ─── Markdown output ──────────────────────────────────────────────────────────
+
+// Failure gate: assertion failures, request failures, or an SLA p95 breach.
+// Computed before the mdMode branch so Markdown output propagates it too.
+const exitCode = failedAsserts > 0 || failedReqs > 0 || slaFailed ? 1 : 0;
 
 if (mdMode) {
     const now = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
@@ -172,6 +212,25 @@ if (mdMode) {
         lines.push('');
     }
 
+    if (times.length > 0) {
+        lines.push('## Response Times');
+        lines.push('');
+        lines.push('| min | p50 | p90 | p95 | p99 | max | avg |');
+        lines.push('|---|---|---|---|---|---|---|');
+        lines.push('| ' + [pct.min, pct.p50, pct.p90, pct.p95, pct.p99, pct.max, pct.avg].map(function(v) { return v + ' ms'; }).join(' | ') + ' |');
+        lines.push('');
+        if (slaOn) {
+            lines.push('**SLA ' + slaMs + ' ms** — p95 = ' + pct.p95 + ' ms — ' + (slaFailed ? '❌ breached' : '✅ ok'));
+            if (slaBreaches.length > 0) {
+                lines.push('');
+                lines.push('| Over-SLA request | Time |');
+                lines.push('|---|---|');
+                slaBreaches.slice(0, 10).forEach(function(r) { lines.push('| ' + r.name + ' | ' + r.time + ' ms |'); });
+            }
+            lines.push('');
+        }
+    }
+
     if (topFailed.length > 0) {
         lines.push('## Most Failed Assertions');
         lines.push('');
@@ -184,7 +243,7 @@ if (mdMode) {
     }
 
     process.stdout.write(lines.join('\n') + '\n');
-    process.exit(0);
+    process.exit(exitCode);
 }
 
 // ─── Console output ───────────────────────────────────────────────────────────
@@ -275,10 +334,31 @@ if (topFailed.length > 0) {
     console.log('');
 }
 
-const exitCode = failedAsserts > 0 || failedReqs > 0 ? 1 : 0;
+// Response times + SLA
+if (times.length > 0) {
+    console.log(c.bold('  ⑤ Response Times'));
+    console.log('  ' + DIM);
+    console.log(
+        '  min ' + pct.min + '   p50 ' + pct.p50 + '   p90 ' + pct.p90
+        + '   p95 ' + c.bold(String(pct.p95)) + '   p99 ' + pct.p99 + '   max ' + pct.max + c.dim('  (ms)')
+    );
+    if (slaOn) {
+        const slaLine = 'SLA ' + slaMs + ' ms  →  p95 ' + pct.p95 + ' ms  ' + (slaFailed ? '❌ BREACHED' : '✅ ok');
+        console.log('  ' + (slaFailed ? c.red(slaLine) : c.green(slaLine)));
+        slaBreaches.slice(0, 5).forEach(function(r) {
+            console.log('  ' + c.red('    ⚠ ' + r.name.slice(0, 40) + '  ' + r.time + ' ms'));
+        });
+    }
+    console.log('');
+}
+
 console.log(exitCode === 0
     ? c.green('  ✅ All tests passed!')
-    : c.red('  ❌ ' + failedAsserts + ' assertion(s) failed')
+    : c.red('  ❌ ' + [
+        failedAsserts > 0 ? failedAsserts + ' assertion(s) failed' : '',
+        failedReqs > 0    ? failedReqs + ' request(s) failed'      : '',
+        slaFailed         ? 'SLA breached (p95 ' + pct.p95 + ' > ' + slaMs + ' ms)' : ''
+    ].filter(Boolean).join(', '))
 );
 console.log('');
 

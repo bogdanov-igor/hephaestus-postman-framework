@@ -1,7 +1,7 @@
 /**
  * Hephaestus Plugin — Microsoft Teams Notifier
  *
- * Отправляет Adaptive Card в Teams-канал через Incoming Webhook когда:
+ * Отправляет MessageCard в Teams-канал через Incoming Webhook когда:
  *   - HTTP-статус 5xx
  *   - Есть провалившиеся assertions
  *

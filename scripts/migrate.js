@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Hephaestus Migration Assistant  v3.3.0
+ * Hephaestus Migration Assistant  v3.9.0
  *
  * Сканирует Postman collection JSON и сообщает статус миграции каждого
  * запроса:  migrated | partial | needs-migration | no-scripts
@@ -189,7 +189,7 @@ const counts = { migrated: 0, partial: 0, 'needs-migration': 0, 'no-scripts': 0 
 results.forEach(r => counts[r.status]++);
 
 console.log('\n╔══════════════════════════════════════════════════════════════╗');
-console.log('║  🔥 Hephaestus Migration Assistant  v3.3.0                  ║');
+console.log('║  🔥 Hephaestus Migration Assistant  v3.9.0                  ║');
 console.log('╠══════════════════════════════════════════════════════════════╣');
 console.log('║  Collection: ' + colName.padEnd(48) + '║');
 console.log('║  Requests:   ' + String(results.length).padEnd(48) + '║');

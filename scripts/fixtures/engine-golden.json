@@ -1,0 +1,782 @@
+{
+  "tests": [
+    {
+      "item": "auth-bearer",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "auth-bearer",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "auth-bearer",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "auth-bearer",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "auth-bearer",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "auth-bearer",
+      "name": "🔬 eq \"Bearer TESTTOKEN\" [authorization]",
+      "ok": true
+    },
+    {
+      "item": "auth-bearer",
+      "name": "🔬 exists [authorization]",
+      "ok": true
+    },
+    {
+      "item": "auth-bearer",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "auth-bearer",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
+      "item": "headers-assert",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "headers-assert",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "headers-assert",
+      "name": "📨 Header \"X-Version\" = \"v2\"",
+      "ok": true
+    },
+    {
+      "item": "headers-assert",
+      "name": "📨 Header отсутствует: X-Absent",
+      "ok": true
+    },
+    {
+      "item": "headers-assert",
+      "name": "📨 Header существует: X-Request-Id",
+      "ok": true
+    },
+    {
+      "item": "headers-assert",
+      "name": "📨 Header существует: X-Version",
+      "ok": true
+    },
+    {
+      "item": "headers-assert",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "headers-assert",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "headers-assert",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "headers-assert",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "headers-assert",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts",
+      "name": "📊 assertOrder[items] by \"id\" asc — ✅",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts",
+      "name": "🔑 assertUnique[items].by(\"id\") — ✅",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts",
+      "name": "🔢 assertEach[items]: 3 эл. × 2 правил — ✅ все прошли",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts",
+      "name": "🧩 shape \"items.0.id\": number",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts",
+      "name": "🧩 shape \"items.0.kind\": string",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts",
+      "name": "🧩 shape \"items.0.price\": number",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts",
+      "name": "🧩 shape \"items\": array",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions",
+      "name": "💾 Сохранено: 'savedId' ← data.id",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions",
+      "name": "📏 Кол-во 'tags': 2 / 2 ✅",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions",
+      "name": "🔎 Найдено: 'data.id' (data.id)",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions",
+      "name": "🔎 Найдено: 'data.name' (data.name)",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions",
+      "name": "🔬 > 0 [data.id]",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions",
+      "name": "🔬 >= 2 [count]",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions",
+      "name": "🔬 eq \"active\" [data.status]",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions",
+      "name": "🔬 eq \"Alice\" [data.name]",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions",
+      "name": "🔬 eq 42 [data.id]",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions",
+      "name": "🔬 exists [count]",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions",
+      "name": "🔬 exists [data.id]",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions",
+      "name": "🔬 exists [data.name]",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions",
+      "name": "🔬 exists [data.status]",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
+      "item": "schema-validate",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "schema-validate",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "schema-validate",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "schema-validate",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "schema-validate",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "schema-validate",
+      "name": "🔬 Schema: ✅ валидна",
+      "ok": true
+    },
+    {
+      "item": "schema-validate",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "schema-validate",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🛡️ Заголовок безопасности: content-security-policy",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🛡️ Заголовок безопасности: strict-transport-security",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🛡️ Заголовок безопасности: x-content-type-options",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🛡️ Заголовок безопасности: x-frame-options",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🛡️ Нет раскрытия сервера: server",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🛡️ Нет раскрытия сервера: x-aspnet-version",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🛡️ Нет раскрытия сервера: x-powered-by",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🛡️ Нет утечек отладки в теле ответа",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🛡️ Заголовок безопасности: content-security-policy",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🛡️ Заголовок безопасности: strict-transport-security",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🛡️ Заголовок безопасности: x-content-type-options",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🛡️ Заголовок безопасности: x-frame-options",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🛡️ Нет раскрытия сервера: server",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🛡️ Нет раскрытия сервера: x-aspnet-version",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🛡️ Нет раскрытия сервера: x-powered-by",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🛡️ Нет утечек отладки в теле ответа",
+      "ok": true
+    },
+    {
+      "item": "security-audit",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
+      "item": "snapshot-record",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "snapshot-record",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "snapshot-record",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "snapshot-record",
+      "name": "📸 Snapshot: 🔴 baseline перезаписан (record)",
+      "ok": true
+    },
+    {
+      "item": "snapshot-record",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "snapshot-record",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "snapshot-record",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "snapshot-record",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
+      "item": "snapshot-save",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "snapshot-save",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "snapshot-save",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "snapshot-save",
+      "name": "📸 Snapshot: ✅ baseline сохранён",
+      "ok": true
+    },
+    {
+      "item": "snapshot-save",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "snapshot-save",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "snapshot-save",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "snapshot-save",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
+      "item": "xml-extract",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "xml-extract",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "xml-extract",
+      "name": "💾 Сохранено: 'xmlToken' ← root.token",
+      "ok": true
+    },
+    {
+      "item": "xml-extract",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "xml-extract",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "xml-extract",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "xml-extract",
+      "name": "🔎 Найдено: 'root.token' (root.token)",
+      "ok": true
+    },
+    {
+      "item": "xml-extract",
+      "name": "🧾 Content-Type: application/xml",
+      "ok": true
+    },
+    {
+      "item": "xml-extract",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    }
+  ],
+  "ci": {
+    "auth-bearer": {
+      "request": "auth-bearer",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [
+        "authorization"
+      ],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "headers-assert": {
+      "request": "headers-assert",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [
+        {
+          "name": "X-Request-Id",
+          "ok": true
+        },
+        {
+          "name": "X-Version",
+          "ok": true
+        },
+        {
+          "name": "X-Absent",
+          "ok": true
+        }
+      ],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "list-array-asserts": {
+      "request": "list-array-asserts",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [
+        "assertEach:items"
+      ],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "obj-assertions": {
+      "request": "obj-assertions",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [
+        "data.id",
+        "data.name",
+        "data.id",
+        "data.name",
+        "data.status",
+        "count"
+      ],
+      "saved": [
+        "savedId"
+      ],
+      "counts": [
+        {
+          "alias": "tags",
+          "length": 2,
+          "expected": 2,
+          "ok": true
+        }
+      ],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "schema-validate": {
+      "request": "schema-validate",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": {
+        "valid": true
+      },
+      "security": null,
+      "errors": []
+    },
+    "security-audit": {
+      "request": "security-audit",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": {
+        "findings": 0,
+        "ok": true
+      },
+      "errors": []
+    },
+    "security-audit-malformed": {
+      "request": "security-audit-malformed",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": {
+        "findings": 0,
+        "ok": true
+      },
+      "errors": []
+    },
+    "snapshot-record": {
+      "request": "snapshot-record",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": {
+        "status": "recorded",
+        "key": "EngineTest::snapshot-record::200::json"
+      },
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "snapshot-save": {
+      "request": "snapshot-save",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": {
+        "status": "saved",
+        "key": "EngineTest::snapshot-save::200::json"
+      },
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "xml-extract": {
+      "request": "xml-extract",
+      "method": "GET",
+      "status": 200,
+      "format": "xml",
+      "found": [
+        "root.token"
+      ],
+      "saved": [
+        "xmlToken"
+      ],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    }
+  }
+}

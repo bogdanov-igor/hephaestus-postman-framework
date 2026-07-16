@@ -6,7 +6,7 @@
 
 **Модульный фреймворк автоматизации API-тестирования для Postman**
 
-[![Version](https://img.shields.io/badge/version-3.8.0-blue?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-3.9.0-blue?style=flat-square)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 [![Postman](https://img.shields.io/badge/Postman-v10+-orange?style=flat-square&logo=postman&logoColor=white)](https://postman.com)
 [![Apidog](https://img.shields.io/badge/Apidog-compatible-9cf?style=flat-square)](https://apidog.com)
@@ -43,7 +43,7 @@
 | 🔄 **Pipeline-архитектура** | Orchestrator управляет цепочкой модулей через единый объект `ctx` |
 | ⚙️ **Defaults + Override** | Конфиг на уровне коллекции + переопределение на уровне метода |
 | 📸 **Snapshot-регрессия** | Автоматический baseline, strict/non-strict режимы, diff-preview в логе |
-| 🔐 **Auth-плагин** | `none`, `basic`, `bearer`, `headers`, `variables` — настраивается per-request |
+| 🔐 **Auth-плагин** | `none`, `basic`, `bearer`, `headers`, `variables`, `oauth2cc` — настраивается per-request |
 | 🔍 **Extract API** | `ctx.api.get()`, `.find()`, `.all()`, `.count()`, `.save()` — JSON и XML |
 | ✅ **Assertions** | `keysToFind` (soft-режим), `varsToSave`, `keysToCount`, `maxResponseTime` |
 | 📨 **Header assertions** | `assertHeaders` — проверка наличия, значения, точного совпадения и отсутствия заголовков |
@@ -203,7 +203,7 @@ eval(pm.collectionVariables.get("hephaestus.v3.post"));
 | `baseUrl` | string | `""` | Базовый URL API — протокол можно не указывать, подставится автоматически |
 | `defaultProtocol` | string | `"https"` | Протокол по умолчанию, если в `baseUrl` не указан. `"http"` — выдаст предупреждение |
 | `auth.enabled` | boolean | `false` | Включить авторизацию |
-| `auth.type` | string | `"none"` | Тип: `none`, `basic`, `bearer`, `headers`, `variables` |
+| `auth.type` | string | `"none"` | Тип: `none`, `basic`, `bearer`, `headers`, `variables`, `oauth2cc` (см. [OAuth2](#-oauth2-client_credentials-v34)) |
 | `contentType` | string | `"json"` | Ожидаемый формат ответа: `json`, `xml`, `text` |
 | `expectEmpty` | boolean | `false` | Ожидать пустой ответ |
 | `expectedStatus` | number \| number[] | `[200,201,202]` | Ожидаемые HTTP-статусы. Для негативного тестирования: `400`, `[404, 422]` |
@@ -464,6 +464,31 @@ const override = {
 
 ---
 
+## 🛡️ Аудит безопасности
+
+Пассивные проверки безопасности ответа (opt-in) — ловит отсутствие защитных
+заголовков, раскрытие версии сервера, утечки стектрейсов/отладки в теле и
+небезопасный CORS. Включается per-request или глобально в `hephaestus.defaults`:
+
+```javascript
+const override = {
+    securityAudit: {
+        enabled: true,
+        // у всех списков есть разумные дефолты — переопределяй по необходимости:
+        requireHeaders: ["strict-transport-security", "content-security-policy",
+                         "x-frame-options", "x-content-type-options"],
+        forbidHeaders:  ["server", "x-powered-by"],          // раскрытие версии
+        forbidBodyPatterns: ["SQLSTATE", "stack trace", "Traceback"],
+        checkCors: true,   // wildcard Access-Control-Allow-Origin + credentials
+        soft: false        // findings как предупреждения вместо провалов
+    }
+};
+```
+
+Каждая проверка — отдельный `🛡️` тест, поэтому нарушение политики заголовков валит прогон в CI.
+
+---
+
 ## 📸 Snapshot-регрессия
 
 Snapshot хранится в `hephaestus.snapshots` (collectionVariables) как JSON-объект.
@@ -482,6 +507,15 @@ Snapshot хранится в `hephaestus.snapshots` (collectionVariables) как
 | Просмотр | `🛠️ Hephaestus System → 📋 snapshot-view` |
 | Очистка | `🛠️ Hephaestus System → 🗑️ snapshot-clear` |
 | Фильтр | Переменная `hephaestus.snapshot.clearFilter` |
+
+**Перезапись baseline** — когда API изменился легитимно, обнови устаревший снапшот за один прогон вместо очистки:
+
+```javascript
+const override = {
+    snapshot: { enabled: true, record: true }   // игнорирует старый baseline, сохраняет текущий ответ
+    // top-level `snapshotRecord: true` тоже работает. После — убери флаг.
+};
+```
 
 ---
 
@@ -621,7 +655,14 @@ npm run summary -- results.json           # консоль
 npm run summary -- results.json --md      # Markdown
 ```
 
-Показывает: общий pass rate, per-folder таблицу, топ-5 медленных, топ-5 часто-падающих assertions.
+Показывает: общий pass rate, per-folder таблицу, самые медленные, часто-падающие assertions и **перцентили времени ответа** (p50 / p90 / p95 / p99).
+
+**SLA-гейт** — валит прогон, если p95 превышает порог (удобно в CI):
+
+```bash
+npm run summary -- results.json --sla=500        # или: hephaestus summary results.json --sla=500
+# exit 1, если p95 > 500 мс, со списком запросов сверх SLA
+```
 
 ## 🧙 Init Wizard (v3.7)
 
@@ -755,6 +796,34 @@ node scripts/generate-report.js results.json report.html
 ```
 
 Отчёт содержит: SVG-датчик pass rate, временные бары по запросам, раскрываемые assertions, фильтр и поиск. Полностью автономный HTML-файл.
+
+---
+
+## ⚒️ CLI — команда `hephaestus`
+
+Все Node-инструменты доступны одной командой — без клонирования репозитория:
+
+```bash
+# через npx (без установки)
+npx hephaestus-postman-framework report results.json
+
+# или после установки пакета
+npm i -D hephaestus-postman-framework
+npx hephaestus report results.json
+```
+
+| Команда | Что делает |
+|---|---|
+| `hephaestus summary <results.json>` | Сводка прогона Newman (консоль/Markdown) |
+| `hephaestus compare <before> <after>` | Дифф двух прогонов — CI-гейт регрессий (exit 1) |
+| `hephaestus report <results.json> [out.html]` | Самодостаточный HTML-отчёт |
+| `hephaestus junit <results.json> [out.xml]` | Newman JSON → JUnit XML (`-` читает stdin) |
+| `hephaestus migrate <collection.json>` | Классификация состояния миграции коллекции |
+| `hephaestus docs <collection.json>` | Генерация API-документации из коллекции |
+| `hephaestus init` | Интерактивный мастер конфигурации |
+| `hephaestus watch -c <collection.json>` | Перезапуск Newman при изменении файлов |
+
+Exit-коды пробрасываются, поэтому `compare`/`summary` работают как CI-гейты. Полный список — `hephaestus --help`. Те же инструменты работают и как `npm run <name>` внутри репозитория.
 
 ---
 

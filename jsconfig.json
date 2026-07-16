@@ -1,0 +1,12 @@
+{
+  "//": "IntelliSense for the engine source (ES modules). No TypeScript is authored — checkJs is off, so JSDoc @typedefs power autocomplete/hover without flooding the editor with type errors. VS Code uses its built-in JS language service; no dependency is required.",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "checkJs": false,
+    "allowJs": true,
+    "noEmit": true
+  },
+  "include": ["engine/src/**/*.js"]
+}

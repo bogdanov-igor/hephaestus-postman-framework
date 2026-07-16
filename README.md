@@ -6,7 +6,7 @@
 
 **Modular API testing automation framework for Postman**
 
-[![Version](https://img.shields.io/badge/version-3.8.0-blue?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-3.9.0-blue?style=flat-square)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 [![Postman](https://img.shields.io/badge/Postman-v10+-orange?style=flat-square&logo=postman&logoColor=white)](https://postman.com)
 [![Apidog](https://img.shields.io/badge/Apidog-compatible-9cf?style=flat-square)](https://apidog.com)
@@ -43,7 +43,7 @@ Each request in a collection contains only a minimal `override` config. All logi
 | 🔄 **Pipeline architecture** | Orchestrator drives a module chain through a shared `ctx` object |
 | ⚙️ **Defaults + Override** | Collection-level config merged with per-request overrides |
 | 📸 **Snapshot regression** | Automatic baseline, strict/non-strict modes, checkPaths/ignorePaths, diff preview |
-| 🔐 **Auth plugin** | `none`, `basic`, `bearer`, `headers`, `variables` — configurable per request |
+| 🔐 **Auth plugin** | `none`, `basic`, `bearer`, `headers`, `variables`, `oauth2cc` — configurable per request |
 | 🔍 **Extract API** | `ctx.api.get()`, `.find()`, `.all()`, `.count()`, `.save()` — JSON and XML |
 | ✅ **Assertions** | `keysToFind` (with `soft` mode), `varsToSave`, `keysToCount`, `maxResponseTime` |
 | 📨 **Header assertions** | `assertHeaders` — check existence, value, exact match, absence of response headers |
@@ -203,7 +203,7 @@ eval(pm.collectionVariables.get("hephaestus.v3.post"));
 | `baseUrl` | string | `""` | API base URL — protocol can be omitted, it will be prepended |
 | `defaultProtocol` | string | `"https"` | Default protocol when `baseUrl` has none. `"http"` triggers a warning |
 | `auth.enabled` | boolean | `false` | Enable authentication |
-| `auth.type` | string | `"none"` | Auth type: `none`, `basic`, `bearer`, `headers`, `variables` |
+| `auth.type` | string | `"none"` | Auth type: `none`, `basic`, `bearer`, `headers`, `variables`, `oauth2cc` (see [OAuth2](#-oauth2-client_credentials-v34)) |
 | `contentType` | string | `"json"` | Expected response format: `json`, `xml`, `text` |
 | `expectEmpty` | boolean | `false` | Expect an empty response body |
 | `expectedStatus` | number \| number[] | `[200,201,202]` | Expected HTTP status code(s). Use for negative testing: `400`, `[404, 422]` |
@@ -413,6 +413,31 @@ assertHeaders: [
 
 ---
 
+## 🛡️ Security Audit
+
+Opt-in passive security checks on the response — flags missing protective
+headers, server version disclosure, debug/stack-trace leaks in the body, and
+insecure CORS. Enable per request or globally in `hephaestus.defaults`:
+
+```javascript
+const override = {
+    securityAudit: {
+        enabled: true,
+        // every list has sane defaults — override only what you need:
+        requireHeaders: ["strict-transport-security", "content-security-policy",
+                         "x-frame-options", "x-content-type-options"],
+        forbidHeaders:  ["server", "x-powered-by"],          // version disclosure
+        forbidBodyPatterns: ["SQLSTATE", "stack trace", "Traceback"],
+        checkCors: true,   // wildcard Access-Control-Allow-Origin + credentials
+        soft: false        // findings as warnings instead of failures
+    }
+};
+```
+
+Each check emits a `🛡️` test, so a failing header policy fails the run in CI.
+
+---
+
 ## 🔌 Plugin System
 
 Extend the engine without forking. Plugins are JS scripts stored in `collectionVariables` and executed after all built-in modules.
@@ -525,6 +550,15 @@ Snapshots are stored in `hephaestus.snapshots` (collectionVariables) as a JSON o
 | View | `🛠️ Hephaestus System → 📋 snapshot-view` |
 | Clear | `🛠️ Hephaestus System → 🗑️ snapshot-clear` |
 | Filter | `hephaestus.snapshot.clearFilter` collection variable |
+
+**Re-record a baseline** — when the API legitimately changed, overwrite a stale snapshot in one run instead of clearing it:
+
+```javascript
+const override = {
+    snapshot: { enabled: true, record: true }   // ignore the old baseline, save the current response
+    // top-level `snapshotRecord: true` also works. Remove the flag afterwards.
+};
+```
 
 ---
 
@@ -697,7 +731,14 @@ npm run summary -- results.json
 npm run summary -- results.json --md > summary.md
 ```
 
-Shows: overall pass rate, per-folder breakdown table, top-5 slowest endpoints, top-5 most-failed assertions.
+Shows: overall pass rate, per-folder breakdown, slowest endpoints, most-failed assertions, and **response-time percentiles** (p50 / p90 / p95 / p99).
+
+**SLA gate** — fail the run when p95 exceeds a threshold (ideal for CI):
+
+```bash
+npm run summary -- results.json --sla=500        # or: hephaestus summary results.json --sla=500
+# exits 1 if p95 > 500 ms and lists the over-SLA requests
+```
 
 ## 🧙 Interactive Init Wizard (v3.7)
 
@@ -897,6 +938,34 @@ const sent     = ctx.request.bodyParsed;
 const received = ctx.api.body;
 pm.test("Echo: id matches", () => pm.expect(received.id).to.eql(sent.id));
 ```
+
+---
+
+## ⚒️ CLI — the `hephaestus` command
+
+All Node tools are also available through a single command — no repo clone needed:
+
+```bash
+# via npx (no install)
+npx hephaestus-postman-framework report results.json
+
+# or after installing the package
+npm i -D hephaestus-postman-framework
+npx hephaestus report results.json
+```
+
+| Command | Does |
+|---|---|
+| `hephaestus summary <results.json>` | Console/Markdown summary of a Newman run |
+| `hephaestus compare <before> <after>` | Diff two runs — CI regression gate (exit 1 on regression) |
+| `hephaestus report <results.json> [out.html]` | Self-contained HTML report |
+| `hephaestus junit <results.json> [out.xml]` | Newman JSON → JUnit XML (`-` reads stdin) |
+| `hephaestus migrate <collection.json>` | Classify a collection's migration state |
+| `hephaestus docs <collection.json>` | Generate API docs from a collection |
+| `hephaestus init` | Interactive config/environment wizard |
+| `hephaestus watch -c <collection.json>` | Re-run Newman on file changes |
+
+Exit codes propagate, so `compare`/`summary` work as CI gates. Run `hephaestus --help` for the full list. The same tools also work as `npm run <name>` inside the repo.
 
 ---
 

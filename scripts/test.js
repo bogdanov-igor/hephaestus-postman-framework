@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Hephaestus — Tool Suite Tests  v3.8.0
+ * Hephaestus — Tool Suite Tests  v3.9.0
  *
  * Validates all tooling scripts and project consistency.
  * Run: npm test
@@ -164,14 +164,14 @@ const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'))
 
 test('package.json version matches engine pre-request VERSION', function() {
     const pre = fs.readFileSync(path.join(ROOT, 'engine/pre-request.js'), 'utf8');
-    const match = pre.match(/const VERSION = '([^']+)'/);
+    const match = pre.match(/(?:const|let|var)\s+VERSION\s*=\s*["']([^"']+)["']/);
     assert(match, 'VERSION not found in pre-request.js');
     assert(match[1] === pkg.version, 'pre-request VERSION ' + match[1] + ' !== package.json ' + pkg.version);
 });
 
 test('package.json version matches engine post-request VERSION', function() {
     const post = fs.readFileSync(path.join(ROOT, 'engine/post-request.js'), 'utf8');
-    const match = post.match(/const VERSION = '([^']+)'/);
+    const match = post.match(/(?:const|let|var)\s+VERSION\s*=\s*["']([^"']+)["']/);
     assert(match, 'VERSION not found in post-request.js');
     assert(match[1] === pkg.version, 'post-request VERSION ' + match[1] + ' !== package.json ' + pkg.version);
 });
@@ -291,7 +291,11 @@ console.log('\n⑧ summary.js');
 const summaryMdOut = path.join(TMP, 'summary.md');
 
 test('--md flag generates Markdown summary', function() {
-    run(NODE + ' "' + path.join(ROOT, 'scripts/summary.js') + '" "' + newmanFixtureFile + '" --md > "' + summaryMdOut + '"', { shell: true });
+    // The fixture has a failing assertion, so --md now correctly exits 1 (the
+    // markdown is still written before exit) — tolerate the non-zero exit here.
+    try {
+        run(NODE + ' "' + path.join(ROOT, 'scripts/summary.js') + '" "' + newmanFixtureFile + '" --md > "' + summaryMdOut + '"', { shell: true });
+    } catch (e) { /* expected: exit 1 due to fixture failures */ }
     assert(fs.existsSync(summaryMdOut), 'summary.md not created');
 });
 
@@ -303,6 +307,35 @@ test('summary Markdown contains collection name', function() {
 test('summary Markdown contains Folders section', function() {
     const md = fs.readFileSync(summaryMdOut, 'utf8');
     assertContains(md, '## Folders', 'missing Folders section');
+});
+
+test('summary Markdown includes Response Times percentiles (p95)', function() {
+    const md = fs.readFileSync(summaryMdOut, 'utf8');
+    assertContains(md, '## Response Times', 'missing Response Times section');
+    assertContains(md, 'p95', 'missing p95 percentile');
+});
+
+const slaFixtureFile = path.join(TMP, 'sla-pass.json');
+fs.writeFileSync(slaFixtureFile, JSON.stringify({
+    collection: { info: { name: 'Perf' } },
+    run: {
+        stats: { requests: { total: 1, failed: 0 }, assertions: { total: 1, failed: 0 } },
+        timings: { started: 0, completed: 300 },
+        executions: [{ item: { name: 'GET Slow', request: { method: 'GET' } }, response: { code: 200, responseTime: 300, responseSize: 128 }, assertions: [{ assertion: 'ok', skipped: false, error: null }] }],
+        failures: []
+    }
+}));
+
+test('summary --sla gates on p95 breach (exit 1)', function() {
+    let code = 0;
+    try { run(NODE + ' "' + path.join(ROOT, 'scripts/summary.js') + '" "' + slaFixtureFile + '" --sla=100 --no-color'); }
+    catch(e) { code = e.status || 1; }
+    assert(code === 1, 'SLA breach (p95 300 > 100) should exit 1, got ' + code);
+});
+
+test('summary --sla passes when p95 under threshold (exit 0)', function() {
+    const out = run(NODE + ' "' + path.join(ROOT, 'scripts/summary.js') + '" "' + slaFixtureFile + '" --sla=500 --no-color');
+    assertContains(out, '✅', 'expected all-pass with SLA ok');
 });
 
 // ─── 9. compare.js ───────────────────────────────────────────────────────────
@@ -399,6 +432,49 @@ test('HTML has no external <script> or <link rel=stylesheet>', function() {
     const linkHref   = (html.match(/<link\b[^>]+href="https?:\/\//g) || []);
     assert(scriptSrc.length === 0, 'found external <script src>: ' + scriptSrc.join(', '));
     assert(linkHref.length  === 0, 'found external <link href>: '  + linkHref.join(', '));
+});
+
+// ─── 11. hephaestus CLI ───────────────────────────────────────────────────────
+
+console.log('\n⑪ hephaestus CLI (bin/hephaestus.js)');
+
+const CLI = path.join(ROOT, 'bin/hephaestus.js');
+
+test('--version prints package version', function() {
+    assertContains(run(NODE + ' "' + CLI + '" --version'), pkg.version, 'version');
+});
+
+test('--help lists all user commands', function() {
+    const out = run(NODE + ' "' + CLI + '" --help');
+    ['summary', 'compare', 'report', 'junit', 'migrate', 'docs', 'init', 'watch'].forEach(function(c) {
+        assertContains(out, c, 'help command ' + c);
+    });
+});
+
+test('unknown command exits non-zero', function() {
+    let code = 0;
+    try { run(NODE + ' "' + CLI + '" frobnicate'); } catch(e) { code = e.status || 1; }
+    assert(code !== 0, 'unknown command should exit non-zero');
+});
+
+test('report subcommand delegates → HTML file', function() {
+    const outHtml = path.join(TMP, 'cli-report.html');
+    run(NODE + ' "' + CLI + '" report "' + newmanFixtureFile + '" "' + outHtml + '"');
+    assert(fs.existsSync(outHtml), 'HTML should be created');
+    assertContains(fs.readFileSync(outHtml, 'utf8'), '<html', 'report HTML');
+});
+
+test('junit subcommand delegates → JUnit XML', function() {
+    const outXml = path.join(TMP, 'cli-junit.xml');
+    run(NODE + ' "' + CLI + '" junit "' + newmanFixtureFile + '" "' + outXml + '"');
+    assert(fs.existsSync(outXml), 'XML should be created');
+    assertContains(fs.readFileSync(outXml, 'utf8'), 'testsuite', 'junit XML');
+});
+
+test('propagates sub-command exit code (summary with failures exits 1)', function() {
+    let code = 0;
+    try { run(NODE + ' "' + CLI + '" summary "' + newmanFixtureFile + '"'); } catch(e) { code = e.status || 1; }
+    assert(code === 1, 'summary should propagate exit 1 on failures, got ' + code);
 });
 
 // ─── Cleanup ─────────────────────────────────────────────────────────────────
