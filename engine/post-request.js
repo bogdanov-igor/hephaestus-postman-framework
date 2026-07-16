@@ -1071,6 +1071,20 @@
             const mode = cfg.mode || "non-strict";
             const autoSave = cfg.autoSaveMissing !== false;
             const checkPaths = cfg.checkPaths || [];
+            if (cfg.record === true || ctx2.config.snapshotRecord === true) {
+              store[key] = {
+                savedAt: (/* @__PURE__ */ new Date()).toISOString(),
+                statusCode: ctx2.response.code,
+                format: ctx2.response.format,
+                mode,
+                checkPaths,
+                data: currentData
+              };
+              this._saveStore(store, ctx2);
+              pm.test("\u{1F4F8} Snapshot: \u{1F534} baseline \u043F\u0435\u0440\u0435\u0437\u0430\u043F\u0438\u0441\u0430\u043D (record)", () => pm.expect(true).to.be.true);
+              ctx2._meta.results.snapshot = { status: "recorded", key };
+              return;
+            }
             if (!existing) {
               if (!autoSave) {
                 pm.test("\u{1F4F8} Snapshot: \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D (autoSaveMissing \u043E\u0442\u043A\u043B\u044E\u0447\u0451\u043D)", () => {

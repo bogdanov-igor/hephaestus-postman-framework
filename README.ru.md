@@ -508,6 +508,15 @@ Snapshot хранится в `hephaestus.snapshots` (collectionVariables) как
 | Очистка | `🛠️ Hephaestus System → 🗑️ snapshot-clear` |
 | Фильтр | Переменная `hephaestus.snapshot.clearFilter` |
 
+**Перезапись baseline** — когда API изменился легитимно, обнови устаревший снапшот за один прогон вместо очистки:
+
+```javascript
+const override = {
+    snapshot: { enabled: true, record: true }   // игнорирует старый baseline, сохраняет текущий ответ
+    // top-level `snapshotRecord: true` тоже работает. После — убери флаг.
+};
+```
+
 ---
 
 ## 🔄 Обновление движка

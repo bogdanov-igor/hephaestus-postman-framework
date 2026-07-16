@@ -188,6 +188,13 @@ function buildCollection(preSrc, postSrc, baseUrl) {
             event: methodScripts({}, {
                 securityAudit: { enabled: true }
             })
+        },
+        {
+            name: 'snapshot-record',
+            request: { method: 'GET', url: baseUrl + '/obj' },
+            event: methodScripts({}, {
+                snapshot: { enabled: true, mode: 'non-strict', record: true }
+            })
         }
     ];
 

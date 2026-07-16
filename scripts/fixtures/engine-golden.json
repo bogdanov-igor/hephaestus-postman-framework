@@ -386,6 +386,46 @@
       "ok": true
     },
     {
+      "item": "snapshot-record",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "snapshot-record",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "snapshot-record",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "snapshot-record",
+      "name": "📸 Snapshot: 🔴 baseline перезаписан (record)",
+      "ok": true
+    },
+    {
+      "item": "snapshot-record",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "snapshot-record",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "snapshot-record",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "snapshot-record",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
       "item": "snapshot-save",
       "name": "⚠️ URL: небезопасный протокол http",
       "ok": true
@@ -582,6 +622,22 @@
       "counts": [],
       "headers": [],
       "snapshot": null,
+      "schema": null,
+      "errors": []
+    },
+    "snapshot-record": {
+      "request": "snapshot-record",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": {
+        "status": "recorded",
+        "key": "EngineTest::snapshot-record::200::json"
+      },
       "schema": null,
       "errors": []
     },

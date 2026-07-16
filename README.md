@@ -551,6 +551,15 @@ Snapshots are stored in `hephaestus.snapshots` (collectionVariables) as a JSON o
 | Clear | `🛠️ Hephaestus System → 🗑️ snapshot-clear` |
 | Filter | `hephaestus.snapshot.clearFilter` collection variable |
 
+**Re-record a baseline** — when the API legitimately changed, overwrite a stale snapshot in one run instead of clearing it:
+
+```javascript
+const override = {
+    snapshot: { enabled: true, record: true }   // ignore the old baseline, save the current response
+    // top-level `snapshotRecord: true` also works. Remove the flag afterwards.
+};
+```
+
 ---
 
 ## 🔄 Engine Updates

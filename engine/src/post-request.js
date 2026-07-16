@@ -1144,6 +1144,25 @@ import { configMerge } from './shared/config-merge.js';
             const autoSave    = cfg.autoSaveMissing !== false;
             const checkPaths  = cfg.checkPaths || [];
 
+            // ── snapshotRecord: принудительно перезаписать baseline ────
+            // Обновляет устаревший baseline в один клик из UI: поставь
+            //   snapshot: { enabled: true, record: true }   (или top-level snapshotRecord: true)
+            // — прогони запрос — убери флаг. Игнорирует существующий снапшот.
+            if (cfg.record === true || ctx.config.snapshotRecord === true) {
+                store[key] = {
+                    savedAt:    new Date().toISOString(),
+                    statusCode: ctx.response.code,
+                    format:     ctx.response.format,
+                    mode:       mode,
+                    checkPaths: checkPaths,
+                    data:       currentData
+                };
+                this._saveStore(store, ctx);
+                pm.test('📸 Snapshot: 🔴 baseline перезаписан (record)', () => pm.expect(true).to.be.true);
+                ctx._meta.results.snapshot = { status: 'recorded', key };
+                return;
+            }
+
             // ── Нет снапшота — сохранить baseline ─────────────────────
             if (!existing) {
                 if (!autoSave) {
