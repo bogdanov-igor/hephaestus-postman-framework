@@ -195,6 +195,15 @@ function buildCollection(preSrc, postSrc, baseUrl) {
             event: methodScripts({}, {
                 snapshot: { enabled: true, mode: 'non-strict', record: true }
             })
+        },
+        {
+            // Regression: malformed securityAudit lists (strings, not arrays) must
+            // fall back to defaults, never crash the whole post-request pipeline.
+            name: 'security-audit-malformed',
+            request: { method: 'GET', url: baseUrl + '/secure' },
+            event: methodScripts({}, {
+                securityAudit: { enabled: true, requireHeaders: 'content-security-policy', forbidBodyPatterns: 'oops' }
+            })
         }
     ];
 

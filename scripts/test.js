@@ -291,7 +291,11 @@ console.log('\n⑧ summary.js');
 const summaryMdOut = path.join(TMP, 'summary.md');
 
 test('--md flag generates Markdown summary', function() {
-    run(NODE + ' "' + path.join(ROOT, 'scripts/summary.js') + '" "' + newmanFixtureFile + '" --md > "' + summaryMdOut + '"', { shell: true });
+    // The fixture has a failing assertion, so --md now correctly exits 1 (the
+    // markdown is still written before exit) — tolerate the non-zero exit here.
+    try {
+        run(NODE + ' "' + path.join(ROOT, 'scripts/summary.js') + '" "' + newmanFixtureFile + '" --md > "' + summaryMdOut + '"', { shell: true });
+    } catch (e) { /* expected: exit 1 due to fixture failures */ }
     assert(fs.existsSync(summaryMdOut), 'summary.md not created');
 });
 

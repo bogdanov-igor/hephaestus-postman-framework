@@ -1027,7 +1027,7 @@ import { configMerge } from './shared/config-merge.js';
         // если checkPaths задан — берём только эти пути
         // иначе — весь parsed с удалёнными ignorePaths
         _buildData(ctx) {
-            const cfg = ctx.config.snapshot;
+            const cfg = ctx.config.snapshot || {};
             const source = ctx.response.parsed;
             const checkPaths  = cfg.checkPaths  || [];
             const ignorePaths = cfg.ignorePaths || [];
@@ -1124,8 +1124,33 @@ import { configMerge } from './shared/config-merge.js';
         },
 
         run(ctx) {
-            const cfg = ctx.config.snapshot;
-            if (!cfg || !cfg.enabled) return;
+            const cfg = ctx.config.snapshot || {};
+            const wantRecord = cfg.record === true || ctx.config.snapshotRecord === true;
+            // record works standalone (no snapshot.enabled needed)
+            if (!cfg.enabled && !wantRecord) return;
+
+            // ── snapshotRecord: принудительно перезаписать baseline ────
+            // Обновляет устаревший baseline в один клик из UI: поставь
+            //   snapshot: { enabled: true, record: true }   (или top-level snapshotRecord: true)
+            // — прогони запрос — убери флаг. Игнорирует существующий снапшот и
+            // storage (пишет всегда в collection-vars).
+            if (wantRecord) {
+                const rkey   = this._key(ctx);
+                const rstore = this._loadStore();
+                rstore[rkey] = {
+                    savedAt:    new Date().toISOString(),
+                    statusCode: ctx.response.code,
+                    format:     ctx.response.format,
+                    mode:       cfg.mode || 'non-strict',
+                    checkPaths: cfg.checkPaths || [],
+                    data:       this._buildData(ctx)
+                };
+                this._saveStore(rstore, ctx);
+                console.warn('📸 snapshotRecord: baseline перезаписан для "' + rkey + '" — не забудь убрать флаг record (иначе регрессии не ловятся)');
+                pm.test('📸 Snapshot: 🔴 baseline перезаписан (record)', () => pm.expect(true).to.be.true);
+                ctx._meta.results.snapshot = { status: 'recorded', key: rkey };
+                return;
+            }
 
             const storage = cfg.storage || 'collection-vars';
 
@@ -1143,25 +1168,6 @@ import { configMerge } from './shared/config-merge.js';
             const mode        = cfg.mode || 'non-strict';
             const autoSave    = cfg.autoSaveMissing !== false;
             const checkPaths  = cfg.checkPaths || [];
-
-            // ── snapshotRecord: принудительно перезаписать baseline ────
-            // Обновляет устаревший baseline в один клик из UI: поставь
-            //   snapshot: { enabled: true, record: true }   (или top-level snapshotRecord: true)
-            // — прогони запрос — убери флаг. Игнорирует существующий снапшот.
-            if (cfg.record === true || ctx.config.snapshotRecord === true) {
-                store[key] = {
-                    savedAt:    new Date().toISOString(),
-                    statusCode: ctx.response.code,
-                    format:     ctx.response.format,
-                    mode:       mode,
-                    checkPaths: checkPaths,
-                    data:       currentData
-                };
-                this._saveStore(store, ctx);
-                pm.test('📸 Snapshot: 🔴 baseline перезаписан (record)', () => pm.expect(true).to.be.true);
-                ctx._meta.results.snapshot = { status: 'recorded', key };
-                return;
-            }
 
             // ── Нет снапшота — сохранить baseline ─────────────────────
             if (!existing) {
@@ -1371,9 +1377,16 @@ import { configMerge } from './shared/config-merge.js';
             const cfg = ctx.config.securityAudit;
             if (!cfg || !cfg.enabled) return;
 
-            const soft = cfg.soft === true || !!ctx.config.softFail;
+            // Security checks intentionally do NOT inherit the global softFail flag
+            // (that flag is for flaky functional assertions) — a security regression
+            // must fail the run unless securityAudit.soft is explicitly set.
+            const soft = cfg.soft === true;
             const self = this;
             const findings = [];
+
+            // Config lists may be malformed (e.g. a bare string) — fall back to
+            // defaults for anything that isn't an array so a typo can't crash the pipeline.
+            function list(v, dflt) { return Array.isArray(v) ? v : dflt; }
 
             function secTest(label, ok, detail) {
                 const name = (soft ? '🛡️ [soft] ' : '🛡️ ') + label;
@@ -1388,7 +1401,7 @@ import { configMerge } from './shared/config-merge.js';
             }
 
             // 1. Обязательные защитные заголовки присутствуют
-            (cfg.requireHeaders || self._defaults.requireHeaders).forEach(function(h) {
+            list(cfg.requireHeaders, self._defaults.requireHeaders).forEach(function(h) {
                 const v = self._headerVal(h);
                 const present = typeof v === 'string' && v.length > 0;
                 if (!present) findings.push({ type: 'missing-header', name: h });
@@ -1396,7 +1409,7 @@ import { configMerge } from './shared/config-merge.js';
             });
 
             // 2. Заголовки раскрытия сервера отсутствуют
-            (cfg.forbidHeaders || self._defaults.forbidHeaders).forEach(function(h) {
+            list(cfg.forbidHeaders, self._defaults.forbidHeaders).forEach(function(h) {
                 const v = self._headerVal(h);
                 const disclosed = typeof v === 'string' && v.length > 0;
                 if (disclosed) findings.push({ type: 'disclosure-header', name: h, value: v });
@@ -1404,7 +1417,7 @@ import { configMerge } from './shared/config-merge.js';
             });
 
             // 3. Нет отладочной информации / стектрейсов в теле
-            const patterns = cfg.forbidBodyPatterns || self._defaults.forbidBodyPatterns;
+            const patterns = list(cfg.forbidBodyPatterns, self._defaults.forbidBodyPatterns);
             const raw = (ctx.response && ctx.response.raw) ? String(ctx.response.raw) : '';
             if (raw && patterns && patterns.length) {
                 const hit = patterns.filter(function(p) { return raw.indexOf(p) !== -1; });
@@ -1494,7 +1507,7 @@ import { configMerge } from './shared/config-merge.js';
             }
             if (results.snapshot) {
                 const s    = results.snapshot;
-                const icon = s.status === 'match' ? '✅' : s.status === 'saved' ? '🆕' : s.status === 'diff' ? '❌' : '⚠️';
+                const icon = s.status === 'match' ? '✅' : s.status === 'saved' ? '🆕' : s.status === 'recorded' ? '🔴' : s.status === 'diff' ? '❌' : '⚠️';
                 const det  = s.status === 'diff' ? ' (' + (s.diff || []).length + ' различий)' : s.status === 'saved' ? ' baseline' : '';
                 lines.push('📸 SNAPSHOT ' + icon + ' ' + (s.mode || '') + det);
                 // Показываем конкретные расхождения прямо в логе
@@ -1537,6 +1550,7 @@ import { configMerge } from './shared/config-merge.js';
                     headers:  ctx._meta.results.headers.map(x => ({ name: x.name, ok: x.ok })),
                     snapshot: ctx._meta.results.snapshot,
                     schema:   ctx._meta.results.schema ? { valid: ctx._meta.results.schema.valid } : null,
+                    security: ctx._meta.results.security ? { findings: ctx._meta.results.security.findings.length, ok: ctx._meta.results.security.ok } : null,
                     errors:   ctx._meta.errors
                 }));
             }
@@ -1549,7 +1563,7 @@ import { configMerge } from './shared/config-merge.js';
                 const found   = ctx._meta.results.found.filter(function(f) { return f.ok; }).length;
                 const saved   = ctx._meta.results.saved.length;
                 const snap    = ctx._meta.results.snapshot;
-                const snapIco = snap ? (snap.status === 'match' ? '📸✅' : snap.status === 'saved' ? '📸🆕' : '📸❌') : '';
+                const snapIco = snap ? (snap.status === 'match' ? '📸✅' : snap.status === 'saved' ? '📸🆕' : snap.status === 'recorded' ? '📸🔴' : '📸❌') : '';
                 const parts   = [res._statusEmoji + ' ' + res.code, res.time + 'ms'];
                 if (found)   parts.push('🔎×' + found);
                 if (saved)   parts.push('💾×' + saved);

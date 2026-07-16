@@ -29,6 +29,9 @@ const noColor   = args.includes('--no-color') || mdMode;
 const slaArg    = args.find(function(a) { return a.indexOf('--sla=') === 0; });
 const slaMs     = slaArg ? parseInt(slaArg.slice(6), 10) : null;
 const slaOn     = typeof slaMs === 'number' && !isNaN(slaMs) && slaMs > 0;
+if (slaArg && !slaOn) {
+    console.error('⚠️  Invalid --sla value "' + slaArg.slice(6) + '" — SLA gate disabled (expected a positive number of ms).');
+}
 
 if (!inputFile) {
     console.error('Usage: node scripts/summary.js <results.json> [--md] [--no-color] [--sla=<ms>]');
@@ -109,7 +112,8 @@ const slowest = requests.slice().sort(function(a, b) { return b.time - a.time; }
 
 const times = requests
     .map(function(r) { return r.time; })
-    .filter(function(t) { return typeof t === 'number' && t >= 0; })
+    // exclude 0 (failed / no-response executions) so they don't deflate percentiles
+    .filter(function(t) { return typeof t === 'number' && t > 0; })
     .sort(function(a, b) { return a - b; });
 
 function percentile(sorted, p) {
@@ -162,6 +166,10 @@ const collectionName = colInfo.name || path.basename(inputFile, '.json');
 const envName        = data.environment && data.environment.name || '—';
 
 // ─── Markdown output ──────────────────────────────────────────────────────────
+
+// Failure gate: assertion failures, request failures, or an SLA p95 breach.
+// Computed before the mdMode branch so Markdown output propagates it too.
+const exitCode = failedAsserts > 0 || failedReqs > 0 || slaFailed ? 1 : 0;
 
 if (mdMode) {
     const now = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
@@ -235,7 +243,7 @@ if (mdMode) {
     }
 
     process.stdout.write(lines.join('\n') + '\n');
-    process.exit(0);
+    process.exit(exitCode);
 }
 
 // ─── Console output ───────────────────────────────────────────────────────────
@@ -344,12 +352,13 @@ if (times.length > 0) {
     console.log('');
 }
 
-const exitCode = failedAsserts > 0 || failedReqs > 0 || slaFailed ? 1 : 0;
 console.log(exitCode === 0
     ? c.green('  ✅ All tests passed!')
-    : c.red('  ❌ ' + (slaFailed && failedAsserts === 0
-        ? 'SLA breached — p95 ' + pct.p95 + ' ms > ' + slaMs + ' ms'
-        : failedAsserts + ' assertion(s) failed'))
+    : c.red('  ❌ ' + [
+        failedAsserts > 0 ? failedAsserts + ' assertion(s) failed' : '',
+        failedReqs > 0    ? failedReqs + ' request(s) failed'      : '',
+        slaFailed         ? 'SLA breached (p95 ' + pct.p95 + ' > ' + slaMs + ' ms)' : ''
+    ].filter(Boolean).join(', '))
 );
 console.log('');
 

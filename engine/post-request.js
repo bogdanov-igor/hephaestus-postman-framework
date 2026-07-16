@@ -951,7 +951,7 @@
           // если checkPaths задан — берём только эти пути
           // иначе — весь parsed с удалёнными ignorePaths
           _buildData(ctx2) {
-            const cfg = ctx2.config.snapshot;
+            const cfg = ctx2.config.snapshot || {};
             const source = ctx2.response.parsed;
             const checkPaths = cfg.checkPaths || [];
             const ignorePaths = cfg.ignorePaths || [];
@@ -1057,8 +1057,26 @@
             });
           },
           run(ctx2) {
-            const cfg = ctx2.config.snapshot;
-            if (!cfg || !cfg.enabled) return;
+            const cfg = ctx2.config.snapshot || {};
+            const wantRecord = cfg.record === true || ctx2.config.snapshotRecord === true;
+            if (!cfg.enabled && !wantRecord) return;
+            if (wantRecord) {
+              const rkey = this._key(ctx2);
+              const rstore = this._loadStore();
+              rstore[rkey] = {
+                savedAt: (/* @__PURE__ */ new Date()).toISOString(),
+                statusCode: ctx2.response.code,
+                format: ctx2.response.format,
+                mode: cfg.mode || "non-strict",
+                checkPaths: cfg.checkPaths || [],
+                data: this._buildData(ctx2)
+              };
+              this._saveStore(rstore, ctx2);
+              console.warn('\u{1F4F8} snapshotRecord: baseline \u043F\u0435\u0440\u0435\u0437\u0430\u043F\u0438\u0441\u0430\u043D \u0434\u043B\u044F "' + rkey + '" \u2014 \u043D\u0435 \u0437\u0430\u0431\u0443\u0434\u044C \u0443\u0431\u0440\u0430\u0442\u044C \u0444\u043B\u0430\u0433 record (\u0438\u043D\u0430\u0447\u0435 \u0440\u0435\u0433\u0440\u0435\u0441\u0441\u0438\u0438 \u043D\u0435 \u043B\u043E\u0432\u044F\u0442\u0441\u044F)');
+              pm.test("\u{1F4F8} Snapshot: \u{1F534} baseline \u043F\u0435\u0440\u0435\u0437\u0430\u043F\u0438\u0441\u0430\u043D (record)", () => pm.expect(true).to.be.true);
+              ctx2._meta.results.snapshot = { status: "recorded", key: rkey };
+              return;
+            }
             const storage = cfg.storage || "collection-vars";
             if (storage === "postman-api") {
               ctx2._meta.errors.push('snapshot: storage "postman-api" \u0435\u0449\u0451 \u043D\u0435 \u0440\u0435\u0430\u043B\u0438\u0437\u043E\u0432\u0430\u043D');
@@ -1071,20 +1089,6 @@
             const mode = cfg.mode || "non-strict";
             const autoSave = cfg.autoSaveMissing !== false;
             const checkPaths = cfg.checkPaths || [];
-            if (cfg.record === true || ctx2.config.snapshotRecord === true) {
-              store[key] = {
-                savedAt: (/* @__PURE__ */ new Date()).toISOString(),
-                statusCode: ctx2.response.code,
-                format: ctx2.response.format,
-                mode,
-                checkPaths,
-                data: currentData
-              };
-              this._saveStore(store, ctx2);
-              pm.test("\u{1F4F8} Snapshot: \u{1F534} baseline \u043F\u0435\u0440\u0435\u0437\u0430\u043F\u0438\u0441\u0430\u043D (record)", () => pm.expect(true).to.be.true);
-              ctx2._meta.results.snapshot = { status: "recorded", key };
-              return;
-            }
             if (!existing) {
               if (!autoSave) {
                 pm.test("\u{1F4F8} Snapshot: \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D (autoSaveMissing \u043E\u0442\u043A\u043B\u044E\u0447\u0451\u043D)", () => {
@@ -1226,9 +1230,12 @@
           run(ctx2) {
             const cfg = ctx2.config.securityAudit;
             if (!cfg || !cfg.enabled) return;
-            const soft2 = cfg.soft === true || !!ctx2.config.softFail;
+            const soft2 = cfg.soft === true;
             const self = this;
             const findings = [];
+            function list2(v2, dflt) {
+              return Array.isArray(v2) ? v2 : dflt;
+            }
             function secTest(label2, ok, detail) {
               const name2 = (soft2 ? "\u{1F6E1}\uFE0F [soft] " : "\u{1F6E1}\uFE0F ") + label2;
               if (soft2) {
@@ -1242,19 +1249,19 @@
                 });
               }
             }
-            (cfg.requireHeaders || self._defaults.requireHeaders).forEach(function(h) {
+            list2(cfg.requireHeaders, self._defaults.requireHeaders).forEach(function(h) {
               const v2 = self._headerVal(h);
               const present = typeof v2 === "string" && v2.length > 0;
               if (!present) findings.push({ type: "missing-header", name: h });
               secTest("\u0417\u0430\u0433\u043E\u043B\u043E\u0432\u043E\u043A \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u0438: " + h, present, '\u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442 \u0437\u0430\u0449\u0438\u0442\u043D\u044B\u0439 \u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043E\u043A "' + h + '"');
             });
-            (cfg.forbidHeaders || self._defaults.forbidHeaders).forEach(function(h) {
+            list2(cfg.forbidHeaders, self._defaults.forbidHeaders).forEach(function(h) {
               const v2 = self._headerVal(h);
               const disclosed = typeof v2 === "string" && v2.length > 0;
               if (disclosed) findings.push({ type: "disclosure-header", name: h, value: v2 });
               secTest("\u041D\u0435\u0442 \u0440\u0430\u0441\u043A\u0440\u044B\u0442\u0438\u044F \u0441\u0435\u0440\u0432\u0435\u0440\u0430: " + h, !disclosed, '\u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043E\u043A "' + h + '" \u0440\u0430\u0441\u043A\u0440\u044B\u0432\u0430\u0435\u0442 "' + v2 + '"');
             });
-            const patterns = cfg.forbidBodyPatterns || self._defaults.forbidBodyPatterns;
+            const patterns = list2(cfg.forbidBodyPatterns, self._defaults.forbidBodyPatterns);
             const raw2 = ctx2.response && ctx2.response.raw ? String(ctx2.response.raw) : "";
             if (raw2 && patterns && patterns.length) {
               const hit = patterns.filter(function(p2) {
@@ -1343,7 +1350,7 @@
             }
             if (results.snapshot) {
               const s = results.snapshot;
-              const icon = s.status === "match" ? "\u2705" : s.status === "saved" ? "\u{1F195}" : s.status === "diff" ? "\u274C" : "\u26A0\uFE0F";
+              const icon = s.status === "match" ? "\u2705" : s.status === "saved" ? "\u{1F195}" : s.status === "recorded" ? "\u{1F534}" : s.status === "diff" ? "\u274C" : "\u26A0\uFE0F";
               const det = s.status === "diff" ? " (" + (s.diff || []).length + " \u0440\u0430\u0437\u043B\u0438\u0447\u0438\u0439)" : s.status === "saved" ? " baseline" : "";
               lines.push("\u{1F4F8} SNAPSHOT " + icon + " " + (s.mode || "") + det);
               if (s.status === "diff" && s.diff && s.diff.length > 0) {
@@ -1384,6 +1391,7 @@
                 headers: ctx2._meta.results.headers.map((x) => ({ name: x.name, ok: x.ok })),
                 snapshot: ctx2._meta.results.snapshot,
                 schema: ctx2._meta.results.schema ? { valid: ctx2._meta.results.schema.valid } : null,
+                security: ctx2._meta.results.security ? { findings: ctx2._meta.results.security.findings.length, ok: ctx2._meta.results.security.ok } : null,
                 errors: ctx2._meta.errors
               }));
             }
@@ -1394,7 +1402,7 @@
               }).length;
               const saved = ctx2._meta.results.saved.length;
               const snap = ctx2._meta.results.snapshot;
-              const snapIco = snap ? snap.status === "match" ? "\u{1F4F8}\u2705" : snap.status === "saved" ? "\u{1F4F8}\u{1F195}" : "\u{1F4F8}\u274C" : "";
+              const snapIco = snap ? snap.status === "match" ? "\u{1F4F8}\u2705" : snap.status === "saved" ? "\u{1F4F8}\u{1F195}" : snap.status === "recorded" ? "\u{1F4F8}\u{1F534}" : "\u{1F4F8}\u274C" : "";
               const parts = [res._statusEmoji + " " + res.code, res.time + "ms"];
               if (found2) parts.push("\u{1F50E}\xD7" + found2);
               if (saved) parts.push("\u{1F4BE}\xD7" + saved);

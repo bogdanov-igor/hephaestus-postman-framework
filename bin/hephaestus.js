@@ -13,6 +13,7 @@
 
 'use strict';
 
+const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 
@@ -80,9 +81,20 @@ if (!entry) {
     process.exit(1);
 }
 
-const result = spawnSync(process.execPath, [path.join(SCRIPTS, entry.script)].concat(rest), { stdio: 'inherit' });
+const scriptPath = path.join(SCRIPTS, entry.script);
+if (!fs.existsSync(scriptPath)) {
+    console.error('Hephaestus: script for "' + cmd + '" not found at ' + scriptPath + ' (broken install?).');
+    process.exit(1);
+}
+
+const result = spawnSync(process.execPath, [scriptPath].concat(rest), { stdio: 'inherit' });
 if (result.error) {
     console.error('Failed to run "' + cmd + '": ' + result.error.message);
     process.exit(1);
+}
+if (result.status === null && result.signal) {
+    // Child terminated by a signal → conventional 128+signal exit code (e.g. 130 for SIGINT).
+    const signals = require('os').constants.signals;
+    process.exit(128 + (signals[result.signal] || 0));
 }
 process.exit(result.status === null ? 1 : result.status);

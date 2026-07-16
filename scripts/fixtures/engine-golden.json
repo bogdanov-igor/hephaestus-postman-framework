@@ -311,6 +311,81 @@
       "ok": true
     },
     {
+      "item": "security-audit-malformed",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🛡️ Заголовок безопасности: content-security-policy",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🛡️ Заголовок безопасности: strict-transport-security",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🛡️ Заголовок безопасности: x-content-type-options",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🛡️ Заголовок безопасности: x-frame-options",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🛡️ Нет раскрытия сервера: server",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🛡️ Нет раскрытия сервера: x-aspnet-version",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🛡️ Нет раскрытия сервера: x-powered-by",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🛡️ Нет утечек отладки в теле ответа",
+      "ok": true
+    },
+    {
+      "item": "security-audit-malformed",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
       "item": "security-audit",
       "name": "⚠️ URL: небезопасный протокол http",
       "ok": true
@@ -525,6 +600,7 @@
       "headers": [],
       "snapshot": null,
       "schema": null,
+      "security": null,
       "errors": []
     },
     "headers-assert": {
@@ -551,6 +627,7 @@
       ],
       "snapshot": null,
       "schema": null,
+      "security": null,
       "errors": []
     },
     "list-array-asserts": {
@@ -566,6 +643,7 @@
       "headers": [],
       "snapshot": null,
       "schema": null,
+      "security": null,
       "errors": []
     },
     "obj-assertions": {
@@ -595,6 +673,7 @@
       "headers": [],
       "snapshot": null,
       "schema": null,
+      "security": null,
       "errors": []
     },
     "schema-validate": {
@@ -610,6 +689,7 @@
       "schema": {
         "valid": true
       },
+      "security": null,
       "errors": []
     },
     "security-audit": {
@@ -623,6 +703,27 @@
       "headers": [],
       "snapshot": null,
       "schema": null,
+      "security": {
+        "findings": 0,
+        "ok": true
+      },
+      "errors": []
+    },
+    "security-audit-malformed": {
+      "request": "security-audit-malformed",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": {
+        "findings": 0,
+        "ok": true
+      },
       "errors": []
     },
     "snapshot-record": {
@@ -639,6 +740,7 @@
         "key": "EngineTest::snapshot-record::200::json"
       },
       "schema": null,
+      "security": null,
       "errors": []
     },
     "snapshot-save": {
@@ -655,6 +757,7 @@
         "key": "EngineTest::snapshot-save::200::json"
       },
       "schema": null,
+      "security": null,
       "errors": []
     },
     "xml-extract": {
@@ -672,6 +775,7 @@
       "headers": [],
       "snapshot": null,
       "schema": null,
+      "security": null,
       "errors": []
     }
   }

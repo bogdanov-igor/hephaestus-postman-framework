@@ -90,38 +90,44 @@ pm.sendRequest(buildRequest(CHECKSUMS_PATH), function(err, res) {
 
 // ── Шаг 2: загрузка и верификация файлов движка ───────────────────────────
 function downloadEngine(expectedHashes) {
-    var completed = 0;
-    var failed    = 0;
+    var completed   = 0;
+    var failed      = 0;
+    var verified    = 0;      // файлов, чей sha256 реально сверён с манифестом
+    var lastVersion = null;
+    var staged      = {};     // file.key -> code; коммитим ТОЛЬКО если failed===0
 
-    function maybeFinish(loadedVersion) {
+    function maybeFinish() {
         if (completed + failed !== ENGINE_FILES.length) return;
         if (failed === 0) {
+            // Атомарный коммит: движок пишется в переменные только когда ВСЕ файлы
+            // прошли — иначе pre/post не разъедутся (никакого "франкенштейна").
+            ENGINE_FILES.forEach(function(f) { pm.collectionVariables.set(f.key, staged[f.key]); });
             pm.collectionVariables.set("hephaestus.engineRef",     ref);
-            pm.collectionVariables.set("hephaestus.engineVersion", loadedVersion || ref);
+            pm.collectionVariables.set("hephaestus.engineVersion", lastVersion || ref);
             pm.collectionVariables.set("hephaestus.updatedAt",     new Date().toISOString());
             console.log([
                 "╔══════════════════════════════════════════════════════════════╗",
                 "║  🚀 HEPHAESTUS — ENGINE UPDATE COMPLETE                    ║",
                 "╠══════════════════════════════════════════════════════════════╣",
                 "║  Ref:       " + ref,
-                "║  Version:   " + (loadedVersion || "—"),
-                "║  Integrity: " + (expectedHashes ? "sha256 ✅" : "не проверялась"),
+                "║  Version:   " + (lastVersion || "—"),
+                "║  Integrity: " + (!expectedHashes ? "нет манифеста" : verified === ENGINE_FILES.length ? "sha256 ✅ (" + verified + "/" + ENGINE_FILES.length + ")" : "sha256 частично (" + verified + "/" + ENGINE_FILES.length + " проверено)"),
                 "║  Updated:   " + new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC",
                 "╚══════════════════════════════════════════════════════════════╝"
             ].join("\n"));
         } else {
-            console.warn("⚠️ Обновление с ошибками: " + failed + "/" + ENGINE_FILES.length + " файлов не загружены/не прошли проверку");
+            console.warn("⚠️ Обновление ОТМЕНЕНО: " + failed + "/" + ENGINE_FILES.length + " файлов не прошли — движок НЕ изменён (staged, не закоммичено)");
         }
     }
 
     ENGINE_FILES.forEach(function(file) {
         pm.sendRequest(buildRequest(file.path), function(err, res) {
-            if (err) {
+            if (err || !res) {
                 failed++;
                 pm.test("❌ " + file.label + " — сетевая ошибка", function() {
-                    throw new Error(err.message);
+                    throw new Error(err ? err.message : "нет ответа от сервера");
                 });
-                maybeFinish(null);
+                maybeFinish();
                 return;
             }
 
@@ -133,7 +139,7 @@ function downloadEngine(expectedHashes) {
                         "Проверь: hephaestus.githubToken задан верно и не истёк."
                     );
                 });
-                maybeFinish(null);
+                maybeFinish();
                 return;
             }
 
@@ -146,7 +152,7 @@ function downloadEngine(expectedHashes) {
                         "Classic token: нужен scope 'repo'."
                     );
                 });
-                maybeFinish(null);
+                maybeFinish();
                 return;
             }
 
@@ -158,7 +164,7 @@ function downloadEngine(expectedHashes) {
                         "Проверь: hephaestus.version задан верно."
                     );
                 });
-                maybeFinish(null);
+                maybeFinish();
                 return;
             }
 
@@ -167,7 +173,7 @@ function downloadEngine(expectedHashes) {
                 pm.test("❌ " + file.label + " — HTTP " + res.code, function() {
                     throw new Error("Неожиданный ответ: HTTP " + res.code);
                 });
-                maybeFinish(null);
+                maybeFinish();
                 return;
             }
 
@@ -175,6 +181,7 @@ function downloadEngine(expectedHashes) {
             var sizeKb = (code.length / 1024).toFixed(1);
 
             // Проверка целостности: sha256 загруженного кода против манифеста.
+            var fileVerified = false;
             if (expectedHashes && expectedHashes[file.path]) {
                 if (typeof CryptoJS === "undefined") {
                     console.warn("⚠️ CryptoJS недоступен — проверка целостности " + file.label + " пропущена");
@@ -189,10 +196,14 @@ function downloadEngine(expectedHashes) {
                                 "Файл повреждён или подменён — код НЕ сохранён."
                             );
                         });
-                        maybeFinish(null);
+                        maybeFinish();
                         return;
                     }
+                    verified++;
+                    fileVerified = true;
                 }
+            } else if (expectedHashes) {
+                console.warn("⚠️ Манифест не содержит хэш для " + file.path + " — файл НЕ верифицирован");
             }
 
             // Верификация: убеждаемся что загруженный код содержит VERSION-константу.
@@ -205,19 +216,22 @@ function downloadEngine(expectedHashes) {
                 pm.test("❌ " + file.label + " — VERSION-константа не найдена (повреждённый файл?)", function() {
                     throw new Error("VERSION-константа не найдена в загруженном коде — код НЕ сохранён");
                 });
-                maybeFinish(null);
+                maybeFinish();
                 return;
             }
 
-            pm.collectionVariables.set(file.key, code);
+            // Стейджим, но НЕ коммитим — запись в переменные произойдёт в maybeFinish
+            // только если ВСЕ файлы прошли (атомарность).
+            staged[file.key] = code;
+            lastVersion = loadedVersion;
             completed++;
 
-            var intMark = (expectedHashes && expectedHashes[file.path]) ? " 🔒" : "";
-            pm.test("✅ " + file.label + " загружен v" + loadedVersion + intMark + " (" + sizeKb + " KB, ref: " + ref + ")", function() {
+            var intMark = fileVerified ? " 🔒" : "";
+            pm.test("✅ " + file.label + " получен v" + loadedVersion + intMark + " (" + sizeKb + " KB, ref: " + ref + ")", function() {
                 pm.expect(code).to.be.a("string").and.have.length.above(0);
             });
 
-            maybeFinish(loadedVersion);
+            maybeFinish();
         });
     });
 }

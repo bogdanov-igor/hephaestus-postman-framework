@@ -82,14 +82,16 @@ function reconcile(label, current, desired, writeFn) {
 
 // ── Load once ────────────────────────────────────────────────────────────────
 
-const pkg        = JSON.parse(read('package.json'));
-const pkgVersion = pkg.version;
-const preSrcMod  = read('engine/src/pre-request.js');
-const postSrcMod = read('engine/src/post-request.js');
-
 function safeRead(relPath) {
     try { return read(relPath); } catch (e) { return ''; }
 }
+
+const pkg        = JSON.parse(read('package.json'));
+const pkgVersion = pkg.version;
+// safeRead so a missing/renamed engine/src degrades to a clean check failure
+// (Check 1/2) instead of an uncaught ENOENT stack trace.
+const preSrcMod  = safeRead('engine/src/pre-request.js');
+const postSrcMod = safeRead('engine/src/post-request.js');
 
 // ── Check 1: engine bundle ────────────────────────────────────────────────────
 
@@ -160,7 +162,14 @@ let bannerDrift = 0;
 BANNER_FILES.forEach(function(rel) {
     let src;
     try { src = read(rel); } catch (e) { return; }
-    const found = src.match(/\b\d+\.\d+\.\d+\b/g) || [];
+    // Match both `vX.Y.Z` banners and bare `X.Y.Z` (Docker). First drop URLs
+    // (Postman collection-schema URLs, GitHub links) and node base-image tags
+    // so unrelated versions aren't flagged as Hephaestus banner drift.
+    const found = (src
+        .replace(/https?:\/\/[^\s"'`)]+/g, '')
+        .replace(/node:\d+\.\d+\.\d+/g, '')
+        .match(/v?\d+\.\d+\.\d+/g) || [])
+        .map(function(v) { return v.replace(/^v/, ''); });
     const bad   = found.filter(function(v) { return v !== pkgVersion; });
     if (bad.length) {
         bannerDrift++;
@@ -175,10 +184,14 @@ if (bannerDrift === 0) {
 const secMinor = pkgVersion.split('.').slice(0, 2).join('.'); // "3.8"
 try {
     const sec = read('SECURITY.md');
-    if (sec.indexOf(secMinor + '.x') !== -1 || sec.indexOf(secMinor + '.') !== -1) {
-        pass('SECURITY.md lists ' + secMinor + '.x as supported');
+    // Require the current minor to appear on a ✅-supported row, not just anywhere.
+    const supported = sec.split('\n').some(function(l) {
+        return l.indexOf(secMinor + '.x') !== -1 && l.indexOf('✅') !== -1;
+    });
+    if (supported) {
+        pass('SECURITY.md lists ' + secMinor + '.x as ✅ supported');
     } else {
-        fail('SECURITY.md does not list current minor ' + secMinor + '.x as supported');
+        fail('SECURITY.md does not list current minor ' + secMinor + '.x on a ✅ row');
     }
 } catch (e) {
     fail('SECURITY.md not readable: ' + e.message);
@@ -214,7 +227,9 @@ try {
 
 console.log('\n🔧 Check 6: generated artifacts (engine embedded, checksums, defaults)');
 
-if (collection && defaultsObj) {
+// Guard on preSource/postSource: if esbuild bundling failed (Check 1), skip all
+// artifact writes so EMIT can't overwrite checksums/collection with empty engines.
+if (collection && defaultsObj && preSource && postSource) {
     // --- 6a. checksums.json ---
     const desiredChecksums = JSON.stringify({
         version:   pkgVersion,
@@ -263,7 +278,7 @@ if (collection && defaultsObj) {
         writeFile(COLLECTION_PATH, desiredCollectionRaw);
     });
 } else {
-    fail('skipped artifact checks (collection or defaults did not load)');
+    fail('skipped artifact checks (collection/defaults missing or engine bundle empty)');
 }
 
 // ── Summary ───────────────────────────────────────────────────────────────────
