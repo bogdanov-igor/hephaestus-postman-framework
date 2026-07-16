@@ -477,6 +477,38 @@ test('propagates sub-command exit code (summary with failures exits 1)', functio
     assert(code === 1, 'summary should propagate exit 1 on failures, got ' + code);
 });
 
+// ─── 12. sync-examples.js ─────────────────────────────────────────────────────
+
+console.log('\n⑫ sync-examples.js');
+
+const snapCollectionFile = path.join(TMP, 'snap-collection.json');
+const snapOutFile        = path.join(TMP, 'snap-out.json');
+fs.writeFileSync(snapCollectionFile, JSON.stringify({
+    info: { name: 'Snap', schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json' },
+    variable: [{ key: 'hephaestus.snapshots', value: JSON.stringify({
+        'Snap::GET User::200::json': { statusCode: 200, format: 'json', data: { id: 42, name: 'Alice' } }
+    }) }],
+    item: [{ name: 'GET User', request: { method: 'GET', url: { raw: 'http://x/user' } }, response: [{ name: 'Existing', code: 200, body: '{}' }] }]
+}));
+
+test('sync-examples adds a 📸 example from a snapshot', function() {
+    run(NODE + ' "' + path.join(ROOT, 'scripts/sync-examples.js') + '" "' + snapCollectionFile + '" -o "' + snapOutFile + '"');
+    const col = JSON.parse(fs.readFileSync(snapOutFile, 'utf8'));
+    const ex  = (col.item[0].response || []).find(function(r) { return r.name && r.name.indexOf('📸 Snapshot') === 0; });
+    assert(ex, 'no 📸 Snapshot example added');
+    assert(ex.code === 200, 'example code should be 200');
+    assertContains(ex.body, 'Alice', 'example body should contain the snapshot data');
+});
+
+test('sync-examples keeps hand-written examples and is idempotent', function() {
+    run(NODE + ' "' + path.join(ROOT, 'scripts/sync-examples.js') + '" "' + snapOutFile + '" -o "' + snapOutFile + '"');
+    const resp = JSON.parse(fs.readFileSync(snapOutFile, 'utf8')).item[0].response;
+    const generated   = resp.filter(function(r) { return r.name && r.name.indexOf('📸 Snapshot') === 0; });
+    const handwritten = resp.filter(function(r) { return r.name === 'Existing'; });
+    assert(generated.length === 1, 'expected exactly 1 generated example (idempotent), got ' + generated.length);
+    assert(handwritten.length === 1, 'hand-written example must be preserved');
+});
+
 // ─── Cleanup ─────────────────────────────────────────────────────────────────
 
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch(e) { /* ignore */ }
