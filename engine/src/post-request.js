@@ -323,19 +323,19 @@ import { t, statusLabel } from './shared/i18n.js';
                 if (Array.isArray(v) && filter)    v = this._filters(v, filter, false);
                 if (v !== undefined && transform)   v = this._transforms(v, transform);
                 const found  = v !== undefined && v !== null;
-                const label  = (soft ? '⚪ [soft] ' : '🔎 ') + 'Найдено: \'' + name + '\' (' + path + ')';
+                const label  = t(ctx, 'assertions.found', soft, name, path);
                 pm.test(label, () => {
                     if (!found) {
                         if (soft) {
-                            console.log('⚪ [soft] Поле не найдено: ' + path + ' — пропущено');
+                            console.log(t(ctx, 'assertions.softFieldNotFound', path));
                             pm.expect(true).to.be.true;
                             return;
                         }
-                        pm.expect(v, '🚫 Значение не найдено по пути: ' + path).to.exist;
+                        pm.expect(v, t(ctx, 'assertions.valueNotFound', path)).to.exist;
                     }
                     if (found && expect !== undefined) {
-                        if (typeof expect === 'function') pm.expect((() => { try { return expect(v); } catch(e) { return false; } })(), '🚫 \'' + name + '\': условие не выполнено').to.be.true;
-                        else pm.expect(v, '🚫 \'' + name + '\': ожидалось "' + expect + '"').to.eql(expect);
+                        if (typeof expect === 'function') pm.expect((() => { try { return expect(v); } catch(e) { return false; } })(), t(ctx, 'assertions.conditionFailed', name)).to.be.true;
+                        else pm.expect(v, t(ctx, 'assertions.expectedValue', name, expect)).to.eql(expect);
                     }
                 });
                 ctx._meta.results.found.push({ name, path, ok: soft || found });
@@ -351,8 +351,8 @@ import { t, statusLabel } from './shared/i18n.js';
                 if (Array.isArray(v) && filter)    v = this._filters(v, filter, ignoreCase);
                 if (v !== undefined && transform)   v = this._transforms(v, transform);
                 let ok = false;
-                pm.test('💾 Сохранено: \'' + name + '\' ← ' + path, () => {
-                    pm.expect(raw, '🚫 \'' + name + '\': не найдена по пути \'' + path + '\'').to.exist; ok = true;
+                pm.test(t(ctx, 'assertions.saved', name, path), () => {
+                    pm.expect(raw, t(ctx, 'assertions.notFoundAtPath', name, path)).to.exist; ok = true;
                 });
                 if (v !== undefined) {
                     const sv = typeof v === 'object' ? JSON.stringify(v) : v;
@@ -360,9 +360,9 @@ import { t, statusLabel } from './shared/i18n.js';
                     else if (scope === 'local')  pm.variables.set(name, sv);
                     else                         pm.collectionVariables.set(name, sv);
                     if (scope !== 'collection' && scope !== 'environment' && scope !== 'local')
-                        ctx._meta.errors.push('varsToSave: неизвестный scope "' + scope + '" для "' + name + '", использован collection');
+                        ctx._meta.errors.push(t(ctx, 'assertions.unknownScope', scope, name));
                 } else {
-                    ctx._meta.errors.push('varsToSave: \'' + name + '\' не найдена по пути \'' + path + '\'');
+                    ctx._meta.errors.push(t(ctx, 'assertions.varsSaveNotFound', name, path));
                 }
                 ctx._meta.results.saved.push({ name, scope, ok });
             });
@@ -385,9 +385,9 @@ import { t, statusLabel } from './shared/i18n.js';
                 if (typeof transformAfter === 'function') { try { extracted = transformAfter(extracted); } catch(e) { ctx._meta.errors.push('keysToCount[' + alias + '] transformAfter: ' + e.message); } }
                 const length = Array.isArray(extracted) ? extracted.length : 0;
                 const ok = expected === undefined || length === expected;
-                const label = expected !== undefined ? length + ' / ' + expected + (ok ? ' ✅' : ' ❌') : length + ' эл.';
-                pm.test('📏 Кол-во \'' + alias + '\': ' + label, () => {
-                    if (expected !== undefined) pm.expect(length, '🚫 \'' + alias + '\': ожидалось ' + expected + ', получено ' + length).to.eql(expected);
+                const label = t(ctx, 'assertions.countLabel', length, expected, ok);
+                pm.test(t(ctx, 'assertions.countTest', alias, label), () => {
+                    if (expected !== undefined) pm.expect(length, t(ctx, 'assertions.countMismatch', alias, expected, length)).to.eql(expected);
                     else pm.expect(length).to.be.a('number');
                 });
                 ctx._meta.results.counts.push({ alias, length, expected, ok });
@@ -438,7 +438,7 @@ import { t, statusLabel } from './shared/i18n.js';
                 // absent — поле должно ОТСУТСТВОВАТЬ
                 if (rule.absent === true) {
                     check('absent', function() {
-                        pm.expect(raw, '🚫 "' + fieldPath + '" должен отсутствовать').to.be.oneOf([undefined, null]);
+                        pm.expect(raw, t(ctx, 'assertions.mustBeAbsent', fieldPath)).to.be.oneOf([undefined, null]);
                     });
                     ctx._meta.results.found.push({ name: fieldPath, path: fieldPath, ok: raw === undefined || raw === null });
                     return;
@@ -446,8 +446,8 @@ import { t, statusLabel } from './shared/i18n.js';
 
                 // exists — поле существует (явная проверка или подразумевается при других операторах)
                 if (rule.exists === false) {
-                    check('не существует', function() {
-                        pm.expect(raw, '🚫 "' + fieldPath + '" должен отсутствовать').to.be.oneOf([undefined, null]);
+                    check(t(ctx, 'assertions.notExists'), function() {
+                        pm.expect(raw, t(ctx, 'assertions.mustBeAbsent', fieldPath)).to.be.oneOf([undefined, null]);
                     });
                     ctx._meta.results.found.push({ name: fieldPath, path: fieldPath, ok: raw === undefined || raw === null });
                     return;
@@ -455,7 +455,7 @@ import { t, statusLabel } from './shared/i18n.js';
 
                 // Для всех остальных операторов — поле должно существовать
                 check('exists', function() {
-                    pm.expect(raw, '🚫 "' + fieldPath + '" не найдено').to.not.be.oneOf([undefined, null]);
+                    pm.expect(raw, t(ctx, 'assertions.fieldNotFound', fieldPath)).to.not.be.oneOf([undefined, null]);
                 });
                 ctx._meta.results.found.push({ name: fieldPath, path: fieldPath, ok: raw !== undefined && raw !== null });
 
@@ -476,20 +476,20 @@ import { t, statusLabel } from './shared/i18n.js';
 
                 if (rule.type !== undefined)
                     check('type=' + rule.type, function() {
-                        if (rule.type === 'array')  pm.expect(raw, '🚫 ожидался array').to.be.an('array');
-                        else if (rule.type === 'null') pm.expect(raw, '🚫 ожидался null').to.be.null;
-                        else pm.expect(typeof raw, '🚫 ожидался тип ' + rule.type).to.equal(rule.type);
+                        if (rule.type === 'array')  pm.expect(raw, t(ctx, 'assertions.expectedArray')).to.be.an('array');
+                        else if (rule.type === 'null') pm.expect(raw, t(ctx, 'assertions.expectedNull')).to.be.null;
+                        else pm.expect(typeof raw, t(ctx, 'assertions.expectedType', rule.type)).to.equal(rule.type);
                     });
 
                 if (rule.minLen !== undefined)
                     check('minLen=' + rule.minLen, function() {
                         const len = Array.isArray(raw) ? raw.length : (typeof raw === 'string' ? raw.length : -1);
-                        pm.expect(len, '🚫 длина ' + len + ' < ' + rule.minLen).to.be.at.least(rule.minLen);
+                        pm.expect(len, t(ctx, 'assertions.lenBelow', len, rule.minLen)).to.be.at.least(rule.minLen);
                     });
                 if (rule.maxLen !== undefined)
                     check('maxLen=' + rule.maxLen, function() {
                         const len = Array.isArray(raw) ? raw.length : (typeof raw === 'string' ? raw.length : Infinity);
-                        pm.expect(len, '🚫 длина ' + len + ' > ' + rule.maxLen).to.be.at.most(rule.maxLen);
+                        pm.expect(len, t(ctx, 'assertions.lenAbove', len, rule.maxLen)).to.be.at.most(rule.maxLen);
                     });
 
                 if (rule.includes !== undefined)
@@ -501,7 +501,7 @@ import { t, statusLabel } from './shared/i18n.js';
                 if (rule.matches !== undefined)
                     check('matches ' + rule.matches, function() {
                         const re = rule.matches instanceof RegExp ? rule.matches : new RegExp(rule.matches);
-                        pm.expect(re.test(String(raw)), '🚫 "' + raw + '" не соответствует ' + re).to.be.true;
+                        pm.expect(re.test(String(raw)), t(ctx, 'assertions.notMatch', raw, re)).to.be.true;
                     });
             });
         },
@@ -518,7 +518,7 @@ import { t, statusLabel } from './shared/i18n.js';
         },
         run(ctx) {
             if (!ctx.response.parsed && ctx.response.format !== 'text') {
-                ctx._meta.errors.push('assertions: ответ не распарсен, проверки пропущены'); return;
+                ctx._meta.errors.push(t(ctx, 'assertions.notParsed')); return;
             }
             this.runFind(ctx); this.runSave(ctx); this.runCount(ctx); this.runAssertMap(ctx); this.runMaxTime(ctx);
         }
@@ -559,17 +559,17 @@ import { t, statusLabel } from './shared/i18n.js';
 
             // absent
             if (rule.absent === true) {
-                if (val !== undefined && val !== null) errs.push(path + ': должен отсутствовать, но = ' + this._serVal(val));
+                if (val !== undefined && val !== null) errs.push(t(ctx, 'assertEach.ruleAbsentGot', path, this._serVal(val)));
                 return errs;
             }
             // exists / non-null check
             if (rule.exists !== false) {
                 if (val === undefined || val === null) {
-                    errs.push(path + ': поле отсутствует');
+                    errs.push(t(ctx, 'assertEach.ruleFieldMissing', path));
                     return errs; // нет смысла продолжать операторы
                 }
             } else if (rule.exists === false) {
-                if (val !== undefined && val !== null) errs.push(path + ': должен отсутствовать');
+                if (val !== undefined && val !== null) errs.push(t(ctx, 'assertEach.ruleAbsent', path));
                 return errs;
             }
 
@@ -610,8 +610,8 @@ import { t, statusLabel } from './shared/i18n.js';
             const arr = ctx.api.get(cfg.path);
 
             if (!Array.isArray(arr)) {
-                pm.test('🔢 assertEach[' + cfg.path + ']: не массив', function() {
-                    pm.expect(arr, '🚫 "' + cfg.path + '" не является массивом (получено: ' + typeof arr + ')').to.be.an('array');
+                pm.test(t(ctx, 'assertEach.notArray', cfg.path), function() {
+                    pm.expect(arr, t(ctx, 'assertEach.notArrayMsg', cfg.path, typeof arr)).to.be.an('array');
                 });
                 return;
             }
@@ -619,14 +619,14 @@ import { t, statusLabel } from './shared/i18n.js';
             // Bounds
             if (cfg.minCount !== undefined) {
                 const ok = arr.length >= cfg.minCount;
-                pm.test('🔢 assertEach: minCount=' + cfg.minCount + ' (' + arr.length + ' элементов) ' + (ok ? '✅' : '❌'), function() {
-                    pm.expect(arr.length, '🚫 Ожидалось минимум ' + cfg.minCount + ' элементов, получено ' + arr.length).to.be.at.least(cfg.minCount);
+                pm.test(t(ctx, 'assertEach.minCount', cfg.minCount, arr.length, ok), function() {
+                    pm.expect(arr.length, t(ctx, 'assertEach.minCountMsg', cfg.minCount, arr.length)).to.be.at.least(cfg.minCount);
                 });
             }
             if (cfg.maxCount !== undefined) {
                 const ok = arr.length <= cfg.maxCount;
-                pm.test('🔢 assertEach: maxCount=' + cfg.maxCount + ' (' + arr.length + ' элементов) ' + (ok ? '✅' : '❌'), function() {
-                    pm.expect(arr.length, '🚫 Ожидалось максимум ' + cfg.maxCount + ' элементов, получено ' + arr.length).to.be.at.most(cfg.maxCount);
+                pm.test(t(ctx, 'assertEach.maxCount', cfg.maxCount, arr.length, ok), function() {
+                    pm.expect(arr.length, t(ctx, 'assertEach.maxCountMsg', cfg.maxCount, arr.length)).to.be.at.most(cfg.maxCount);
                 });
             }
 
@@ -654,14 +654,13 @@ import { t, statusLabel } from './shared/i18n.js';
             const totalChecks = arr.length * ruleKeys.length;
             const hardFailed  = allFailures.length;
             const softFailed  = softFailures.length;
-            const label       = (globalSoft ? '⚪ [soft] ' : '') + '🔢 assertEach[' + cfg.path + ']: ' + arr.length + ' эл. × ' + ruleKeys.length + ' правил';
+            const label       = t(ctx, 'assertEach.label', globalSoft, cfg.path, arr.length, ruleKeys.length);
 
-            pm.test(label + ' — ' + (hardFailed === 0 ? '✅ все прошли' : '❌ ' + hardFailed + ' нарушений'), function() {
+            pm.test(t(ctx, 'assertEach.result', label, hardFailed), function() {
                 if (hardFailed > 0) {
                     const preview = allFailures.slice(0, 10).join('\n');
                     throw new Error(
-                        hardFailed + '/' + totalChecks + ' нарушений:\n' + preview +
-                        (allFailures.length > 10 ? '\n... +' + (allFailures.length - 10) + ' ещё' : '')
+                        t(ctx, 'assertEach.violations', hardFailed, totalChecks, preview, allFailures.length)
                     );
                 }
             });
@@ -715,17 +714,16 @@ import { t, statusLabel } from './shared/i18n.js';
                     // This test will show as "passed" to indicate retry in progress
                     // (we don't throw — we just log)
                 });
-                console.log('[HEPHAESTUS] ⚡ retryOnStatus: попытка ' + (count + 1) + '/' + maxRetries + ', status=' + code + ', re-running: ' + pm.info.requestName);
+                console.log(t(_ctx, 'retryOnStatus.rerunLog', (count + 1), maxRetries, code, pm.info.requestName));
                 pm.setNextRequest(pm.info.requestName);
                 return true; // true = skip remaining pipeline
             }
 
             // Max retries exhausted
             pm.variables.unset(key);
-            pm.test('⚡ retryOnStatus: исчерпаны все ' + maxRetries + ' повторов (status=' + code + ')', function() {
+            pm.test(t(_ctx, 'retryOnStatus.exhausted', maxRetries, code), function() {
                 throw new Error(
-                    'Все ' + maxRetries + ' попытки вернули статус ' + code + '. ' +
-                    'Ожидался не ' + statuses.join('/') + '.'
+                    t(_ctx, 'retryOnStatus.allFailed', maxRetries, code, statuses.join('/'))
                 );
             });
             return false; // allow pipeline to continue so logger emits the summary
@@ -778,21 +776,21 @@ import { t, statusLabel } from './shared/i18n.js';
 
                 if (expected === 'absent') {
                     shapeTest('🧩 shape "' + fieldPath + '": absent', function() {
-                        pm.expect(val, '🚫 "' + fieldPath + '" должен отсутствовать, но = ' + JSON.stringify(val)).to.be.oneOf([undefined, null]);
+                        pm.expect(val, t(ctx, 'assertShape.mustBeAbsent', fieldPath, JSON.stringify(val))).to.be.oneOf([undefined, null]);
                     });
                     return;
                 }
 
                 if (expected === 'any') {
                     shapeTest('🧩 shape "' + fieldPath + '": exists', function() {
-                        pm.expect(val, '🚫 "' + fieldPath + '" не найдено').to.not.be.oneOf([undefined, null]);
+                        pm.expect(val, t(ctx, 'assertShape.notFound', fieldPath)).to.not.be.oneOf([undefined, null]);
                     });
                     return;
                 }
 
                 shapeTest('🧩 shape "' + fieldPath + '": ' + expected, function() {
-                    pm.expect(val, '🚫 "' + fieldPath + '" не найдено').to.not.be.oneOf([undefined, null]);
-                    pm.expect(actual, '🚫 "' + fieldPath + '": ожидался ' + expected + ', получен ' + actual).to.equal(expected);
+                    pm.expect(val, t(ctx, 'assertShape.notFound', fieldPath)).to.not.be.oneOf([undefined, null]);
+                    pm.expect(actual, t(ctx, 'assertShape.typeMismatch', fieldPath, expected, actual)).to.equal(expected);
                 });
             });
         }
@@ -853,9 +851,9 @@ import { t, statusLabel } from './shared/i18n.js';
 
             const isSoft  = !!ctx.config.softFail;
             const label   = (isSoft ? '⚪ [soft] ' : '') + '📊 assertOrder[' + cfg.path + '] by "' + by + '" ' + dir;
-            pm.test(label + ' — ' + (violations.length === 0 ? '✅' : '❌ ' + violations.length + ' нарушений'), function() {
+            pm.test(label + ' — ' + (violations.length === 0 ? '✅' : t(ctx, 'assertOrder.violationsCount', violations.length)), function() {
                 if (violations.length > 0) {
-                    const msg = 'Нарушения порядка сортировки (' + dir + ' by "' + by + '"):\n' + violations.join('\n');
+                    const msg = t(ctx, 'assertOrder.violationsMsg', dir, by, violations.join('\n'));
                     if (isSoft) { console.warn('⚪ [soft] assertOrder: ' + msg); }
                     else { throw new Error(msg); }
                 }
@@ -900,9 +898,9 @@ import { t, statusLabel } from './shared/i18n.js';
                 }
             });
 
-            pm.test(label + ' — ' + (dupes.length === 0 ? '✅' : '❌ ' + dupes.length + ' дублей'), function() {
+            pm.test(label + ' — ' + t(ctx, 'assertUnique.dupeCount', dupes.length), function() {
                 if (dupes.length > 0) {
-                    const msg = 'Найдены дубли (' + cfg.path + (by ? '.' + by : '') + '):\n' + dupes.slice(0, 5).join('\n');
+                    const msg = t(ctx, 'assertUnique.dupesMsg', cfg.path, by, dupes.slice(0, 5).join('\n'));
                     if (isSoft) { console.warn('⚪ [soft] assertUnique: ' + msg); }
                     else { throw new Error(msg); }
                 }
@@ -1008,7 +1006,7 @@ import { t, statusLabel } from './shared/i18n.js';
             if (str.length > 900000) {
                 ctx._meta.errors.push(
                     'snapshot: hephaestus.snapshots > 900KB. ' +
-                    'Используй checkPaths для сокращения или очисти через snapshot-clear метод.'
+                    t(ctx, 'snapshot.storeSizeWarn')
                 );
             }
             pm.collectionVariables.set('hephaestus.snapshots', str);
@@ -1074,20 +1072,20 @@ import { t, statusLabel } from './shared/i18n.js';
         _findDiff(stored, current, path) {
             const diffs = [];
             if (typeof stored !== typeof current) {
-                return [path + ': тип "' + typeof stored + '" → "' + typeof current + '"'];
+                return [t(ctx, 'snapshot.typeDiff_helper_findDiff_noCtx', path, typeof stored, typeof current)];
             }
             if (typeof stored !== 'object' || stored === null) {
                 if (stored !== current) diffs.push(path + ': ' + this._sv(stored) + ' → ' + this._sv(current));
                 return diffs;
             }
             if (Array.isArray(stored) !== Array.isArray(current)) {
-                return [path + ': array/object несовпадение'];
+                return [t(ctx, 'snapshot.arrayObjectMismatch_helper_findDiff_noCtx', path)];
             }
             const keys = new Set([...Object.keys(stored), ...Object.keys(current || {})]);
             keys.forEach(k => {
                 const np = path ? path + '.' + k : k;
-                if (!(k in (current || {}))) diffs.push(np + ': ключ удалён (был ' + this._sv(stored[k]) + ')');
-                else if (!(k in stored))     diffs.push(np + ': ключ добавлен = ' + this._sv((current || {})[k]));
+                if (!(k in (current || {}))) diffs.push(t(ctx, 'snapshot.keyRemoved_helper_findDiff_noCtx', np, this._sv(stored[k])));
+                else if (!(k in stored))     diffs.push(t(ctx, 'snapshot.keyAdded_helper_findDiff_noCtx', np, this._sv((current || {})[k])));
                 else diffs.push(...this._findDiff(stored[k], (current || {})[k], np));
             });
             return diffs;
@@ -1104,12 +1102,12 @@ import { t, statusLabel } from './shared/i18n.js';
                 return true;
             }
             if (Array.isArray(stored)) {
-                if (!Array.isArray(current)) { diff.push(path + ': ожидался массив'); return false; }
+                if (!Array.isArray(current)) { diff.push(t(ctx, 'snapshot.expectedArray_helper_nonStrictMatch_noCtx', path)); return false; }
                 return stored.every((item, i) => this._nonStrictMatch(item, current[i], diff, path + '[' + i + ']'));
             }
             return Object.keys(stored).every(k => {
                 const np = path ? path + '.' + k : k;
-                if (!current || !(k in current)) { diff.push(np + ': ключ отсутствует'); return false; }
+                if (!current || !(k in current)) { diff.push(t(ctx, 'snapshot.keyMissing_helper_nonStrictMatch_noCtx', np)); return false; }
                 return this._nonStrictMatch(stored[k], current[k], diff, np);
             });
         },
@@ -1137,8 +1135,8 @@ import { t, statusLabel } from './shared/i18n.js';
                     data:       this._buildData(ctx)
                 };
                 this._saveStore(rstore, ctx);
-                console.warn('📸 snapshotRecord: baseline перезаписан для "' + rkey + '" — не забудь убрать флаг record (иначе регрессии не ловятся)');
-                pm.test('📸 Snapshot: 🔴 baseline перезаписан (record)', () => pm.expect(true).to.be.true);
+                console.warn(t(ctx, 'snapshot.recordWarn', rkey));
+                pm.test(t(ctx, 'snapshot.recordTest'), () => pm.expect(true).to.be.true);
                 ctx._meta.results.snapshot = { status: 'recorded', key: rkey };
                 return;
             }
@@ -1148,7 +1146,7 @@ import { t, statusLabel } from './shared/i18n.js';
             if (storage === 'postman-api') {
                 // TODO Итерация 4+: pm.sendRequest к api.getpostman.com
                 // Требует: postman.api.key + postman.collection.uid в environment
-                ctx._meta.errors.push('snapshot: storage "postman-api" ещё не реализован');
+                ctx._meta.errors.push(t(ctx, 'snapshot.postmanApiUnimpl'));
                 return;
             }
 
@@ -1163,8 +1161,8 @@ import { t, statusLabel } from './shared/i18n.js';
             // ── Нет снапшота — сохранить baseline ─────────────────────
             if (!existing) {
                 if (!autoSave) {
-                    pm.test('📸 Snapshot: не найден (autoSaveMissing отключён)', () => {
-                        pm.expect(false, '🚫 Снапшот "' + key + '" не найден').to.be.true;
+                    pm.test(t(ctx, 'snapshot.missingTest'), () => {
+                        pm.expect(false, t(ctx, 'snapshot.missingMsg', key)).to.be.true;
                     });
                     ctx._meta.results.snapshot = { status: 'missing', key };
                     return;
@@ -1178,7 +1176,7 @@ import { t, statusLabel } from './shared/i18n.js';
                     data:       currentData
                 };
                 this._saveStore(store, ctx);
-                pm.test('📸 Snapshot: ✅ baseline сохранён', () => pm.expect(true).to.be.true);
+                pm.test(t(ctx, 'snapshot.savedTest'), () => pm.expect(true).to.be.true);
                 ctx._meta.results.snapshot = { status: 'saved', key };
                 return;
             }
@@ -1200,17 +1198,17 @@ import { t, statusLabel } from './shared/i18n.js';
                 : '(full)';
 
             pm.test(
-                '📸 Snapshot ' + mode + ' ' + pathsLabel + ': ' + (isEqual ? '✅ совпадает' : '❌ расхождение'),
+                t(ctx, 'snapshot.compareTest', mode, pathsLabel, isEqual),
                 () => {
                     if (!isEqual) {
                         const diffStr = diff.slice(0, 5).map(d => '  • ' + d).join('\n');
-                        pm.expect(isEqual, '🚫 Snapshot расхождение:\n' + diffStr + (diff.length > 5 ? '\n  ... и ещё ' + (diff.length - 5) : '')).to.be.true;
+                        pm.expect(isEqual, t(ctx, 'snapshot.diffMsg', diffStr, diff.length)).to.be.true;
                     }
                 }
             );
 
             if (!isEqual && diff.length > 0) {
-                console.warn('📸 Snapshot diff (' + diff.length + ' различий):\n' + diff.slice(0, 10).map(d => '  • ' + d).join('\n'));
+                console.warn(t(ctx, 'snapshot.diffWarn', diff.length, diff.slice(0, 10).map(d => '  • ' + d).join('\n')));
             }
 
             ctx._meta.results.snapshot = { status: isEqual ? 'match' : 'diff', key, mode, diff };
@@ -1230,14 +1228,14 @@ import { t, statusLabel } from './shared/i18n.js';
 
             const source = ctx.response.parsed;
             if (!source) {
-                ctx._meta.errors.push('schema: нет данных для валидации (ответ не распарсен)');
+                ctx._meta.errors.push(t(ctx, 'schema.noData'));
                 ctx._meta.results.schema = { valid: false, errors: ['no parsed data'] };
                 return;
             }
 
             // tv4 — JSON Schema validator, глобально доступен в Postman sandbox
             if (typeof tv4 === 'undefined') {
-                ctx._meta.errors.push('schema: tv4 не доступен в этой версии Postman');
+                ctx._meta.errors.push(t(ctx, 'schema.tv4Missing'));
                 return;
             }
 
@@ -1246,7 +1244,7 @@ import { t, statusLabel } from './shared/i18n.js';
                 const valid  = result.errors.length === 0;
                 const count  = result.errors.length;
 
-                pm.test('🔬 Schema: ' + (valid ? '✅ валидна' : '❌ ошибки (' + count + ')'), () => {
+                pm.test(t(ctx, 'schema.testName', valid, count), () => {
                     if (!valid) {
                         const errStr = result.errors.slice(0, 3)
                             .map(e => '  • [' + (e.dataPath || '/') + '] ' + e.message)
@@ -1265,7 +1263,7 @@ import { t, statusLabel } from './shared/i18n.js';
                     errors: result.errors.map(e => ({ path: e.dataPath, message: e.message }))
                 };
             } catch (e) {
-                ctx._meta.errors.push('schema: ошибка валидации — ' + e.message);
+                ctx._meta.errors.push(t(ctx, 'schema.validationError', e.message));
             }
         }
     };
@@ -1307,7 +1305,7 @@ import { t, statusLabel } from './shared/i18n.js';
                 list = JSON.parse(raw);
                 if (!Array.isArray(list) || list.length === 0) return;
             } catch(e) {
-                ctx._meta.errors.push('plugins: ошибка разбора hephaestus.plugins — ' + e.message);
+                ctx._meta.errors.push(t(ctx, 'plugins.parseError', e.message));
                 return;
             }
 
@@ -1319,20 +1317,20 @@ import { t, statusLabel } from './shared/i18n.js';
                 try {
                     code = pm.collectionVariables.get(p.post) || '';
                 } catch(e) {
-                    ctx._meta.errors.push('plugin "' + p.name + '": не удалось прочитать "' + p.post + '" — ' + e.message);
+                    ctx._meta.errors.push(t(ctx, 'plugins.readFailed', p.name, p.post, e.message));
                     return;
                 }
 
                 if (!code.trim()) {
-                    ctx._meta.errors.push('plugin "' + p.name + '": переменная "' + p.post + '" пуста');
+                    ctx._meta.errors.push(t(ctx, 'plugins.varEmpty', p.name, p.post));
                     return;
                 }
 
                 try {
                     eval(code);
                 } catch(e) {
-                    ctx._meta.errors.push('plugin "' + p.name + '": ошибка выполнения — ' + e.message);
-                    pm.test('🔌 Plugin "' + p.name + '": ошибка', function() {
+                    ctx._meta.errors.push(t(ctx, 'plugins.execError', p.name, e.message));
+                    pm.test(t(ctx, 'plugins.testError', p.name), function() {
                         throw new Error(e.message);
                     });
                 }
@@ -1396,7 +1394,7 @@ import { t, statusLabel } from './shared/i18n.js';
                 const v = self._headerVal(h);
                 const present = typeof v === 'string' && v.length > 0;
                 if (!present) findings.push({ type: 'missing-header', name: h });
-                secTest('Заголовок безопасности: ' + h, present, 'отсутствует защитный заголовок "' + h + '"');
+                secTest(t(ctx, 'securityAudit.requireHeaderName', h), present, t(ctx, 'securityAudit.requireHeaderDetail', h));
             });
 
             // 2. Заголовки раскрытия сервера отсутствуют
@@ -1404,7 +1402,7 @@ import { t, statusLabel } from './shared/i18n.js';
                 const v = self._headerVal(h);
                 const disclosed = typeof v === 'string' && v.length > 0;
                 if (disclosed) findings.push({ type: 'disclosure-header', name: h, value: v });
-                secTest('Нет раскрытия сервера: ' + h, !disclosed, 'заголовок "' + h + '" раскрывает "' + v + '"');
+                secTest(t(ctx, 'securityAudit.forbidHeaderName', h), !disclosed, t(ctx, 'securityAudit.forbidHeaderDetail', h, v));
             });
 
             // 3. Нет отладочной информации / стектрейсов в теле
@@ -1413,7 +1411,7 @@ import { t, statusLabel } from './shared/i18n.js';
             if (raw && patterns && patterns.length) {
                 const hit = patterns.filter(function(p) { return raw.indexOf(p) !== -1; });
                 if (hit.length) findings.push({ type: 'body-leak', patterns: hit });
-                secTest('Нет утечек отладки в теле ответа', hit.length === 0, 'найдены утечки: ' + hit.join(', '));
+                secTest(t(ctx, 'securityAudit.bodyLeakName'), hit.length === 0, t(ctx, 'securityAudit.bodyLeakDetail', hit.join(', ')));
             }
 
             // 4. Небезопасный CORS: wildcard-origin вместе с credentials
@@ -1422,7 +1420,7 @@ import { t, statusLabel } from './shared/i18n.js';
                 const acac = self._headerVal('access-control-allow-credentials');
                 if (acao === '*' && String(acac).toLowerCase() === 'true') {
                     findings.push({ type: 'insecure-cors' });
-                    secTest('CORS: нет wildcard-origin с credentials', false, 'Access-Control-Allow-Origin: * вместе с Allow-Credentials: true');
+                    secTest(t(ctx, 'securityAudit.corsName'), false, t(ctx, 'securityAudit.corsDetail'));
                 }
             }
 
@@ -1499,7 +1497,7 @@ import { t, statusLabel } from './shared/i18n.js';
             if (results.snapshot) {
                 const s    = results.snapshot;
                 const icon = s.status === 'match' ? '✅' : s.status === 'saved' ? '🆕' : s.status === 'recorded' ? '🔴' : s.status === 'diff' ? '❌' : '⚠️';
-                const det  = s.status === 'diff' ? ' (' + (s.diff || []).length + ' различий)' : s.status === 'saved' ? ' baseline' : '';
+                const det  = s.status === 'diff' ? t(ctx, 'logger.snapshotDiffCount', (s.diff || []).length) : s.status === 'saved' ? ' baseline' : '';
                 lines.push('📸 SNAPSHOT ' + icon + ' ' + (s.mode || '') + det);
                 // Показываем конкретные расхождения прямо в логе
                 if (s.status === 'diff' && s.diff && s.diff.length > 0) {
@@ -1512,7 +1510,7 @@ import { t, statusLabel } from './shared/i18n.js';
             }
             if (results.schema) {
                 const sv = results.schema;
-                lines.push('🔬 SCHEMA   ' + (sv.valid ? '✅ валидна' : '❌ ' + sv.errors.length + ' ошибок'));
+                lines.push('🔬 SCHEMA   ' + (sv.valid ? t(ctx, 'logger.schemaValid') : t(ctx, 'logger.schemaErrors', sv.errors.length)));
             }
             return lines;
         },
@@ -1582,7 +1580,7 @@ import { t, statusLabel } from './shared/i18n.js';
             } else if (res.raw && res.raw.length > 0) {
                 previewStr = res.raw.length > 800 ? res.raw.slice(0, 800) + '\n... [+' + (res.raw.length - 800) + ' chars]' : res.raw;
             } else {
-                previewStr = '— (пустой ответ)';
+                previewStr = t(ctx, 'logger.emptyResponse');
             }
 
             const resultLines = this._resultLines(ctx._meta.results);
@@ -1664,7 +1662,7 @@ import { t, statusLabel } from './shared/i18n.js';
             logger.summary(ctx);
         }
     } catch (e) {
-        pm.test('🚫 Hephaestus post-request: критическая ошибка', () => {
+        pm.test(t(ctx, 'engine.postCritical'), () => {
             throw new Error('[v' + VERSION + '] ' + e.message);
         });
     }

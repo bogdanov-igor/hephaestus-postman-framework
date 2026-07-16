@@ -8,6 +8,8 @@
 // Depends only on the `pm` sandbox global + its (ctx, override) arguments,
 // so it bundles cleanly with no closure coupling to the engine IIFE.
 // ════════════════════════════════════════════════════════════
+import { t } from './i18n.js';
+
 export const configMerge = {
     _merge(target, source) {
         const out = Object.assign({}, target);
@@ -27,7 +29,7 @@ export const configMerge = {
             const raw = pm.collectionVariables.get('hephaestus.defaults');
             if (raw) defaults = JSON.parse(raw);
         } catch (e) {
-            ctx._meta.errors.push('configMerge: не удалось разобрать hephaestus.defaults — ' + e.message);
+            ctx._meta.errors.push(t(ctx, 'configMerge.parseDefaultsFailed', e.message));
         }
         ctx.config = this._merge(defaults, override || {});
     }

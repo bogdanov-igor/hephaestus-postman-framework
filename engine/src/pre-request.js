@@ -9,6 +9,7 @@
 // configMerge · envRequired · iterationData · random · urlBuilder · auth · dateUtils (flexible) · logger
 
 import { configMerge } from './shared/config-merge.js';
+import { t } from './shared/i18n.js';
 
 (function hephaestusPreRequest() {
 
@@ -103,16 +104,13 @@ import { configMerge } from './shared/config-merge.js';
 
             if (missing.length === 0) return;
 
-            const envName = pm.environment.name || '(нет environment)';
-            pm.test('⚠️ envRequired: отсутствуют переменные [' + missing.join(', ') + ']', function() {
+            const envName = pm.environment.name || t(ctx, 'envRequired.noEnv');
+            pm.test(t(ctx, 'envRequired.missingTest', missing), function() {
                 throw new Error(
-                    'Обязательные environment variables не заданы:\n' +
-                    missing.map(function(n) { return '  • ' + n; }).join('\n') + '\n' +
-                    'Текущий environment: ' + envName + '\n' +
-                    'Проверь настройки environment в Postman / Newman.'
+                    t(ctx, 'envRequired.missingError', missing, envName)
                 );
             });
-            ctx._meta.errors.push('envRequired: не заданы [' + missing.join(', ') + '] в environment "' + envName + '"');
+            ctx._meta.errors.push(t(ctx, 'envRequired.missingPush', missing, envName));
         }
     };
 
@@ -217,17 +215,17 @@ import { configMerge } from './shared/config-merge.js';
             // Автоподстановка протокола, если не указан
             if (rawUrl && !/^https?:\/\//i.test(rawUrl)) {
                 rawUrl = defaultProtocol + '://' + rawUrl;
-                console.log('🌐 urlBuilder: протокол не указан — подставлен "' + defaultProtocol + '://"');
+                console.log(t(ctx, 'urlBuilder.protocolSubstituted', defaultProtocol));
             }
 
-            pm.test('🌐 URL: базовый адрес задан', () => {
-                pm.expect(rawUrl, '🚫 baseUrl не задан ни в defaults, ни в override').to.be.a('string').and.have.length.above(0);
+            pm.test(t(ctx, 'urlBuilder.baseUrlSet'), () => {
+                pm.expect(rawUrl, t(ctx, 'urlBuilder.baseUrlMissing')).to.be.a('string').and.have.length.above(0);
             });
 
             // Предупреждение при http (не блокирует выполнение)
             if (/^http:\/\//i.test(rawUrl)) {
-                pm.test('⚠️ URL: небезопасный протокол http', () => {
-                    console.warn('⚠️ baseUrl использует http:// — убедись, что это намеренно.');
+                pm.test(t(ctx, 'urlBuilder.insecureHttp'), () => {
+                    console.warn(t(ctx, 'urlBuilder.httpWarning'));
                     pm.expect(true).to.be.true;
                 });
             }
@@ -331,17 +329,17 @@ import { configMerge } from './shared/config-merge.js';
                             body:   { mode: 'urlencoded', urlencoded: body.filter(p => p.value) }
                         }, function(err, response) {
                             if (err || !response) {
-                                ctx._meta.errors.push('oauth2cc: ' + (err ? err.message : 'нет ответа'));
+                                ctx._meta.errors.push(t(ctx, 'auth.oauth2ccNoResponse', err));
                                 return;
                             }
                             var tokenBody;
                             try { tokenBody = response.json(); } catch(je) {
-                                ctx._meta.errors.push('oauth2cc: невалидный JSON в ответе сервера авторизации');
+                                ctx._meta.errors.push(t(ctx, 'auth.oauth2ccInvalidJson'));
                                 return;
                             }
                             var accessToken = tokenBody.access_token;
                             if (!accessToken) {
-                                ctx._meta.errors.push('oauth2cc: нет access_token в ответе');
+                                ctx._meta.errors.push(t(ctx, 'auth.oauth2ccNoAccessToken'));
                                 return;
                             }
                             var expiresIn = ((tokenBody.expires_in || 3600) * 1000);
@@ -353,10 +351,10 @@ import { configMerge } from './shared/config-merge.js';
                     }
 
                     default:
-                        ctx._meta.errors.push('auth: неизвестный тип "' + a.type + '". Допустимые: none, basic, bearer, headers, variables, oauth2cc');
+                        ctx._meta.errors.push(t(ctx, 'auth.unknownType', a.type));
                 }
             } catch (e) {
-                ctx._meta.errors.push('auth: ошибка — ' + e.message);
+                ctx._meta.errors.push(t(ctx, 'auth.error', e.message));
             }
         }
     };
@@ -449,7 +447,7 @@ import { configMerge } from './shared/config-merge.js';
                     if (d) {
                         pm.variables.set(varName, this._format(d, fmt));
                     } else {
-                        ctx._meta.errors.push('dateUtils: неизвестное выражение "' + dates[varName] + '" для "' + varName + '"');
+                        ctx._meta.errors.push(t(ctx, 'dateUtils.unknownExpr', dates[varName], varName));
                     }
                 });
             }
@@ -501,7 +499,7 @@ import { configMerge } from './shared/config-merge.js';
         // Формирует безопасное описание auth-конфига для отображения в логах.
         // Значения credentials никогда не попадают в console в открытом виде.
         _authInfo(auth, secrets) {
-            if (!auth || !auth.enabled) return 'none (отключена)';
+            if (!auth || !auth.enabled) return t(ctx, 'logger.authNone');
 
             const ALL_SECRETS = ['token', 'pass', 'password', 'secret', 'key', 'authorization']
                 .concat(secrets || []);
@@ -530,7 +528,7 @@ import { configMerge } from './shared/config-merge.js';
                 }
 
                 default:
-                    return auth.type + ' (неизвестный тип)';
+                    return t(ctx, 'logger.unknownAuthType', auth.type);
             }
         },
 
@@ -570,7 +568,7 @@ import { configMerge } from './shared/config-merge.js';
 
             if (ctx._meta.errors.length > 0) {
                 console.warn(
-                    '⚠️  [Hephaestus] Ошибки инициализации:\n' +
+                    t(ctx, 'logger.initErrors') +
                     ctx._meta.errors.map(e => '  • ' + e).join('\n')
                 );
             }
@@ -591,7 +589,7 @@ import { configMerge } from './shared/config-merge.js';
         dateUtils.run(ctx);
         logger.summary(ctx); // в логах только маскированные значения
     } catch (e) {
-        pm.test('🚫 Hephaestus pre-request: критическая ошибка', () => {
+        pm.test(t(ctx, 'engine.preCritical'), () => {
             throw new Error('[v' + VERSION + '] ' + e.message);
         });
     }

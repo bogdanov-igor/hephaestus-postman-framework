@@ -209,7 +209,72 @@ function buildCollection(preSrc, postSrc, baseUrl) {
             // i18n: with locale 'en', translated modules emit English test names.
             name: 'locale-en',
             request: { method: 'GET', url: baseUrl + '/obj' },
-            event: methodScripts({}, { locale: 'en', expectedStatus: 200 })
+            event: methodScripts({ locale: 'en' }, { locale: 'en', expectedStatus: 200 })
+        },
+        // ── i18n EN coverage: clones of rich fixtures with locale 'en' so the
+        //    golden also locks English output across assertions/headers/schema/security. ──
+        {
+            name: 'obj-assertions-en',
+            request: { method: 'GET', url: baseUrl + '/obj' },
+            event: methodScripts({ locale: 'en' }, {
+                locale: 'en',
+                expectedStatus: 200,
+                keysToFind: [{ path: 'data.id' }, { path: 'data.name' }],
+                assertions: {
+                    'data.id':     { eq: 42, gt: 0 },
+                    'data.name':   { eq: 'Alice' },
+                    'data.status': { exists: true, eq: 'active' },
+                    'count':       { gte: 2 }
+                },
+                varsToSave: { savedIdEn: { path: 'data.id', name: 'savedIdEn' } },
+                keysToCount: { tags: { path: 'data.tags', expected: 2 } }
+            })
+        },
+        {
+            name: 'list-array-asserts-en',
+            request: { method: 'GET', url: baseUrl + '/list' },
+            event: methodScripts({ locale: 'en' }, {
+                locale: 'en',
+                assertEach: { path: 'items', rules: { id: { gt: 0 }, kind: { exists: true } } },
+                assertShape: { 'items': 'array', 'items.0.id': 'number', 'items.0.kind': 'string', 'items.0.price': 'number' },
+                assertOrder: { path: 'items', by: 'id', direction: 'asc' },
+                assertUnique: { path: 'items', by: 'id' }
+            })
+        },
+        {
+            name: 'headers-assert-en',
+            request: { method: 'GET', url: baseUrl + '/headers' },
+            event: methodScripts({ locale: 'en' }, {
+                locale: 'en',
+                assertHeaders: [
+                    { name: 'X-Request-Id' },
+                    { name: 'X-Version', equals: 'v2' },
+                    { name: 'X-Absent', absent: true }
+                ]
+            })
+        },
+        {
+            name: 'schema-validate-en',
+            request: { method: 'GET', url: baseUrl + '/obj' },
+            event: methodScripts({ locale: 'en' }, {
+                locale: 'en',
+                schema: { enabled: true, definition: {
+                    type: 'object',
+                    properties: {
+                        data: { type: 'object', properties: { id: { type: 'number' }, name: { type: 'string' } }, required: ['id', 'name'] },
+                        count: { type: 'number' }
+                    },
+                    required: ['data']
+                } }
+            })
+        },
+        {
+            name: 'security-audit-en',
+            request: { method: 'GET', url: baseUrl + '/secure' },
+            event: methodScripts({ locale: 'en' }, {
+                locale: 'en',
+                securityAudit: { enabled: true }
+            })
         }
     ];
 
