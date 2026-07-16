@@ -11,6 +11,7 @@
 // retryOnStatus · assertEach · assertShape · assertOrder · assertUnique · assertHeaders · snapshot · schema (tv4) · plugins · logger
 
 import { configMerge } from './shared/config-merge.js';
+import { t, statusLabel } from './shared/i18n.js';
 
 (function hephaestusPostRequest() {
 
@@ -21,17 +22,7 @@ import { configMerge } from './shared/config-merge.js';
         ? override
         : {};
 
-    const STATUS_LABELS = {
-        200: 'Успешно',             201: 'Создан',
-        202: 'Принято',             204: 'Нет содержимого',
-        301: 'Перемещён',           302: 'Найден',
-        400: 'Неверный запрос',     401: 'Неавторизован',
-        403: 'Доступ запрещён',     404: 'Не найден',
-        405: 'Метод запрещён',      409: 'Конфликт',
-        422: 'Некорректные данные', 429: 'Слишком много запросов',
-        500: 'Ошибка сервера',      502: 'Плохой шлюз',
-        503: 'Сервис недоступен',   504: 'Таймаут шлюза'
-    };
+    // STATUS_LABELS перенесены в engine/src/shared/i18n.js (statusLabel(ctx, code))
 
     // ════════════════════════════════════════════════════════════
     // CTX
@@ -194,7 +185,7 @@ import { configMerge } from './shared/config-merge.js';
         },
         run(ctx) {
             const { code, size } = ctx.response;
-            const label   = STATUS_LABELS[code] || 'Неизвестный статус';
+            const label   = statusLabel(ctx, code);
             const allowed = this._resolveAllowed(ctx.config);
             const isOk    = allowed.includes(code);
             const emoji   = isOk ? '🟢' : (code >= 400 && code < 500 ? '🟡' : '🔴');
@@ -203,20 +194,20 @@ import { configMerge } from './shared/config-merge.js';
             ctx.response._sizeFormatted = this._formatSize(size);
 
             const allowedLabel = allowed.length === 1 ? allowed[0] : '[' + allowed.join(', ') + ']';
-            pm.test(emoji + ' Статус: ' + code + ' — ' + label, () => {
-                pm.expect(code, '🚫 Статус ' + code + ' не входит в ожидаемые: ' + allowedLabel).to.be.oneOf(allowed);
+            pm.test(t(ctx, 'metrics.status', emoji, code, label), () => {
+                pm.expect(code, t(ctx, 'metrics.statusExpect', code, allowedLabel)).to.be.oneOf(allowed);
             });
 
             const expectEmpty = ctx.config.expectEmpty === true;
-            pm.test('📭 Тело ответа: ' + (expectEmpty ? 'пустое ✓' : 'не пустое'), () => {
-                if (!expectEmpty) pm.expect(ctx.response.raw, '🚫 Ответ пустой').to.have.length.above(0);
-                else              pm.expect(ctx.response.raw, '🚫 Ответ не пустой').to.have.length.below(10);
+            pm.test(t(ctx, 'metrics.bodyName', expectEmpty), () => {
+                if (!expectEmpty) pm.expect(ctx.response.raw, t(ctx, 'metrics.bodyEmpty')).to.have.length.above(0);
+                else              pm.expect(ctx.response.raw, t(ctx, 'metrics.bodyNotEmpty')).to.have.length.below(10);
             });
 
             const expectedType = (ctx.config.contentType || '').toLowerCase();
             if (!expectEmpty && expectedType) {
-                pm.test('🧾 Content-Type: ' + (ctx.response.contentType || '—'), () => {
-                    pm.expect(ctx.response.contentType, '🚫 Ожидался "' + expectedType + '"').to.include(expectedType);
+                pm.test(t(ctx, 'metrics.contentType', (ctx.response.contentType || '—')), () => {
+                    pm.expect(ctx.response.contentType, t(ctx, 'metrics.contentTypeExpect', expectedType)).to.include(expectedType);
                 });
             }
         }

@@ -171,6 +171,41 @@
       "ok": true
     },
     {
+      "item": "locale-en",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "locale-en",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "locale-en",
+      "name": "📭 Response body: not empty",
+      "ok": true
+    },
+    {
+      "item": "locale-en",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "locale-en",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "locale-en",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "locale-en",
+      "name": "🟢 Status: 200 — OK",
+      "ok": true
+    },
+    {
       "item": "obj-assertions",
       "name": "⚠️ URL: небезопасный протокол http",
       "ok": true
@@ -638,6 +673,20 @@
       "found": [
         "assertEach:items"
       ],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "locale-en": {
+      "request": "locale-en",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
       "saved": [],
       "counts": [],
       "headers": [],

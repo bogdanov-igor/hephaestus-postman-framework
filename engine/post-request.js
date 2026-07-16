@@ -53,14 +53,26 @@
     }
   });
 
-  // engine/src/post-request.js
-  var require_post_request = __commonJS({
-    "engine/src/post-request.js"(exports, module) {
-      init_config_merge();
-      (function hephaestusPostRequest() {
-        const VERSION = "3.9.0";
-        const _override = typeof override !== "undefined" && override !== null ? override : {};
-        const STATUS_LABELS = {
+  // engine/src/shared/i18n.js
+  function locOf(ctx2) {
+    return ctx2 && ctx2.config && ctx2.config.locale === "en" ? "en" : "ru";
+  }
+  function statusLabel(ctx2, code2) {
+    const loc = locOf(ctx2);
+    return STATUS[loc] && STATUS[loc][code2] || (loc === "en" ? "Unknown status" : "\u041D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u044B\u0439 \u0441\u0442\u0430\u0442\u0443\u0441");
+  }
+  function t(ctx2, id) {
+    const entry2 = M[id];
+    if (!entry2) return id;
+    const args = Array.prototype.slice.call(arguments, 2);
+    const fn = entry2[locOf(ctx2)] || entry2.ru;
+    return fn.apply(null, args);
+  }
+  var STATUS, M;
+  var init_i18n = __esm({
+    "engine/src/shared/i18n.js"() {
+      STATUS = {
+        ru: {
           200: "\u0423\u0441\u043F\u0435\u0448\u043D\u043E",
           201: "\u0421\u043E\u0437\u0434\u0430\u043D",
           202: "\u041F\u0440\u0438\u043D\u044F\u0442\u043E",
@@ -79,7 +91,97 @@
           502: "\u041F\u043B\u043E\u0445\u043E\u0439 \u0448\u043B\u044E\u0437",
           503: "\u0421\u0435\u0440\u0432\u0438\u0441 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D",
           504: "\u0422\u0430\u0439\u043C\u0430\u0443\u0442 \u0448\u043B\u044E\u0437\u0430"
-        };
+        },
+        en: {
+          200: "OK",
+          201: "Created",
+          202: "Accepted",
+          204: "No Content",
+          301: "Moved Permanently",
+          302: "Found",
+          400: "Bad Request",
+          401: "Unauthorized",
+          403: "Forbidden",
+          404: "Not Found",
+          405: "Method Not Allowed",
+          409: "Conflict",
+          422: "Unprocessable Entity",
+          429: "Too Many Requests",
+          500: "Internal Server Error",
+          502: "Bad Gateway",
+          503: "Service Unavailable",
+          504: "Gateway Timeout"
+        }
+      };
+      M = {
+        "metrics.status": {
+          ru: function(e2, c, l) {
+            return e2 + " \u0421\u0442\u0430\u0442\u0443\u0441: " + c + " \u2014 " + l;
+          },
+          en: function(e2, c, l) {
+            return e2 + " Status: " + c + " \u2014 " + l;
+          }
+        },
+        "metrics.statusExpect": {
+          ru: function(c, a) {
+            return "\u{1F6AB} \u0421\u0442\u0430\u0442\u0443\u0441 " + c + " \u043D\u0435 \u0432\u0445\u043E\u0434\u0438\u0442 \u0432 \u043E\u0436\u0438\u0434\u0430\u0435\u043C\u044B\u0435: " + a;
+          },
+          en: function(c, a) {
+            return "\u{1F6AB} Status " + c + " not in expected: " + a;
+          }
+        },
+        "metrics.bodyName": {
+          ru: function(e2) {
+            return "\u{1F4ED} \u0422\u0435\u043B\u043E \u043E\u0442\u0432\u0435\u0442\u0430: " + (e2 ? "\u043F\u0443\u0441\u0442\u043E\u0435 \u2713" : "\u043D\u0435 \u043F\u0443\u0441\u0442\u043E\u0435");
+          },
+          en: function(e2) {
+            return "\u{1F4ED} Response body: " + (e2 ? "empty \u2713" : "not empty");
+          }
+        },
+        "metrics.bodyEmpty": {
+          ru: function() {
+            return "\u{1F6AB} \u041E\u0442\u0432\u0435\u0442 \u043F\u0443\u0441\u0442\u043E\u0439";
+          },
+          en: function() {
+            return "\u{1F6AB} Response is empty";
+          }
+        },
+        "metrics.bodyNotEmpty": {
+          ru: function() {
+            return "\u{1F6AB} \u041E\u0442\u0432\u0435\u0442 \u043D\u0435 \u043F\u0443\u0441\u0442\u043E\u0439";
+          },
+          en: function() {
+            return "\u{1F6AB} Response is not empty";
+          }
+        },
+        "metrics.contentType": {
+          ru: function(ct) {
+            return "\u{1F9FE} Content-Type: " + ct;
+          },
+          en: function(ct) {
+            return "\u{1F9FE} Content-Type: " + ct;
+          }
+        },
+        "metrics.contentTypeExpect": {
+          ru: function(t2) {
+            return '\u{1F6AB} \u041E\u0436\u0438\u0434\u0430\u043B\u0441\u044F "' + t2 + '"';
+          },
+          en: function(t2) {
+            return '\u{1F6AB} Expected "' + t2 + '"';
+          }
+        }
+      };
+    }
+  });
+
+  // engine/src/post-request.js
+  var require_post_request = __commonJS({
+    "engine/src/post-request.js"(exports, module) {
+      init_config_merge();
+      init_i18n();
+      (function hephaestusPostRequest() {
+        const VERSION = "3.9.0";
+        const _override = typeof override !== "undefined" && override !== null ? override : {};
         const ctx = {
           config: {},
           request: {
@@ -239,7 +341,7 @@
           },
           run(ctx2) {
             const { code: code2, size } = ctx2.response;
-            const label2 = STATUS_LABELS[code2] || "\u041D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u044B\u0439 \u0441\u0442\u0430\u0442\u0443\u0441";
+            const label2 = statusLabel(ctx2, code2);
             const allowed = this._resolveAllowed(ctx2.config);
             const isOk = allowed.includes(code2);
             const emoji = isOk ? "\u{1F7E2}" : code2 >= 400 && code2 < 500 ? "\u{1F7E1}" : "\u{1F534}";
@@ -247,18 +349,18 @@
             ctx2.response._statusEmoji = emoji;
             ctx2.response._sizeFormatted = this._formatSize(size);
             const allowedLabel = allowed.length === 1 ? allowed[0] : "[" + allowed.join(", ") + "]";
-            pm.test(emoji + " \u0421\u0442\u0430\u0442\u0443\u0441: " + code2 + " \u2014 " + label2, () => {
-              pm.expect(code2, "\u{1F6AB} \u0421\u0442\u0430\u0442\u0443\u0441 " + code2 + " \u043D\u0435 \u0432\u0445\u043E\u0434\u0438\u0442 \u0432 \u043E\u0436\u0438\u0434\u0430\u0435\u043C\u044B\u0435: " + allowedLabel).to.be.oneOf(allowed);
+            pm.test(t(ctx2, "metrics.status", emoji, code2, label2), () => {
+              pm.expect(code2, t(ctx2, "metrics.statusExpect", code2, allowedLabel)).to.be.oneOf(allowed);
             });
             const expectEmpty = ctx2.config.expectEmpty === true;
-            pm.test("\u{1F4ED} \u0422\u0435\u043B\u043E \u043E\u0442\u0432\u0435\u0442\u0430: " + (expectEmpty ? "\u043F\u0443\u0441\u0442\u043E\u0435 \u2713" : "\u043D\u0435 \u043F\u0443\u0441\u0442\u043E\u0435"), () => {
-              if (!expectEmpty) pm.expect(ctx2.response.raw, "\u{1F6AB} \u041E\u0442\u0432\u0435\u0442 \u043F\u0443\u0441\u0442\u043E\u0439").to.have.length.above(0);
-              else pm.expect(ctx2.response.raw, "\u{1F6AB} \u041E\u0442\u0432\u0435\u0442 \u043D\u0435 \u043F\u0443\u0441\u0442\u043E\u0439").to.have.length.below(10);
+            pm.test(t(ctx2, "metrics.bodyName", expectEmpty), () => {
+              if (!expectEmpty) pm.expect(ctx2.response.raw, t(ctx2, "metrics.bodyEmpty")).to.have.length.above(0);
+              else pm.expect(ctx2.response.raw, t(ctx2, "metrics.bodyNotEmpty")).to.have.length.below(10);
             });
             const expectedType = (ctx2.config.contentType || "").toLowerCase();
             if (!expectEmpty && expectedType) {
-              pm.test("\u{1F9FE} Content-Type: " + (ctx2.response.contentType || "\u2014"), () => {
-                pm.expect(ctx2.response.contentType, '\u{1F6AB} \u041E\u0436\u0438\u0434\u0430\u043B\u0441\u044F "' + expectedType + '"').to.include(expectedType);
+              pm.test(t(ctx2, "metrics.contentType", ctx2.response.contentType || "\u2014"), () => {
+                pm.expect(ctx2.response.contentType, t(ctx2, "metrics.contentTypeExpect", expectedType)).to.include(expectedType);
               });
             }
           }
@@ -337,9 +439,9 @@
           }
         };
         const assertions = {
-          _transforms(value, t) {
-            if (!t) return value;
-            return (Array.isArray(t) ? t : [t]).reduce((v2, fn) => {
+          _transforms(value, t2) {
+            if (!t2) return value;
+            return (Array.isArray(t2) ? t2 : [t2]).reduce((v2, fn) => {
               try {
                 return typeof fn === "function" ? fn(v2) : v2;
               } catch (e2) {

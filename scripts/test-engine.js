@@ -204,6 +204,12 @@ function buildCollection(preSrc, postSrc, baseUrl) {
             event: methodScripts({}, {
                 securityAudit: { enabled: true, requireHeaders: 'content-security-policy', forbidBodyPatterns: 'oops' }
             })
+        },
+        {
+            // i18n: with locale 'en', translated modules emit English test names.
+            name: 'locale-en',
+            request: { method: 'GET', url: baseUrl + '/obj' },
+            event: methodScripts({}, { locale: 'en', expectedStatus: 200 })
         }
     ];
 
