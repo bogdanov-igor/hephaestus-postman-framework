@@ -519,6 +519,19 @@ const override = {
 
 ---
 
+## 🖼️ Snapshot → Postman Examples
+
+Превращает сохранённые снапшоты в нативные **Example Responses** Postman — видны в UI и работают с Postman Mock Server:
+
+```bash
+hephaestus sync-examples my.postman_collection.json -o with-examples.json
+# читает hephaestus.snapshots и добавляет пример "📸 Snapshot <код> <формат>" к каждому запросу
+```
+
+Идемпотентно — повторный sync заменяет прежние 📸-примеры, ручные сохраняет. `--in-place` перезаписывает коллекцию (сначала пишет `.bak`), `--filter <substr>` — синхронизирует подмножество.
+
+---
+
 ## 🔄 Обновление движка
 
 Версия движка задаётся в `hephaestus.version` (collectionVariables):

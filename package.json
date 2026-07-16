@@ -31,6 +31,7 @@
     "test:engine": "node scripts/test-engine.js",
     "migrate": "node scripts/migrate.js",
     "docs": "node scripts/docs.js",
+    "sync-examples": "node scripts/sync-examples.js",
     "summary": "node scripts/summary.js",
     "compare": "node scripts/compare.js",
     "watch": "node scripts/watch.js",

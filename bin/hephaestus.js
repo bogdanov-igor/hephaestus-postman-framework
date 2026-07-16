@@ -29,6 +29,7 @@ const COMMANDS = {
     junit:   { script: 'ci-to-junit.js',     usage: 'junit <results.json|-> [out.xml]',                  about: 'Convert Newman JSON to JUnit XML' },
     migrate: { script: 'migrate.js',         usage: 'migrate <collection.json> [--template] [--json]',   about: 'Classify a collection\'s migration state' },
     docs:    { script: 'docs.js',            usage: 'docs <collection.json> [-o out.md] [--json]',       about: 'Generate API docs from a collection' },
+    'sync-examples': { script: 'sync-examples.js', usage: 'sync-examples <collection.json> [-o out.json]', about: 'Snapshots → Postman Example Responses' },
     init:    { script: 'init.js',            usage: 'init [--defaults]',                                 about: 'Interactive config/environment wizard' },
     watch:   { script: 'watch.js',           usage: 'watch -c <collection.json> [-e env.json]',          about: 'Re-run Newman on file changes' }
 };

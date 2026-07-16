@@ -562,6 +562,19 @@ const override = {
 
 ---
 
+## 🖼️ Snapshots → Postman Examples
+
+Turn saved snapshots into native Postman **Example Responses** — visible in the UI and usable with the Postman Mock Server:
+
+```bash
+hephaestus sync-examples my.postman_collection.json -o with-examples.json
+# reads hephaestus.snapshots and adds a "📸 Snapshot <code> <format>" example per request
+```
+
+Idempotent — re-syncs replace prior 📸 examples while keeping hand-authored ones. Use `--in-place` to overwrite the collection (a `.bak` is written first) or `--filter <substr>` to sync a subset.
+
+---
+
 ## 🔄 Engine Updates
 
 Engine version is controlled by `hephaestus.version` in collectionVariables:
