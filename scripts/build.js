@@ -251,7 +251,16 @@ if (collection && defaultsObj && preSource && postSource) {
     (collection.variable || []).forEach(function(v) { varMap[v.key] = v; });
 
     function setVar(key, value) {
-        if (!varMap[key]) { fail('collection variable "' + key + '" is missing'); return; }
+        if (!varMap[key]) {
+            // Heal a missing variable by adding it (so --emit can produce a
+            // complete collection instead of silently shipping one without it).
+            collection.variable = collection.variable || [];
+            const entry = { key: key, value: value };
+            collection.variable.push(entry);
+            varMap[key] = entry;
+            info('added missing collection variable "' + key + '"');
+            return;
+        }
         varMap[key].value = value;
     }
 

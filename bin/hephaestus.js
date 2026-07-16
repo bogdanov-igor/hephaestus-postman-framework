@@ -65,8 +65,9 @@ const cmd  = argv[0];
 const rest = argv.slice(1);
 
 if (!cmd || cmd === 'help' || cmd === '-h' || cmd === '--help') {
+    // Printing help is not a failure — exit 0 whether invoked bare or via --help.
     printHelp();
-    process.exit(cmd ? 0 : 1);
+    process.exit(0);
 }
 
 if (cmd === '--version' || cmd === '-v' || cmd === 'version') {
