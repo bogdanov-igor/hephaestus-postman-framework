@@ -17,6 +17,16 @@
     },
     {
       "item": "auth-bearer",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "auth-bearer",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "auth-bearer",
       "name": "🔬 eq \"Bearer TESTTOKEN\" [authorization]",
       "ok": true
     },
@@ -72,6 +82,16 @@
     },
     {
       "item": "headers-assert",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "headers-assert",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "headers-assert",
       "name": "🧾 Content-Type: application/json",
       "ok": true
     },
@@ -98,6 +118,16 @@
     {
       "item": "list-array-asserts",
       "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts",
+      "name": "🔌 [test-plugin] ctx reachable",
       "ok": true
     },
     {
@@ -163,6 +193,16 @@
     {
       "item": "obj-assertions",
       "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions",
+      "name": "🔌 [test-plugin] ctx reachable",
       "ok": true
     },
     {
@@ -247,6 +287,16 @@
     },
     {
       "item": "schema-validate",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "schema-validate",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "schema-validate",
       "name": "🔬 Schema: ✅ валидна",
       "ok": true
     },
@@ -282,6 +332,16 @@
     },
     {
       "item": "snapshot-save",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "snapshot-save",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "snapshot-save",
       "name": "🧾 Content-Type: application/json",
       "ok": true
     },
@@ -308,6 +368,16 @@
     {
       "item": "xml-extract",
       "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "xml-extract",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "xml-extract",
+      "name": "🔌 [test-plugin] ctx reachable",
       "ok": true
     },
     {

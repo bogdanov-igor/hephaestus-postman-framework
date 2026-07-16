@@ -184,7 +184,14 @@ function buildCollection(preSrc, postSrc, baseUrl) {
             { key: 'hephaestus.v3.post', value: postSrc },
             { key: 'hephaestus.defaults', value: JSON.stringify(defaults) },
             { key: 'hephaestus.collectionName', value: 'EngineTest' },
-            { key: 'hephaestus.snapshots', value: '{}' }
+            { key: 'hephaestus.snapshots', value: '{}' },
+            // Plugin coverage: verifies the eval'd plugin can reach ctx AND _override
+            // (the closure contract that a module split must preserve).
+            { key: 'hephaestus.plugins', value: JSON.stringify([{ name: 'test-plugin', post: 'hephaestus.plugin.test' }]) },
+            { key: 'hephaestus.plugin.test', value:
+                "pm.test('🔌 [test-plugin] ctx reachable', function(){ pm.expect(ctx.response.code).to.eql(200); });" +
+                "pm.test('🔌 [test-plugin] _override reachable', function(){ pm.expect(_override).to.be.an('object'); });"
+            }
         ]
     };
 }
