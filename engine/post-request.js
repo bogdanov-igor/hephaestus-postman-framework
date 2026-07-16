@@ -169,6 +169,86 @@
           en: function(t2) {
             return '\u{1F6AB} Expected "' + t2 + '"';
           }
+        },
+        "headers.absent": {
+          ru: function(l) {
+            return "\u{1F4E8} Header \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442: " + l;
+          },
+          en: function(l) {
+            return "\u{1F4E8} Header absent: " + l;
+          }
+        },
+        "headers.absentExpect": {
+          ru: function(h) {
+            return '\u{1F6AB} Header "' + h + '" \u043F\u0440\u0438\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442, \u043D\u043E \u0434\u043E\u043B\u0436\u0435\u043D \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u043E\u0432\u0430\u0442\u044C';
+          },
+          en: function(h) {
+            return '\u{1F6AB} Header "' + h + '" is present but must be absent';
+          }
+        },
+        "headers.exists": {
+          ru: function(l) {
+            return "\u{1F4E8} Header \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442: " + l;
+          },
+          en: function(l) {
+            return "\u{1F4E8} Header present: " + l;
+          }
+        },
+        "headers.existsExpect": {
+          ru: function(h) {
+            return '\u{1F6AB} Header "' + h + '" \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442 \u0432 \u043E\u0442\u0432\u0435\u0442\u0435';
+          },
+          en: function(h) {
+            return '\u{1F6AB} Header "' + h + '" missing from response';
+          }
+        },
+        "headers.equals": {
+          ru: function(l, v2) {
+            return '\u{1F4E8} Header "' + l + '" = "' + v2 + '"';
+          },
+          en: function(l, v2) {
+            return '\u{1F4E8} Header "' + l + '" = "' + v2 + '"';
+          }
+        },
+        "headers.equalsExpect": {
+          ru: function(e2, g) {
+            return '\u{1F6AB} \u041E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C "' + e2 + '", \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043E "' + g + '"';
+          },
+          en: function(e2, g) {
+            return '\u{1F6AB} Expected "' + e2 + '", got "' + g + '"';
+          }
+        },
+        "headers.cond": {
+          ru: function(l) {
+            return '\u{1F4E8} Header "' + l + '": \u0443\u0441\u043B\u043E\u0432\u0438\u0435';
+          },
+          en: function(l) {
+            return '\u{1F4E8} Header "' + l + '": condition';
+          }
+        },
+        "headers.condExpect": {
+          ru: function(h, v2) {
+            return '\u{1F6AB} Header "' + h + '": \u0443\u0441\u043B\u043E\u0432\u0438\u0435 \u043D\u0435 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u043E (\u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435: "' + v2 + '")';
+          },
+          en: function(h, v2) {
+            return '\u{1F6AB} Header "' + h + '": condition failed (value: "' + v2 + '")';
+          }
+        },
+        "headers.includes": {
+          ru: function(l, e2) {
+            return '\u{1F4E8} Header "' + l + '" \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u0442 "' + e2 + '"';
+          },
+          en: function(l, e2) {
+            return '\u{1F4E8} Header "' + l + '" contains "' + e2 + '"';
+          }
+        },
+        "headers.includesExpect": {
+          ru: function(h, e2) {
+            return '\u{1F6AB} Header "' + h + '" \u043D\u0435 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u0442 "' + e2 + '"';
+          },
+          en: function(h, e2) {
+            return '\u{1F6AB} Header "' + h + '" does not contain "' + e2 + '"';
+          }
         }
       };
     }
@@ -993,19 +1073,19 @@
               const headerValue = pm.response.headers.get(headerName);
               const label2 = entry2.label || headerName;
               if (entry2.absent) {
-                pm.test("\u{1F4E8} Header \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442: " + label2, function() {
-                  pm.expect(headerValue, '\u{1F6AB} Header "' + headerName + '" \u043F\u0440\u0438\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442, \u043D\u043E \u0434\u043E\u043B\u0436\u0435\u043D \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u043E\u0432\u0430\u0442\u044C').to.be.oneOf([null, void 0, ""]);
+                pm.test(t(ctx2, "headers.absent", label2), function() {
+                  pm.expect(headerValue, t(ctx2, "headers.absentExpect", headerName)).to.be.oneOf([null, void 0, ""]);
                 });
                 ctx2._meta.results.headers = ctx2._meta.results.headers || [];
                 ctx2._meta.results.headers.push({ name: headerName, status: "absent", ok: !headerValue });
                 return;
               }
-              pm.test("\u{1F4E8} Header \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442: " + label2, function() {
-                pm.expect(headerValue, '\u{1F6AB} Header "' + headerName + '" \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442 \u0432 \u043E\u0442\u0432\u0435\u0442\u0435').to.be.a("string").and.have.length.above(0);
+              pm.test(t(ctx2, "headers.exists", label2), function() {
+                pm.expect(headerValue, t(ctx2, "headers.existsExpect", headerName)).to.be.a("string").and.have.length.above(0);
               });
               if (entry2.equals !== void 0) {
-                pm.test('\u{1F4E8} Header "' + label2 + '" = "' + entry2.equals + '"', function() {
-                  pm.expect(headerValue, '\u{1F6AB} \u041E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C "' + entry2.equals + '", \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043E "' + headerValue + '"').to.equal(String(entry2.equals));
+                pm.test(t(ctx2, "headers.equals", label2, entry2.equals), function() {
+                  pm.expect(headerValue, t(ctx2, "headers.equalsExpect", entry2.equals, headerValue)).to.equal(String(entry2.equals));
                 });
               } else if (typeof entry2.expect === "function") {
                 var fnResult;
@@ -1014,12 +1094,12 @@
                 } catch (e2) {
                   fnResult = false;
                 }
-                pm.test('\u{1F4E8} Header "' + label2 + '": \u0443\u0441\u043B\u043E\u0432\u0438\u0435', function() {
-                  pm.expect(fnResult, '\u{1F6AB} Header "' + headerName + '": \u0443\u0441\u043B\u043E\u0432\u0438\u0435 \u043D\u0435 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u043E (\u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435: "' + headerValue + '")').to.be.true;
+                pm.test(t(ctx2, "headers.cond", label2), function() {
+                  pm.expect(fnResult, t(ctx2, "headers.condExpect", headerName, headerValue)).to.be.true;
                 });
               } else if (typeof entry2.expect === "string") {
-                pm.test('\u{1F4E8} Header "' + label2 + '" \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u0442 "' + entry2.expect + '"', function() {
-                  pm.expect(headerValue, '\u{1F6AB} Header "' + headerName + '" \u043D\u0435 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u0442 "' + entry2.expect + '"').to.include(entry2.expect);
+                pm.test(t(ctx2, "headers.includes", label2, entry2.expect), function() {
+                  pm.expect(headerValue, t(ctx2, "headers.includesExpect", headerName, entry2.expect)).to.include(entry2.expect);
                 });
               }
               ctx2._meta.results.headers = ctx2._meta.results.headers || [];

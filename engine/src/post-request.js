@@ -936,31 +936,31 @@ import { t, statusLabel } from './shared/i18n.js';
                 const label       = entry.label || headerName;
 
                 if (entry.absent) {
-                    pm.test('📨 Header отсутствует: ' + label, function() {
-                        pm.expect(headerValue, '🚫 Header "' + headerName + '" присутствует, но должен отсутствовать').to.be.oneOf([null, undefined, '']);
+                    pm.test(t(ctx, 'headers.absent', label), function() {
+                        pm.expect(headerValue, t(ctx, 'headers.absentExpect', headerName)).to.be.oneOf([null, undefined, '']);
                     });
                     ctx._meta.results.headers = ctx._meta.results.headers || [];
                     ctx._meta.results.headers.push({ name: headerName, status: 'absent', ok: !headerValue });
                     return;
                 }
 
-                pm.test('📨 Header существует: ' + label, function() {
-                    pm.expect(headerValue, '🚫 Header "' + headerName + '" отсутствует в ответе').to.be.a('string').and.have.length.above(0);
+                pm.test(t(ctx, 'headers.exists', label), function() {
+                    pm.expect(headerValue, t(ctx, 'headers.existsExpect', headerName)).to.be.a('string').and.have.length.above(0);
                 });
 
                 if (entry.equals !== undefined) {
-                    pm.test('📨 Header "' + label + '" = "' + entry.equals + '"', function() {
-                        pm.expect(headerValue, '🚫 Ожидалось "' + entry.equals + '", получено "' + headerValue + '"').to.equal(String(entry.equals));
+                    pm.test(t(ctx, 'headers.equals', label, entry.equals), function() {
+                        pm.expect(headerValue, t(ctx, 'headers.equalsExpect', entry.equals, headerValue)).to.equal(String(entry.equals));
                     });
                 } else if (typeof entry.expect === 'function') {
                     var fnResult;
                     try { fnResult = entry.expect(headerValue); } catch(e) { fnResult = false; }
-                    pm.test('📨 Header "' + label + '": условие', function() {
-                        pm.expect(fnResult, '🚫 Header "' + headerName + '": условие не выполнено (значение: "' + headerValue + '")').to.be.true;
+                    pm.test(t(ctx, 'headers.cond', label), function() {
+                        pm.expect(fnResult, t(ctx, 'headers.condExpect', headerName, headerValue)).to.be.true;
                     });
                 } else if (typeof entry.expect === 'string') {
-                    pm.test('📨 Header "' + label + '" содержит "' + entry.expect + '"', function() {
-                        pm.expect(headerValue, '🚫 Header "' + headerName + '" не содержит "' + entry.expect + '"').to.include(entry.expect);
+                    pm.test(t(ctx, 'headers.includes', label, entry.expect), function() {
+                        pm.expect(headerValue, t(ctx, 'headers.includesExpect', headerName, entry.expect)).to.include(entry.expect);
                     });
                 }
 

@@ -52,7 +52,28 @@ const M = {
     'metrics.contentType':       { ru: function(ct) { return '🧾 Content-Type: ' + ct; },
                                    en: function(ct) { return '🧾 Content-Type: ' + ct; } },
     'metrics.contentTypeExpect': { ru: function(t) { return '🚫 Ожидался "' + t + '"'; },
-                                   en: function(t) { return '🚫 Expected "' + t + '"'; } }
+                                   en: function(t) { return '🚫 Expected "' + t + '"'; } },
+
+    'headers.absent':         { ru: function(l) { return '📨 Header отсутствует: ' + l; },
+                                en: function(l) { return '📨 Header absent: ' + l; } },
+    'headers.absentExpect':   { ru: function(h) { return '🚫 Header "' + h + '" присутствует, но должен отсутствовать'; },
+                                en: function(h) { return '🚫 Header "' + h + '" is present but must be absent'; } },
+    'headers.exists':         { ru: function(l) { return '📨 Header существует: ' + l; },
+                                en: function(l) { return '📨 Header present: ' + l; } },
+    'headers.existsExpect':   { ru: function(h) { return '🚫 Header "' + h + '" отсутствует в ответе'; },
+                                en: function(h) { return '🚫 Header "' + h + '" missing from response'; } },
+    'headers.equals':         { ru: function(l, v) { return '📨 Header "' + l + '" = "' + v + '"'; },
+                                en: function(l, v) { return '📨 Header "' + l + '" = "' + v + '"'; } },
+    'headers.equalsExpect':   { ru: function(e, g) { return '🚫 Ожидалось "' + e + '", получено "' + g + '"'; },
+                                en: function(e, g) { return '🚫 Expected "' + e + '", got "' + g + '"'; } },
+    'headers.cond':           { ru: function(l) { return '📨 Header "' + l + '": условие'; },
+                                en: function(l) { return '📨 Header "' + l + '": condition'; } },
+    'headers.condExpect':     { ru: function(h, v) { return '🚫 Header "' + h + '": условие не выполнено (значение: "' + v + '")'; },
+                                en: function(h, v) { return '🚫 Header "' + h + '": condition failed (value: "' + v + '")'; } },
+    'headers.includes':       { ru: function(l, e) { return '📨 Header "' + l + '" содержит "' + e + '"'; },
+                                en: function(l, e) { return '📨 Header "' + l + '" contains "' + e + '"'; } },
+    'headers.includesExpect': { ru: function(h, e) { return '🚫 Header "' + h + '" не содержит "' + e + '"'; },
+                                en: function(h, e) { return '🚫 Header "' + h + '" does not contain "' + e + '"'; } }
 };
 
 export function t(ctx, id) {
