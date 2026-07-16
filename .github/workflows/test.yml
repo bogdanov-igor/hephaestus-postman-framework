@@ -1,0 +1,47 @@
+name: Tests
+
+on:
+  push:
+    paths:
+      - "engine/**"
+      - "scripts/**"
+      - "setup/**"
+      - "collection/**"
+      - "package.json"
+      - ".github/workflows/test.yml"
+  pull_request:
+    paths:
+      - "engine/**"
+      - "scripts/**"
+      - "setup/**"
+      - "collection/**"
+      - "package.json"
+      - ".github/workflows/test.yml"
+
+jobs:
+  test:
+    name: Build + test suite
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # package-lock.json is gitignored (see .gitignore) → npm install, not npm ci.
+      - name: Install dependencies
+        run: npm install
+
+      # Verifies engine bundles are in sync with engine/src, version single-source,
+      # and the collection embeds the current engine + checksums.
+      - name: Build checks
+        run: npm run build
+
+      # 30 tooling tests + the newman engine behavioral harness (65 assertions)
+      # run against a local mock server and compared to the golden baseline.
+      - name: Tool + engine test suite
+        run: npm test
