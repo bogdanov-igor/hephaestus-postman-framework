@@ -509,6 +509,58 @@ test('sync-examples keeps hand-written examples and is idempotent', function() {
     assert(handwritten.length === 1, 'hand-written example must be preserved');
 });
 
+// ─── 13. openapi-import.js ────────────────────────────────────────────────────
+
+console.log('\n⑬ openapi-import.js');
+
+const openapiYamlFile = path.join(TMP, 'api.yaml');
+const openapiOutFile  = path.join(TMP, 'api-collection.json');
+fs.writeFileSync(openapiYamlFile, [
+    'openapi: 3.0.0',
+    'info:',
+    '  title: Test API',
+    'servers:',
+    '  - url: https://api.example.com',
+    'paths:',
+    '  /pets/{petId}:',
+    '    get:',
+    '      summary: Get pet',
+    '      tags: [pets]',
+    '      responses:',
+    "        '200':",
+    '          description: ok',
+    '          content:',
+    '            application/json:',
+    '              schema:',
+    "                $ref: '#/components/schemas/Pet'",
+    'components:',
+    '  schemas:',
+    '    Pet:',
+    '      type: object',
+    '      required: [id]',
+    '      properties:',
+    '        id:',
+    '          type: integer'
+].join('\n'));
+
+test('openapi imports YAML into a collection', function() {
+    run(NODE + ' "' + path.join(ROOT, 'scripts/openapi-import.js') + '" "' + openapiYamlFile + '" -o "' + openapiOutFile + '"');
+    const col = JSON.parse(fs.readFileSync(openapiOutFile, 'utf8'));
+    assert(col.info.name === 'Test API', 'collection name from info.title, got ' + col.info.name);
+    const folder = col.item.find(function(f) { return f.name === 'pets'; });
+    assert(folder && folder.item.length === 1, 'expected 1 request in pets folder');
+});
+
+test('openapi converts path params + pre-fills override (expectedStatus + inlined $ref schema)', function() {
+    const col = JSON.parse(fs.readFileSync(openapiOutFile, 'utf8'));
+    const req = col.item[0].item[0];
+    assertContains(req.request.url.raw, '/pets/:petId', 'path param {petId} → :petId');
+    const src = req.event.find(function(e) { return e.listen === 'test'; }).script.exec.join('\n');
+    const override = JSON.parse(src.match(/const override = ([\s\S]*?);/)[1]);
+    assert(JSON.stringify(override.expectedStatus) === '[200]', 'expectedStatus should be [200]');
+    assert(override.schema && override.schema.definition && override.schema.definition.properties && override.schema.definition.properties.id, '$ref schema should be inlined');
+});
+
 // ─── Cleanup ─────────────────────────────────────────────────────────────────
 
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch(e) { /* ignore */ }

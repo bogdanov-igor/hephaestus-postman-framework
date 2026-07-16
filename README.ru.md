@@ -840,6 +840,18 @@ Exit-коды пробрасываются, поэтому `compare`/`summary` �
 
 ---
 
+## 🧬 Импорт OpenAPI / Swagger
+
+Генерирует готовую Hephaestus-коллекцию из OpenAPI 3.x или Swagger 2.0 (JSON или распространённое подмножество YAML — без зависимостей):
+
+```bash
+hephaestus openapi openapi.yaml -o api.postman_collection.json
+```
+
+По одному запросу на операцию, сгруппированы по тегам, с преднастроенным `override` в Test-скрипте: **`expectedStatus`** (из задокументированных 2xx-ответов) и **`schema`** (JSON-схема ответа с заинлайненными `$ref`). Path-параметры `{id}` → Postman `:id`. Дальше импортируй, задай `hephaestus.defaults`, запусти `🔧 engine-update`.
+
+---
+
 ## 🛠 Инструменты экосистемы (v3.3)
 
 | Инструмент | Описание |

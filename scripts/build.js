@@ -153,7 +153,9 @@ console.log('\n🔧 Check 3: version single-source (' + pkgVersion + ')');
 const BANNER_FILES = [
     'scripts/build.js', 'scripts/ci-to-junit.js', 'scripts/compare.js', 'scripts/docs.js',
     'scripts/generate-report.js', 'scripts/init.js', 'scripts/migrate.js', 'scripts/summary.js',
-    'scripts/test.js', 'scripts/watch.js', 'scripts/sync-examples.js',
+    // NB: test.js / test-engine.js are excluded — they carry fixture data with
+    // unrelated version strings (OpenAPI/Swagger/schema versions), not tool banners.
+    'scripts/watch.js', 'scripts/sync-examples.js', 'scripts/openapi-import.js',
     'setup/snapshot-view.js', 'setup/snapshot-clear.js',
     'Dockerfile', 'docker-compose.yml'
 ];

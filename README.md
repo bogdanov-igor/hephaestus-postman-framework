@@ -982,6 +982,18 @@ Exit codes propagate, so `compare`/`summary` work as CI gates. Run `hephaestus -
 
 ---
 
+## 🧬 OpenAPI / Swagger Import
+
+Generate a ready-to-use Hephaestus collection from an OpenAPI 3.x or Swagger 2.0 spec (JSON, or a common subset of YAML — zero dependencies):
+
+```bash
+hephaestus openapi openapi.yaml -o api.postman_collection.json
+```
+
+One request per operation, grouped by tag, with the Test-script `override` pre-filled: **`expectedStatus`** (from the documented 2xx responses) and **`schema`** (the JSON response schema, with `$ref` inlined). Path params `{id}` become Postman `:id`. Then import it, set `hephaestus.defaults`, and run `🔧 engine-update`.
+
+---
+
 ## 🛠 Ecosystem Tools (v3.3)
 
 | Tool | Description |
