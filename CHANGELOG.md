@@ -2,6 +2,24 @@
 
 ---
 
+## [3.9.0] — 2026-07-16
+
+### Added
+- **Zero-download template** — the shipped collection embeds the engine at build time, so a fresh import runs offline (no `engine-update` needed for first use).
+- **SHA-256 engine integrity** — `engine-update` verifies downloaded code against `engine/checksums.json` before storing it.
+- **Modular engine source** (`engine/src/**`) bundled with **esbuild**; `config-merge` single-sourced; JSDoc typedefs + `jsconfig.json` for IntelliSense.
+- **newman-based engine test harness** — the real in-Postman engine runs against a mock server and is compared to a golden baseline (`npm run test:engine`).
+- **`hephaestus` CLI** — one command (`npx hephaestus …`) dispatching `summary`/`compare`/`report`/`junit`/`migrate`/`docs`/`init`/`watch`; publish-ready `bin`/`files`.
+- **`securityAudit`** post-request module — protective-header / server-disclosure / stack-trace-leak / insecure-CORS checks (opt-in).
+- **`snapshotRecord`** (`snapshot.record` / top-level `snapshotRecord`) — force-rewrite a snapshot baseline in one run.
+- **Response-time percentiles** (p50/p90/p95/p99) and a `--sla=<ms>` CI performance gate in `summary`.
+
+### Changed
+- `npm run build` now generates the engine bundles + embeds them in the collection + writes checksums, and enforces version single-source across all tool banners.
+- CI runs the full test suite (`npm test`) in addition to lint/build.
+
+---
+
 ## [3.8.0] — 2026-04-07
 
 ### Added

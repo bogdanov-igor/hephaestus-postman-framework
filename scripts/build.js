@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Hephaestus Build Utilities  v3.8.0
+ * Hephaestus Build Utilities  v3.9.0
  *
  * Two modes:
  *   node scripts/build.js            → CHECK mode (no writes). Verifies every

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Hephaestus — Newman Run Summary  v3.8.0
+ * Hephaestus — Newman Run Summary  v3.9.0
  *
  * Generates a rich human-readable summary from a Newman JSON results file.
  * Shows overall stats, per-folder breakdown, slowest endpoints, and

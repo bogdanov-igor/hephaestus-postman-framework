@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Hephaestus — Newman Watch Mode  v3.8.0
+ * Hephaestus — Newman Watch Mode  v3.9.0
  *
  * Watches collection + environment files for changes and re-runs Newman.
  * Like jest --watch, but for API tests.
@@ -173,7 +173,7 @@ function onChange(filename) {
 }
 
 console.log('');
-console.log(c('bold', '  🔥 Hephaestus Watch Mode  v3.8.0'));
+console.log(c('bold', '  🔥 Hephaestus Watch Mode  v3.9.0'));
 console.log(c('dim', '  Collection: ') + path.basename(collection));
 if (envFiles.length) console.log(c('dim', '  Environments: ') + envFiles.map(function(e) { return path.basename(e); }).join(', '));
 console.log(c('dim', '  Debounce: ' + delay + 'ms'));

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Hephaestus — Engine Behavioral Test Harness  v3.8.0
+ * Hephaestus — Engine Behavioral Test Harness  v3.9.0
  *
  * Runs the ACTUAL in-Postman engine through the real Newman/Postman sandbox
  * (chai, tv4, CryptoJS, xml2js all present) against a local mock server, and

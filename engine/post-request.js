@@ -58,7 +58,7 @@
     "engine/src/post-request.js"(exports, module) {
       init_config_merge();
       (function hephaestusPostRequest() {
-        const VERSION = "3.8.0";
+        const VERSION = "3.9.0";
         const _override = typeof override !== "undefined" && override !== null ? override : {};
         const STATUS_LABELS = {
           200: "\u0423\u0441\u043F\u0435\u0448\u043D\u043E",

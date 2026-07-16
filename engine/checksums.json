@@ -1,8 +1,8 @@
 {
-  "version": "3.8.0",
+  "version": "3.9.0",
   "algorithm": "sha256",
   "files": {
-    "engine/pre-request.js": "b84f09d91001479fb07d9cb3584447ab2af91623c018b9b58224c8c482f01720",
-    "engine/post-request.js": "fe400f1732f714c8985f234269d89a1eec991bf6abb3471cf8478083b4aff71c"
+    "engine/pre-request.js": "13d1146834d3d0d2309db2dc97176cc3d401547162c77f6f2133e75f8989e056",
+    "engine/post-request.js": "0cf51843306d534ab2f405c68fb71cc25d4e8670322879b88ec0b48b624cdcb0"
   }
 }

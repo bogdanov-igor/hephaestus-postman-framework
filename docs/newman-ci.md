@@ -95,7 +95,7 @@ Enable CI mode in `hephaestus.defaults` before running Newman:
 With `ci: true`, each request appends a structured JSON line to the console:
 
 ```
-[HEPHAESTUS_CI] {"v":"3.8.0","request":"Получение токена","method":"GET","status":200,"time":142,"size":1024,"format":"xml","found":[],"saved":["prod.token"],"counts":[],"headers":[{"name":"Content-Type","ok":true}],"snapshot":null,"schema":null,"errors":[]}
+[HEPHAESTUS_CI] {"v":"3.9.0","request":"Получение токена","method":"GET","status":200,"time":142,"size":1024,"format":"xml","found":[],"saved":["prod.token"],"counts":[],"headers":[{"name":"Content-Type","ok":true}],"snapshot":null,"schema":null,"errors":[]}
 ```
 
 ---

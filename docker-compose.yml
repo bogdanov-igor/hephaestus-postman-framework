@@ -1,4 +1,4 @@
-# Hephaestus — Docker Compose  v3.8.0
+# Hephaestus — Docker Compose  v3.9.0
 #
 # Запуск Newman тестов через Docker.
 #
@@ -19,7 +19,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: hephaestus-runner:3.8.0
+    image: hephaestus-runner:3.9.0
     volumes:
       - .:/data
     working_dir: /data

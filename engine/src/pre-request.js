@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════════════════════════╗
-// ║  Hephaestus v3 — Pre-Request Engine                         v3.8.0      ║
+// ║  Hephaestus v3 — Pre-Request Engine                         v3.9.0      ║
 // ║  Хранится в collectionVariables["hephaestus.v3.pre"]                   ║
 // ║  Обновляется через setup/engine-update.js                               ║
 // ╠══════════════════════════════════════════════════════════════════════════╣
@@ -12,7 +12,7 @@ import { configMerge } from './shared/config-merge.js';
 
 (function hephaestusPreRequest() {
 
-    const VERSION = '3.8.0';
+    const VERSION = '3.9.0';
 
     // override объявлен СНАРУЖИ (в скрипте метода), eval видит его через scope
     const _override = (typeof override !== 'undefined' && override !== null)
