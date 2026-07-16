@@ -6,14 +6,14 @@ on:
       - "engine/**"
       - "setup/**"
       - "templates/**"
-      - "eslint.config.js"
+      - "eslint.config.mjs"
       - "package.json"
   pull_request:
     paths:
       - "engine/**"
       - "setup/**"
       - "templates/**"
-      - "eslint.config.js"
+      - "eslint.config.mjs"
       - "package.json"
 
 jobs:

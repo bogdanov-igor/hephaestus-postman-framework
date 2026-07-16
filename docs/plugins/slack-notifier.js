@@ -67,7 +67,7 @@
             pretext:    status + '  *' + reqName + '*',
             title:      url,
             fields:     fields,
-            footer:     'Hephaestus v' + (ctx._meta.version || '3.3.0'),
+            footer:     'Hephaestus v' + (ctx._meta.version || '3.8.0'),
             ts:         Math.floor(Date.now() / 1000),
         }]
     };

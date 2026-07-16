@@ -309,19 +309,6 @@
     font-family: 'SF Mono', monospace;
   }
   .path-tag.ignore { background: rgba(248,81,73,0.08); border-color: rgba(248,81,73,0.2); color: var(--red); }
-
-  /* Empty state */
-  #empty {
-    max-width: 900px;
-    margin: 0 auto;
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--muted);
-    display: none;
-  }
-  #empty .icon { font-size: 3rem; margin-bottom: 16px; }
-  #empty h3 { font-size: 1.1rem; color: var(--text); margin-bottom: 8px; }
-  #empty p { font-size: 0.85rem; }
 </style>
 </head>
 <body>
@@ -355,7 +342,7 @@
 </div>
 
 <!-- Stats bar -->
-<div id="stats-bar" style="display:none; max-width:900px; margin:0 auto 20px; display:flex; gap:12px; flex-wrap:wrap; align-items:stretch;">
+<div id="stats-bar" style="display:none; max-width:900px; margin:0 auto 20px; gap:12px; flex-wrap:wrap; align-items:stretch;">
   <div class="stat-card"><div class="val" id="s-total">0</div><div class="lbl">Snapshots</div></div>
   <div class="stat-card"><div class="val" id="s-formats">—</div><div class="lbl">Formats</div></div>
   <div class="stat-card"><div class="val" id="s-oldest">—</div><div class="lbl">Oldest</div></div>
@@ -369,7 +356,7 @@
 </div>
 
 <!-- Filter row -->
-<div id="filter-row" style="display:none; max-width:900px; margin:0 auto 16px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+<div id="filter-row" style="display:none; max-width:900px; margin:0 auto 16px; gap:10px; flex-wrap:wrap; align-items:center;">
   <input id="search" type="text" placeholder="Search by key, format, mode..." oninput="filter()">
   <button class="filter-btn active" data-fmt="all" onclick="setFmt(this)">All</button>
   <button class="filter-btn" data-fmt="json" onclick="setFmt(this)">JSON</button>
