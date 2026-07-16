@@ -9,6 +9,17 @@
     "type": "git",
     "url": "https://github.com/bogdanov-igor/hephaestus-postman-framework.git"
   },
+  "bin": {
+    "hephaestus": "bin/hephaestus.js"
+  },
+  "files": [
+    "bin/",
+    "scripts/",
+    "engine/",
+    "setup/",
+    "templates/",
+    "collection/"
+  ],
   "scripts": {
     "lint": "eslint engine/ setup/ templates/",
     "lint:fix": "eslint engine/ setup/ templates/ --fix",

@@ -401,6 +401,49 @@ test('HTML has no external <script> or <link rel=stylesheet>', function() {
     assert(linkHref.length  === 0, 'found external <link href>: '  + linkHref.join(', '));
 });
 
+// ─── 11. hephaestus CLI ───────────────────────────────────────────────────────
+
+console.log('\n⑪ hephaestus CLI (bin/hephaestus.js)');
+
+const CLI = path.join(ROOT, 'bin/hephaestus.js');
+
+test('--version prints package version', function() {
+    assertContains(run(NODE + ' "' + CLI + '" --version'), pkg.version, 'version');
+});
+
+test('--help lists all user commands', function() {
+    const out = run(NODE + ' "' + CLI + '" --help');
+    ['summary', 'compare', 'report', 'junit', 'migrate', 'docs', 'init', 'watch'].forEach(function(c) {
+        assertContains(out, c, 'help command ' + c);
+    });
+});
+
+test('unknown command exits non-zero', function() {
+    let code = 0;
+    try { run(NODE + ' "' + CLI + '" frobnicate'); } catch(e) { code = e.status || 1; }
+    assert(code !== 0, 'unknown command should exit non-zero');
+});
+
+test('report subcommand delegates → HTML file', function() {
+    const outHtml = path.join(TMP, 'cli-report.html');
+    run(NODE + ' "' + CLI + '" report "' + newmanFixtureFile + '" "' + outHtml + '"');
+    assert(fs.existsSync(outHtml), 'HTML should be created');
+    assertContains(fs.readFileSync(outHtml, 'utf8'), '<html', 'report HTML');
+});
+
+test('junit subcommand delegates → JUnit XML', function() {
+    const outXml = path.join(TMP, 'cli-junit.xml');
+    run(NODE + ' "' + CLI + '" junit "' + newmanFixtureFile + '" "' + outXml + '"');
+    assert(fs.existsSync(outXml), 'XML should be created');
+    assertContains(fs.readFileSync(outXml, 'utf8'), 'testsuite', 'junit XML');
+});
+
+test('propagates sub-command exit code (summary with failures exits 1)', function() {
+    let code = 0;
+    try { run(NODE + ' "' + CLI + '" summary "' + newmanFixtureFile + '"'); } catch(e) { code = e.status || 1; }
+    assert(code === 1, 'summary should propagate exit 1 on failures, got ' + code);
+});
+
 // ─── Cleanup ─────────────────────────────────────────────────────────────────
 
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch(e) { /* ignore */ }
