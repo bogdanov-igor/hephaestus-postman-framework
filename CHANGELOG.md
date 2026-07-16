@@ -2,6 +2,19 @@
 
 ---
 
+## [Unreleased]
+
+### Added
+- **Engine i18n** — every user-facing string (test names, log lines, errors) is
+  routed through a locale catalog (`engine/src/shared/i18n.js`). Set
+  `"locale": "en"` in config for English output; default `"ru"` reproduces the
+  historical strings byte-for-byte. Covers both the pre-request and post-request
+  planes across all modules.
+- **English test-engine fixtures** — the golden baseline now locks both `ru` and
+  `en` output (192 assertions / 16 requests).
+
+---
+
 ## [3.9.0] — 2026-07-16
 
 ### Added
