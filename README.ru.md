@@ -655,7 +655,14 @@ npm run summary -- results.json           # консоль
 npm run summary -- results.json --md      # Markdown
 ```
 
-Показывает: общий pass rate, per-folder таблицу, топ-5 медленных, топ-5 часто-падающих assertions.
+Показывает: общий pass rate, per-folder таблицу, самые медленные, часто-падающие assertions и **перцентили времени ответа** (p50 / p90 / p95 / p99).
+
+**SLA-гейт** — валит прогон, если p95 превышает порог (удобно в CI):
+
+```bash
+npm run summary -- results.json --sla=500        # или: hephaestus summary results.json --sla=500
+# exit 1, если p95 > 500 мс, со списком запросов сверх SLA
+```
 
 ## 🧙 Init Wizard (v3.7)
 

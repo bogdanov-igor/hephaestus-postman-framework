@@ -22,7 +22,7 @@ const SCRIPTS = path.join(ROOT, 'scripts');
 // User-facing commands only. Maintainer tasks (build, test, engine tests) stay
 // as `npm run …` because they only make sense inside the repo.
 const COMMANDS = {
-    summary: { script: 'summary.js',         usage: 'summary <results.json> [--md] [--no-color]',        about: 'Human/Markdown summary of a Newman run' },
+    summary: { script: 'summary.js',         usage: 'summary <results.json> [--md] [--sla=<ms>]',        about: 'Newman run summary + p50/p95/p99 (SLA gate via --sla)' },
     compare: { script: 'compare.js',         usage: 'compare <before.json> <after.json> [--md]',         about: 'Diff two Newman runs (CI regression gate)' },
     report:  { script: 'generate-report.js', usage: 'report <results.json> [out.html]',                  about: 'Self-contained HTML report' },
     junit:   { script: 'ci-to-junit.js',     usage: 'junit <results.json|-> [out.xml]',                  about: 'Convert Newman JSON to JUnit XML' },

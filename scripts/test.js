@@ -305,6 +305,35 @@ test('summary Markdown contains Folders section', function() {
     assertContains(md, '## Folders', 'missing Folders section');
 });
 
+test('summary Markdown includes Response Times percentiles (p95)', function() {
+    const md = fs.readFileSync(summaryMdOut, 'utf8');
+    assertContains(md, '## Response Times', 'missing Response Times section');
+    assertContains(md, 'p95', 'missing p95 percentile');
+});
+
+const slaFixtureFile = path.join(TMP, 'sla-pass.json');
+fs.writeFileSync(slaFixtureFile, JSON.stringify({
+    collection: { info: { name: 'Perf' } },
+    run: {
+        stats: { requests: { total: 1, failed: 0 }, assertions: { total: 1, failed: 0 } },
+        timings: { started: 0, completed: 300 },
+        executions: [{ item: { name: 'GET Slow', request: { method: 'GET' } }, response: { code: 200, responseTime: 300, responseSize: 128 }, assertions: [{ assertion: 'ok', skipped: false, error: null }] }],
+        failures: []
+    }
+}));
+
+test('summary --sla gates on p95 breach (exit 1)', function() {
+    let code = 0;
+    try { run(NODE + ' "' + path.join(ROOT, 'scripts/summary.js') + '" "' + slaFixtureFile + '" --sla=100 --no-color'); }
+    catch(e) { code = e.status || 1; }
+    assert(code === 1, 'SLA breach (p95 300 > 100) should exit 1, got ' + code);
+});
+
+test('summary --sla passes when p95 under threshold (exit 0)', function() {
+    const out = run(NODE + ' "' + path.join(ROOT, 'scripts/summary.js') + '" "' + slaFixtureFile + '" --sla=500 --no-color');
+    assertContains(out, '✅', 'expected all-pass with SLA ok');
+});
+
 // ─── 9. compare.js ───────────────────────────────────────────────────────────
 
 console.log('\n⑨ compare.js');

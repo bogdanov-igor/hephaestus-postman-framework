@@ -731,7 +731,14 @@ npm run summary -- results.json
 npm run summary -- results.json --md > summary.md
 ```
 
-Shows: overall pass rate, per-folder breakdown table, top-5 slowest endpoints, top-5 most-failed assertions.
+Shows: overall pass rate, per-folder breakdown, slowest endpoints, most-failed assertions, and **response-time percentiles** (p50 / p90 / p95 / p99).
+
+**SLA gate** — fail the run when p95 exceeds a threshold (ideal for CI):
+
+```bash
+npm run summary -- results.json --sla=500        # or: hephaestus summary results.json --sla=500
+# exits 1 if p95 > 500 ms and lists the over-SLA requests
+```
 
 ## 🧙 Interactive Init Wizard (v3.7)
 
