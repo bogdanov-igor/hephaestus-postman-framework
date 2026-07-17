@@ -17,7 +17,7 @@ import { t } from './i18n.js';
 const KNOWN_KEYS = [
     '$schema', '_comment', 'strictMode', 'extraKeys',
     'baseUrl', 'defaultProtocol', 'auth', 'dateFormat', 'dates',
-    'maxResponseTime', 'expectedStatus', 'expectEmpty', 'contentType',
+    'maxResponseTime', 'maxBytes', 'expectedStatus', 'expectEmpty', 'contentType',
     'snapshot', 'snapshotRecord', 'schema', 'securityAudit', 'secrets',
     'envRequired', 'ci', 'locale', 'logLevel', 'softFail', 'randomData',
     'keysToFind', 'varsToSave', 'keysToCount', 'assertions', 'assertEach',

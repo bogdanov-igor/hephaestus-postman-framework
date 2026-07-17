@@ -52,6 +52,11 @@ function startMockServer() {
             res.writeHead(200, { 'Content-Type': 'application/xml' });
             return res.end('<root><token>ABC123</token><user><id>7</id></user></root>');
         }
+        if (url === '/binary') {
+            // unparseable body (not JSON, not XML, not text) → the notParsed path
+            res.writeHead(200, { 'Content-Type': 'application/octet-stream' });
+            return res.end('\x00\x01BINARY-not-json-' + 'x'.repeat(60));
+        }
         if (url === '/headers') {
             return json({ ok: true }, 200, { 'X-Request-Id': 'req-123', 'X-Version': 'v2' });
         }
@@ -302,6 +307,25 @@ function buildCollection(preSrc, postSrc, baseUrl) {
             name: 'strict-allowed-keys-ok',
             request: { method: 'GET', url: baseUrl + '/obj' },
             event: methodScripts({}, { strictMode: true, slackUrl: 'https://hooks.example', extraKeys: ['myCustom'], myCustom: 1 })
+        },
+        {
+            // maxBytes: a generous response-size budget passes.
+            name: 'maxbytes-ok',
+            request: { method: 'GET', url: baseUrl + '/obj' },
+            event: methodScripts({}, { maxBytes: 100000 })
+        },
+        {
+            // maxBytes: a 1-byte budget is exceeded — NEGATIVE fixture (expected fail).
+            name: 'neg-maxbytes-over',
+            request: { method: 'GET', url: baseUrl + '/obj' },
+            event: methodScripts({}, { maxBytes: 1 })
+        },
+        {
+            // maxBytes must fire even when the body doesn't parse (binary/garbage) —
+            // that's where a size guard matters most. NEGATIVE fixture (expected fail).
+            name: 'neg-maxbytes-binary',
+            request: { method: 'GET', url: baseUrl + '/binary' },
+            event: methodScripts({}, { maxBytes: 1 })
         }
     ];
 

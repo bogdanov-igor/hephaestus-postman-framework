@@ -42,6 +42,7 @@
  * @property {AuthConfig} [auth]
  * @property {string} [dateFormat]
  * @property {number} [maxResponseTime]
+ * @property {number} [maxBytes]
  * @property {number|number[]} [expectedStatus]
  * @property {boolean} [expectEmpty]
  * @property {'json'|'xml'|'text'} [contentType]

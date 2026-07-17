@@ -496,7 +496,20 @@ import { t, statusLabel } from './shared/i18n.js';
                 pm.expect(time, '🚫 Response time exceeded: ' + time + 'ms > ' + max + 'ms').to.be.at.most(max);
             });
         },
+        // maxBytes: ctx.config.maxBytes (число) — бюджет размера ответа в байтах.
+        runMaxBytes(ctx) {
+            const max = ctx.config.maxBytes;
+            if (typeof max !== 'number' || max <= 0) return;
+            const size = ctx.response.size;
+            if (typeof size !== 'number') return;
+            pm.test(t(ctx, 'assertions.maxBytesName', max, size), () => {
+                pm.expect(size, t(ctx, 'assertions.maxBytesExceed', size, max)).to.be.at.most(max);
+            });
+        },
         run(ctx) {
+            // The size budget doesn't need a parsed body — check it before the
+            // notParsed early-return so an oversized binary/garbage payload is caught.
+            this.runMaxBytes(ctx);
             if (!ctx.response.parsed && ctx.response.format !== 'text') {
                 ctx._meta.errors.push(t(ctx, 'assertions.notParsed')); return;
             }

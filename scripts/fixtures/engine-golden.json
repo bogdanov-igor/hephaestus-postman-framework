@@ -331,6 +331,126 @@
       "ok": true
     },
     {
+      "item": "maxbytes-ok",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "maxbytes-ok",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "maxbytes-ok",
+      "name": "📦 Размер ответа ≤ 100000 Б: 88 Б ✅",
+      "ok": true
+    },
+    {
+      "item": "maxbytes-ok",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "maxbytes-ok",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "maxbytes-ok",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "maxbytes-ok",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "maxbytes-ok",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
+      "item": "neg-maxbytes-binary",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "neg-maxbytes-binary",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "neg-maxbytes-binary",
+      "name": "📦 Размер ответа ≤ 1 Б: 78 Б ❌",
+      "ok": false
+    },
+    {
+      "item": "neg-maxbytes-binary",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "neg-maxbytes-binary",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-maxbytes-binary",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-maxbytes-binary",
+      "name": "🧾 Content-Type: application/octet-stream",
+      "ok": false
+    },
+    {
+      "item": "neg-maxbytes-binary",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
+      "item": "neg-maxbytes-over",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "neg-maxbytes-over",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "neg-maxbytes-over",
+      "name": "📦 Размер ответа ≤ 1 Б: 88 Б ❌",
+      "ok": false
+    },
+    {
+      "item": "neg-maxbytes-over",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "neg-maxbytes-over",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-maxbytes-over",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-maxbytes-over",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "neg-maxbytes-over",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
       "item": "neg-strict-unknown-key",
       "name": "⚠️ URL: небезопасный протокол http",
       "ok": true
@@ -1181,6 +1301,50 @@
     },
     "locale-en": {
       "request": "locale-en",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "maxbytes-ok": {
+      "request": "maxbytes-ok",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "neg-maxbytes-binary": {
+      "request": "neg-maxbytes-binary",
+      "method": "GET",
+      "status": 200,
+      "format": "xml",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": [
+        "assertions: ответ не распарсен, проверки пропущены"
+      ]
+    },
+    "neg-maxbytes-over": {
+      "request": "neg-maxbytes-over",
       "method": "GET",
       "status": 200,
       "format": "json",

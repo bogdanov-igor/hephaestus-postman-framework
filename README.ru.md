@@ -181,6 +181,7 @@ node bin/hephaestus.js summary results.json --sla=500   # p95-гейт, exit 1 �
 | `contentType` | `"json"` | Разбор ответа: `json` · `xml` · `text` |
 | `expectedStatus` | `[200,201,202]` | Ожидаемый HTTP-статус — число или список; управляет негативным тестированием |
 | `maxResponseTime` | `1000` | Провал, если ответ медленнее (мс) |
+| `maxBytes` | выкл | Провал, если тело ответа больше N байт |
 | `snapshot` | выключено | `mode`, `checkPaths`, `ignorePaths`, `autoSaveMissing`, `record` |
 | `schema` | выключено | Определение JSON Schema, валидируемое через `tv4` |
 | `securityAudit` | выключено | Пассивные проверки заголовков / раскрытия / CORS |

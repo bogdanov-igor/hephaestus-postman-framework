@@ -192,6 +192,22 @@
     }, en: function(name, path) {
       return "\u{1F6AB} '" + name + "': not found at path '" + path + "'";
     } },
+    "assertions.maxBytesName": {
+      ru: function(max, size) {
+        return "\u{1F4E6} \u0420\u0430\u0437\u043C\u0435\u0440 \u043E\u0442\u0432\u0435\u0442\u0430 \u2264 " + max + " \u0411: " + size + " \u0411 " + (size <= max ? "\u2705" : "\u274C");
+      },
+      en: function(max, size) {
+        return "\u{1F4E6} Response size \u2264 " + max + " B: " + size + " B " + (size <= max ? "\u2705" : "\u274C");
+      }
+    },
+    "assertions.maxBytesExceed": {
+      ru: function(size, max) {
+        return "\u{1F6AB} \u0420\u0430\u0437\u043C\u0435\u0440 \u043E\u0442\u0432\u0435\u0442\u0430 \u043F\u0440\u0435\u0432\u044B\u0448\u0435\u043D: " + size + " \u0411 > " + max + " \u0411";
+      },
+      en: function(size, max) {
+        return "\u{1F6AB} Response size exceeded: " + size + " B > " + max + " B";
+      }
+    },
     "assertions.unknownScope": { ru: function(scope, name) {
       return 'varsToSave: \u043D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u044B\u0439 scope "' + scope + '" \u0434\u043B\u044F "' + name + '", \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D collection';
     }, en: function(scope, name) {
@@ -725,6 +741,7 @@
     "dateFormat",
     "dates",
     "maxResponseTime",
+    "maxBytes",
     "expectedStatus",
     "expectEmpty",
     "contentType",

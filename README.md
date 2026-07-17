@@ -169,6 +169,7 @@ deep-merged with a per-request `override`. Common fields:
 | `contentType` | `"json"` | Response parsing: `json` · `xml` · `text` |
 | `expectedStatus` | `[200,201,202]` | Expected HTTP status — a number or list; drives negative testing |
 | `maxResponseTime` | `1000` | Fail if the response is slower (ms) |
+| `maxBytes` | off | Fail if the response body is larger than N bytes |
 | `snapshot` | disabled | `mode`, `checkPaths`, `ignorePaths`, `autoSaveMissing`, `record` |
 | `schema` | disabled | JSON Schema definition validated via `tv4` |
 | `securityAudit` | disabled | Passive header / disclosure / CORS checks |
