@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/banner.svg" alt="Hephaestus — модульный фреймворк API-тестирования для Postman" width="100%">
+  <img src="docs/assets/banner.svg?v=3.9" alt="Hephaestus — модульный фреймворк API-тестирования для Postman" width="100%">
 </p>
 
 <p align="center">
@@ -260,6 +260,7 @@ npm run <command> -- [args]
 |---|---|
 | [быстрый старт](docs/quickstart.html) | Import → defaults → первый запрос, от и до |
 | [справочник конфига](docs/config-reference.html) | Каждое поле конфига, типизировано, с дефолтами |
+| [рецепты](docs/recipes.md) | 10 частых задач → 10 готовых `override`-блоков |
 | [возможности](docs/features.html) | Модуль за модулем с примерами |
 | [newman и CI](docs/newman-ci.md) | Настройки GitHub Actions, GitLab CI, Jenkins |
 | [просмотр снапшотов](docs/snapshot-viewer.html) | Визуальный браузер для `hephaestus.snapshots` |

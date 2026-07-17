@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/banner.svg" alt="Hephaestus — modular API-testing framework for Postman" width="100%">
+  <img src="docs/assets/banner.svg?v=3.9" alt="Hephaestus — modular API-testing framework for Postman" width="100%">
 </p>
 
 <p align="center">
@@ -247,6 +247,7 @@ Zero runtime dependencies. Dev-only: `esbuild` (pinned), `newman`, `eslint`.
 |---|---|
 | [quickstart](docs/quickstart.html) | Import → defaults → first request, end to end |
 | [config reference](docs/config-reference.html) | Every config field, typed, with defaults |
+| [recipes](docs/recipes.md) | 10 common tasks → 10 ready-to-paste `override` blocks |
 | [features](docs/features.html) | Module-by-module guide with examples |
 | [newman & CI](docs/newman-ci.md) | GitHub Actions, GitLab CI, Jenkins setups |
 | [snapshot viewer](docs/snapshot-viewer.html) | Visual browser for `hephaestus.snapshots` |

@@ -94,9 +94,11 @@ snapKeys.forEach(function(key) {
 function buildExample(item, key, snap) {
     const format = snap.format || 'json';
     const isJson = format === 'json' || format === 'xml';
-    const bodyStr = (snap.data && typeof snap.data === 'object')
-        ? JSON.stringify(snap.data, null, 2)
-        : String(snap.data === undefined ? '' : snap.data);
+    // json/xml bodies are JSON-encoded so a top-level string/number round-trips
+    // as valid JSON (kept consistent with scripts/mock.js serialize()).
+    const bodyStr = format === 'text'
+        ? String(snap.data === undefined || snap.data === null ? '' : snap.data)
+        : JSON.stringify(snap.data === undefined ? null : snap.data, null, 2);
     const contentType = format === 'xml' ? 'application/json'   // snapshot data is parsed → JSON
         : format === 'text' ? 'text/plain'
         : 'application/json';
