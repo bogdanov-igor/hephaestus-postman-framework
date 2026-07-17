@@ -25,3 +25,9 @@ test/
 node_modules/
 npm-debug.log*
 package-lock.json
+
+# Local tooling / author working files (not part of the published project)
+.serena/
+gallery/
+BANNER-TODO.md
+hephaestus_vision.md
