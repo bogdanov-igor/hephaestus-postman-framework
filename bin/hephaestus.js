@@ -34,6 +34,7 @@ const COMMANDS = {
     coverage:{ script: 'coverage.js',        usage: 'coverage --spec <spec> <collection.json> [--min N]', about: 'OpenAPI/Swagger coverage of a collection' },
     init:    { script: 'init.js',            usage: 'init [--defaults]',                                 about: 'Interactive config/environment wizard' },
     watch:   { script: 'watch.js',           usage: 'watch -c <collection.json> [-e env.json]',          about: 'Re-run Newman on file changes' },
+    trends:  { script: 'trends.js',          usage: 'trends [history.jsonl] [--last N] [--json]',        about: 'Pass-rate / p95 sparkline trends across runs' },
     mock:    { script: 'mock.js',            usage: 'mock <collection.json> [-p <port>] [--filter <s>]', about: 'Replay saved snapshots as a local mock API' },
     doctor:  { script: 'doctor.js',          usage: 'doctor [-e <env.json>] [--json]',                   about: 'Pre-flight health check: engine integrity, versions, drift' }
 };
