@@ -1,1072 +1,262 @@
-<div align="center">
+<p align="center">
+  <img src="docs/assets/banner.svg" alt="Hephaestus — modular API-testing framework for Postman" width="100%">
+</p>
 
-<img src="docs/banner.png" alt="Hephaestus" width="100%"/>
+<p align="center">
+  <img src="https://img.shields.io/badge/version-3.9.0-e25822?style=flat-square" alt="version 3.9.0">
+  <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="MIT">
+  <img src="https://img.shields.io/badge/engine-172%20KB-success?style=flat-square" alt="172 KB engine">
+  <img src="https://img.shields.io/badge/runtime%20deps-0-success?style=flat-square" alt="zero runtime dependencies">
+  <img src="https://img.shields.io/badge/tests-46%20%C2%B7%20200%20golden-success?style=flat-square" alt="46 tests, 200 golden assertions">
+  <img src="https://img.shields.io/badge/locale-ru%20%C2%B7%20en-success?style=flat-square" alt="locale ru / en">
+</p>
 
-# ⚒️ Hephaestus
+<p align="center">
+  <b>English</b> · <a href="README.ru.md">Русский</a>
+</p>
 
-**Modular API testing automation framework for Postman**
-
-[![Version](https://img.shields.io/badge/version-3.9.0-blue?style=flat-square)](CHANGELOG.md)
-[![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
-[![Postman](https://img.shields.io/badge/Postman-v10+-orange?style=flat-square&logo=postman&logoColor=white)](https://postman.com)
-[![Apidog](https://img.shields.io/badge/Apidog-compatible-9cf?style=flat-square)](https://apidog.com)
-[![JavaScript](https://img.shields.io/badge/JavaScript-sandbox-yellow?style=flat-square&logo=javascript&logoColor=black)](engine/)
-[![Author](https://img.shields.io/badge/author-Bogdanov_Igor-blueviolet?style=flat-square)](mailto:bogdanov.ig.alex@gmail.com)
-[![Docs](https://img.shields.io/badge/docs-live%20site-f77f00?style=flat-square&logo=github)](https://bogdanov-igor.github.io/hephaestus-postman-framework/)
-
-**[🇷🇺 Русская версия](README.ru.md)** · **[🌐 Live Docs](https://bogdanov-igor.github.io/hephaestus-postman-framework/)**
-
-[Quick Start](#-quick-start) · [Configuration](#️-configuration) · [Modules](#-modules) · [Architecture](#️-architecture) · [Apidog](#-apidog-compatibility) · [Author](#-author)
-
-</div>
+<p align="center"><i>Scattered scripts, forged into one engine.</i></p>
 
 ---
 
-## Overview
+Hephaestus is a modular API-testing framework for Postman and Newman. Instead
+of a pile of copy-pasted pre/post-request scripts, every request carries a
+small `override` config and delegates all logic to one version-controlled
+engine: config merge, auth, assertions, snapshot regression, schema
+validation, a security audit and structured logging, run in a fixed pipeline.
 
-**Hephaestus** is an open-source framework for organizing, automating, and standardizing API testing in Postman. It replaces scattered pre/post-request scripts with a single, version-controlled engine — supporting snapshot regression, schema validation, flexible auth, and secret masking.
+Same author and house style as [Keel](https://github.com/bogdanov-igor/keel)
+and [Loft](https://github.com/bogdanov-igor/loft), my Claude Code kernels.
+This is a different domain — it shares only the discipline: measure what you
+ship, be honest about what it does not do, and carry zero services you do not
+need.
 
-Each request in a collection contains only a minimal `override` config. All logic is handled by the engine loaded from Git.
+## New — English and Russian output
 
-**Built for:**
-- QA engineers automating REST / XML API testing
-- Teams using Postman as their primary tool
-- Collections with many endpoints that need a consistent standard
-- Projects requiring snapshot regression testing without CI overhead
+Every user-facing string the engine emits — test names, log lines, assertion
+messages, status labels, the security audit — now routes through a locale
+catalog ([`engine/src/shared/i18n.js`](engine/src/shared/i18n.js)). Pick the
+language in config:
 
----
-
-## ✨ Features
-
-| Feature | Description |
-|---|---|
-| 🔄 **Pipeline architecture** | Orchestrator drives a module chain through a shared `ctx` object |
-| ⚙️ **Defaults + Override** | Collection-level config merged with per-request overrides |
-| 📸 **Snapshot regression** | Automatic baseline, strict/non-strict modes, checkPaths/ignorePaths, diff preview |
-| 🔐 **Auth plugin** | `none`, `basic`, `bearer`, `headers`, `variables`, `oauth2cc` — configurable per request |
-| 🔍 **Extract API** | `ctx.api.get()`, `.find()`, `.all()`, `.count()`, `.save()` — JSON and XML |
-| ✅ **Assertions** | `keysToFind` (with `soft` mode), `varsToSave`, `keysToCount`, `maxResponseTime` |
-| 📨 **Header assertions** | `assertHeaders` — check existence, value, exact match, absence of response headers |
-| 🔢 **expectedStatus** | Configurable expected HTTP status — supports negative testing (`400`, `[404, 422]`) |
-| 🔌 **Plugin system** | Extend the engine without forking — load custom modules from `collectionVariables` at runtime |
-| 📅 **Flexible dates** | `today±Nd/w/m/y`, `startOfMonth`, `endOfYear`, custom variables via `dates` config |
-| 📋 **Schema validation** | JSON Schema via built-in `tv4` — no external dependencies |
-| 🛡️ **Secret masking** | Tokens, passwords, and URL query params masked in logs automatically |
-| 📊 **Structured logs** | Emoji, ASCII borders, response preview, snapshot diff, CI mode (JSON output) |
-| 🔄 **Auto-update** | Engine updated from Git with a single `engine-update` request |
-
----
-
-## 🏛️ Architecture
-
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                         PRE-REQUEST                              │
-│                                                                  │
-│   configMerge → urlBuilder → auth → dateUtils → logger           │
-│                                                                  │
-│   • Merges hephaestus.defaults + override                        │
-│   • Sets pm.variables.baseUrl (auto-prepends protocol)           │
-│   • Applies auth headers / pm.variables                          │
-│   • Logs request config with secret masking                      │
-└──────────────────────────────────────────────────────────────────┘
-                        ⬇  HTTP Request  ⬇
-┌──────────────────────────────────────────────────────────────────┐
-│                         POST-REQUEST                             │
-│                                                                  │
-│   configMerge → normalizeResponse → metrics → extractor          │
-│   → assertions → assertHeaders → snapshot → schema               │
-│   → plugins → logger                                             │
-│                                                                  │
-│   • Parses JSON / XML / text response into ctx.response          │
-│   • Checks expected HTTP status (expectedStatus)                 │
-│   • Exposes ctx.api for data traversal                           │
-│   • Runs body assertions, saves variables                        │
-│   • Validates response headers (assertHeaders)                   │
-│   • Compares to snapshot or saves baseline                       │
-│   • Validates JSON Schema                                        │
-│   • Runs custom plugins from collectionVariables                 │
-│   • Outputs a structured, masked log                             │
-└──────────────────────────────────────────────────────────────────┘
+```json
+{ "locale": "en" }
 ```
 
-### How the engine works
+The default is `"ru"` and is **byte-identical** to every previous release, so
+existing collections and their golden baselines do not shift. `"en"` gives the
+same engine in English. The golden harness pins both.
 
-```
-Git (engine/pre-request.js + engine/post-request.js)
-         ↓  engine-update (pm.sendRequest)
-collectionVariables["hephaestus.v3.pre"]
-collectionVariables["hephaestus.v3.post"]
-         ↓  each request
-eval(pm.collectionVariables.get("hephaestus.v3.pre"))
-eval(pm.collectionVariables.get("hephaestus.v3.post"))
-```
+## Quickstart
 
-### The `ctx` object
+Two runtimes ship in one repo: the **engine** that runs inside Postman, and a
+**zero-dependency Node CLI** for Newman and CI. Start with the engine.
 
-```javascript
-ctx = {
-    config:   { /* merged: defaults + override */ },
-    request:  { name, method, url },
-    response: { parsed, raw, code, time, size, format },
-    api:      { get(path), find(path, fn), count(path), save(path, target) }
-}
-```
+**1.** Import the shipped collection — the engine is embedded at build time, so
+a fresh import runs offline, no fetch step:
 
----
-
-## 🚀 Quick Start
-
-### Step 1 — Import the collection
-
-```
+```text
 Postman → Import → collection/hephaestus-template.postman_collection.json
 ```
 
-### Step 2 — Bind an environment
-
-Create or attach an environment with the variables your requests need:
-
-```
-login.*      — user logins
-password.*   — user passwords
-channel.*    — additional fields (if required)
-```
-
-### Step 3 — Configure defaults
-
-Open **⚙️ defaults** in `🛠️ Hephaestus System`, edit the JSON body, and click **Send**:
+**2.** Open **⚙️ defaults** in the `Hephaestus System` folder, edit the JSON
+body, and Send:
 
 ```json
 {
   "baseUrl": "https://your-api.example.com",
-  "defaultProtocol": "https",
+  "locale": "en",
   "auth": { "enabled": false, "type": "none" },
   "contentType": "json",
   "snapshot": { "enabled": false, "autoSaveMissing": true, "mode": "non-strict" },
-  "secrets": ["token", "password", "pass", "key"],
+  "secrets": ["token", "password", "pass", "secret", "key", "authorization", "session"],
   "ci": false
 }
 ```
 
-### Step 4 — Load the engine
+**3.** Give any request an `override` and hand off to the engine. Pre-request:
 
-```
-🛠️ Hephaestus System → 🔧 engine-update → Send
-```
-
-The engine is fetched from Git and saved to `hephaestus.v3.pre` and `hephaestus.v3.post`.  
-Re-run after any framework update.
-
-### Step 5 — Write a request
-
-Each request contains only an `override` + engine invocation:
-
-**Pre-request script:**
 ```javascript
 const override = {
-    auth: {
-        enabled: true,
-        type: "bearer",
-        token: "{{prod.token}}"
-    }
+  auth: { enabled: true, type: "bearer", token: "{{prod.token}}" }
 };
-
 eval(pm.collectionVariables.get("hephaestus.v3.pre"));
 ```
 
-**Tests (Post-request):**
+Tests (post-request):
+
 ```javascript
 const override = {
-    contentType: "json",
-    keysToFind: [
-        { path: "data.id",     name: "ID" },
-        { path: "data.status", name: "Status", expect: "active" }
-    ],
-    varsToSave: {
-        token: { path: "data.token", name: "prod.token", scope: "collection" }
-    },
-    snapshot: { enabled: true, autoSaveMissing: true }
+  contentType: "json",
+  keysToFind: [
+    { path: "data.id",     name: "ID" },
+    { path: "data.status", name: "Status", expect: "active" }
+  ],
+  varsToSave: { token: { path: "data.token", name: "prod.token", scope: "collection" } },
+  snapshot: { enabled: true, autoSaveMissing: true }
 };
-
 eval(pm.collectionVariables.get("hephaestus.v3.post"));
 ```
 
----
+**4.** For CI, run Newman and pipe the results through the CLI (from a clone of
+this repo):
 
-## ⚙️ Configuration
-
-### Full field reference
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `baseUrl` | string | `""` | API base URL — protocol can be omitted, it will be prepended |
-| `defaultProtocol` | string | `"https"` | Default protocol when `baseUrl` has none. `"http"` triggers a warning |
-| `auth.enabled` | boolean | `false` | Enable authentication |
-| `auth.type` | string | `"none"` | Auth type: `none`, `basic`, `bearer`, `headers`, `variables`, `oauth2cc` (see [OAuth2](#-oauth2-client_credentials-v34)) |
-| `contentType` | string | `"json"` | Expected response format: `json`, `xml`, `text` |
-| `expectEmpty` | boolean | `false` | Expect an empty response body |
-| `expectedStatus` | number \| number[] | `[200,201,202]` | Expected HTTP status code(s). Use for negative testing: `400`, `[404, 422]` |
-| `maxResponseTime` | number | `1000` | Max allowed response time in ms. Fail test if exceeded |
-| `dateFormat` | string | `"yyyy-MM-dd"` | Date format used for all date variables |
-| `dates` | object | — | Custom date variables — see [dateUtils](#-dateutils) |
-| `assertHeaders` | object[] | `[]` | Response header assertions — see [assertHeaders](#-assertheaders) |
-| `snapshot.enabled` | boolean | `false` | Enable snapshot comparison |
-| `snapshot.mode` | string | `"non-strict"` | `strict` (full diff) or `non-strict` (checkPaths only) |
-| `snapshot.autoSaveMissing` | boolean | `true` | Auto-save baseline when missing |
-| `snapshot.checkPaths` | string[] | `[]` | Compare only these paths (empty = all) |
-| `snapshot.ignorePaths` | string[] | `[]` | Ignore these paths during comparison |
-| `schema.enabled` | boolean | `false` | Enable JSON Schema validation |
-| `schema.definition` | object | `null` | JSON Schema object |
-| `secrets` | string[] | `[...]` | Key names whose values are masked in logs |
-| `ci` | boolean | `false` | CI mode: structured JSON log output |
-
-### Auth types
-
-| Type | Behavior |
-|---|---|
-| `none` | No authentication |
-| `basic` | `Authorization: Basic base64(user:pass)` |
-| `bearer` | `Authorization: Bearer {token}` |
-| `headers` | Injects arbitrary request headers |
-| `variables` | Sets `pm.variables` for URL / body substitution |
-
-**Example — `variables` (login + channel + password):**
-```javascript
-auth: {
-    enabled: true,
-    type: "variables",
-    fields: {
-        "login":    "{{login.main}}",
-        "channel":  "{{channel.main}}",
-        "password": "{{password.main}}"
-    }
-}
-```
-
-### Secret masking
-
-Masking is applied to **log output only** — actual saved values are never altered.
-
-- Keys matching any word in `secrets` are masked: `AAAI3A***MASKED***KMR3ms`
-- URL query params with matching key names are masked in the POST-REQUEST log
-- Customize the list via `secrets` in defaults or override
-
----
-
-## 🧩 Modules
-
-### Pre-request pipeline
-
-| Module | Description |
-|---|---|
-| `configMerge` | Deep merge: `hephaestus.defaults` + `override` → `ctx.config` |
-| `envRequired` | Validates that required environment variables are set |
-| `iterationData` | Loads iteration data from `pm.iterationData` into `ctx.iteration` |
-| `random` | Generates random test data (`randomData` config) into `pm.variables` |
-| `urlBuilder` | Sets `pm.variables.baseUrl`; auto-prepends `defaultProtocol` if missing |
-| `auth` | Auth plugin — applies the selected type to the outgoing request |
-| `dateUtils` | Computes dates (today, tomorrow, etc.) into `pm.variables` |
-| `logger` | Logs request config with secret masking |
-
-### Post-request pipeline
-
-| Module | Description |
-|---|---|
-| `configMerge` | Re-merges config for test-side access |
-| `iterationData` | Loads iteration data from `pm.iterationData` into `ctx.iteration` |
-| `normalizeResponse` | Parses JSON / XML (xml2js) / text → `ctx.response` |
-| `retryOnStatus` | Retries the request on matching HTTP status codes (e.g. 503, 429) |
-| `metrics` | Records response time and body size |
-| `extractor` | Initializes `ctx.api` — Extract API with `get/find/all/count/save` |
-| `assertions` | `keysToFind` (soft), `varsToSave`, `keysToCount`, `maxResponseTime` |
-| `assertEach` | Asserts a condition for every item in an array path |
-| `assertShape` | Validates that every item in an array matches a shape schema |
-| `assertOrder` | Asserts the order of items in an array by a given field |
-| `assertUnique` | Asserts all values at a path within an array are unique |
-| `assertHeaders` | Validates response headers: exists, contains, equals, absent |
-| `snapshot` | Compares to baseline or saves on `autoSaveMissing`; diff shown in log |
-| `schema` | Validates response body against a JSON Schema via `tv4` |
-| `plugins` | Runs custom modules from `collectionVariables` (`hephaestus.plugins`) |
-| `logger` | Structured, masked log: status, metrics, assertions, snapshot diff, preview |
-
-### Extract API
-
-```javascript
-ctx.api.get("data.user.id")                 // → value at dot-path (any depth)
-ctx.api.find("data.items", i => i.active)   // → array filtered by predicate
-ctx.api.all("data.items", i => i.active)    // → same as find (explicit alias)
-ctx.api.count("data.items")                 // → array length
-ctx.api.save("data.token", {                // → save to pm scope
-    name: "prod.token",
-    scope: "collection"                     // "collection" | "environment" | "local"
-})
-```
-
-Wildcard traversal is also supported:
-
-```javascript
-ctx.api.get("data.items[*].id")   // → array of all `id` values in the list
-ctx.api.all("data.items[*]")      // → all items in the list
-```
-
----
-
-## ✅ Assertions
-
-### keysToFind — find and validate fields
-
-```javascript
-keysToFind: [
-    { path: "data.id",     name: "ID" },                     // field exists
-    { path: "data.status", name: "Status", expect: "active" }, // exact match
-    { path: "data.count",  name: "Count",  expect: v => v > 0 }, // predicate
-    { path: "data.extra",  name: "Extra",  soft: true },     // ⚪ soft: no fail if missing
-]
-```
-
-`soft: true` — the test passes even if the field is absent. Useful for optional fields.
-
-### varsToSave — save values to variables
-
-```javascript
-varsToSave: {
-    token: { path: "data.token", name: "prod.token", scope: "collection" }
-    // scope: "collection" | "environment" | "local"
-}
-```
-
-### maxResponseTime — response time assertion
-
-Default value is `1000` ms (set globally in `hephaestus.defaults`). Override per request:
-
-```javascript
-// In hephaestus.defaults (collection-level global):
-{
-    "maxResponseTime": 1000   // ⏱ default for all requests
-}
-
-// In a specific request (override):
-const override = {
-    maxResponseTime: 500   // ⏱ stricter limit for this request only
-};
-```
-
-### keysToCount — count array elements
-
-```javascript
-keysToCount: {
-    items: { path: "data.items", expected: 10 }
-}
-```
-
-### expectedStatus — expected HTTP status
-
-Default: `[200, 201, 202]`. Override per request to test any status:
-
-```javascript
-// Single status (e.g. 204 No Content):
-const override = { expectedStatus: 204 };
-
-// Multiple statuses:
-const override = { expectedStatus: [200, 201] };
-
-// Negative testing — expect a 400 Bad Request:
-const override = { expectedStatus: 400 };
-
-// Multiple error codes:
-const override = { expectedStatus: [400, 422] };
-```
-
----
-
-## 📨 assertHeaders
-
-Assert response headers directly in `override`:
-
-```javascript
-assertHeaders: [
-    // Header exists:
-    { name: "X-Request-Id" },
-
-    // Header contains a string:
-    { name: "Content-Type", expect: "application/json" },
-
-    // Exact match:
-    { name: "X-Api-Version", equals: "v2" },
-
-    // Custom predicate:
-    { name: "X-Rate-Limit-Remaining", label: "Rate limit > 0", expect: v => Number(v) > 0 },
-
-    // Header must be absent:
-    { name: "X-Deprecated", absent: true },
-]
-```
-
-| Field | Type | Description |
-|---|---|---|
-| `name` | string | Header name (case-insensitive per HTTP spec) |
-| `label` | string | Optional display name in test results |
-| `expect` | string \| function | Contains check (string) or custom predicate (function) |
-| `equals` | string | Exact value match |
-| `absent` | boolean | Assert header is **not** present in the response |
-
----
-
-## 🛡️ Security Audit
-
-Opt-in passive security checks on the response — flags missing protective
-headers, server version disclosure, debug/stack-trace leaks in the body, and
-insecure CORS. Enable per request or globally in `hephaestus.defaults`:
-
-```javascript
-const override = {
-    securityAudit: {
-        enabled: true,
-        // every list has sane defaults — override only what you need:
-        requireHeaders: ["strict-transport-security", "content-security-policy",
-                         "x-frame-options", "x-content-type-options"],
-        forbidHeaders:  ["server", "x-powered-by"],          // version disclosure
-        forbidBodyPatterns: ["SQLSTATE", "stack trace", "Traceback"],
-        checkCors: true,   // wildcard Access-Control-Allow-Origin + credentials
-        soft: false        // findings as warnings instead of failures
-    }
-};
-```
-
-Each check emits a `🛡️` test, so a failing header policy fails the run in CI.
-
----
-
-## 🔌 Plugin System
-
-Extend the engine without forking. Plugins are JS scripts stored in `collectionVariables` and executed after all built-in modules.
-
-### Setup
-
-1. Write plugin code and save it to a collection variable (e.g. `hephaestus.plugin.slack`):
-
-```javascript
-// hephaestus.plugin.slack — contents of the collectionVariable
-if (ctx.response.code >= 500) {
-    pm.sendRequest({
-        url: pm.collectionVariables.get('slack.webhook.url'),
-        method: 'POST',
-        header: { 'Content-Type': 'application/json' },
-        body: {
-            mode: 'raw',
-            raw: JSON.stringify({ text: '🔴 ' + ctx.request.name + ' → HTTP ' + ctx.response.code })
-        }
-    }, function() {});
-}
-```
-
-2. Register it in `hephaestus.plugins` (collection variable, JSON array):
-
-```json
-[
-  { "name": "slack-notifier", "post": "hephaestus.plugin.slack" }
-]
-```
-
-### Plugin context
-
-Plugins run in the engine scope and have access to:
-
-| Variable | Description |
-|---|---|
-| `ctx` | Full context: `ctx.config`, `ctx.request`, `ctx.response`, `ctx.api`, `ctx._meta` |
-| `pm` | Postman API — `pm.test`, `pm.expect`, `pm.sendRequest`, variables, etc. |
-| `_override` | The current request's override config |
-
----
-
-## 📅 dateUtils
-
-Always available as `pm.variables`:
-
-| Variable | Value |
-|---|---|
-| `{{currentDate}}` | Today |
-| `{{monthsAgo1}}` | 1 month ago |
-| `{{monthsAgo3}}` | 3 months ago |
-| `{{monthsAgo6}}` | 6 months ago |
-| `{{monthsAgo12}}` | 12 months ago |
-
-**Custom variables** via `dates` in override or defaults:
-
-```javascript
-const override = {
-    dates: {
-        "startDate":  "today-7d",          // 7 days ago
-        "endDate":    "today",             // today
-        "nextMonth":  "today+1m",          // +1 month
-        "weekLater":  "today+1w",          // +7 days
-        "firstDay":   "startOfMonth",      // first day of current month
-        "lastDay":    "endOfMonth",        // last day of current month
-        "yearStart":  "startOfYear",       // Jan 1
-        "yearEnd":    "endOfYear",         // Dec 31
-        "prevStart":  "startOfPrevMonth",
-        "nextStart":  "startOfNextMonth",
-    }
-};
-```
-
-Use as `{{startDate}}`, `{{endDate}}` etc. in URL, body, or headers.  
-Format is controlled by `dateFormat` (default: `yyyy-MM-dd`).
-
-**Supported expressions:**
-
-| Expression | Description |
-|---|---|
-| `today` | Current date |
-| `yesterday` / `tomorrow` | ±1 day |
-| `today+Nd` / `today-Nd` | ±N days |
-| `today+Nw` / `today-Nw` | ±N weeks |
-| `today+Nm` / `today-Nm` | ±N months |
-| `today+Ny` / `today-Ny` | ±N years |
-| `startOfMonth` / `endOfMonth` | First/last day of current month |
-| `startOfNextMonth` / `endOfNextMonth` | First/last day of next month |
-| `startOfPrevMonth` / `endOfPrevMonth` | First/last day of previous month |
-| `startOfYear` / `endOfYear` | Jan 1 / Dec 31 |
-
----
-
-## 📸 Snapshot Regression
-
-Snapshots are stored in `hephaestus.snapshots` (collectionVariables) as a JSON object.
-
-**Snapshot key:** `{collectionName}::{requestName}::{statusCode}::{format}`
-
-| Mode | Behavior |
-|---|---|
-| `non-strict` | Checks only `checkPaths`, ignores `ignorePaths` |
-| `strict` | Full structural diff (with `ignorePaths` applied) |
-
-**Managing snapshots:**
-
-| Action | Location |
-|---|---|
-| View | `🛠️ Hephaestus System → 📋 snapshot-view` |
-| Clear | `🛠️ Hephaestus System → 🗑️ snapshot-clear` |
-| Filter | `hephaestus.snapshot.clearFilter` collection variable |
-
-**Re-record a baseline** — when the API legitimately changed, overwrite a stale snapshot in one run instead of clearing it:
-
-```javascript
-const override = {
-    snapshot: { enabled: true, record: true }   // ignore the old baseline, save the current response
-    // top-level `snapshotRecord: true` also works. Remove the flag afterwards.
-};
-```
-
----
-
-## 🖼️ Snapshots → Postman Examples
-
-Turn saved snapshots into native Postman **Example Responses** — visible in the UI and usable with the Postman Mock Server:
-
-```bash
-hephaestus sync-examples my.postman_collection.json -o with-examples.json
-# reads hephaestus.snapshots and adds a "📸 Snapshot <code> <format>" example per request
-```
-
-Idempotent — re-syncs replace prior 📸 examples while keeping hand-authored ones. Use `--in-place` to overwrite the collection (a `.bak` is written first) or `--filter <substr>` to sync a subset.
-
----
-
-## 🔄 Engine Updates
-
-Engine version is controlled by `hephaestus.version` in collectionVariables:
-
-| Value | Result |
-|---|---|
-| `main` | Loads the latest commit from `main` branch |
-| `3.1.0` | Loads tag `v3.1.0` |
-
-After changing the version → run `🔧 engine-update`.
-
-**Private repositories:** set `hephaestus.githubToken` to a GitHub PAT.  
-The engine will use the GitHub Contents API instead of raw URLs.
-
----
-
-## 🔌 Apidog Compatibility
-
-Hephaestus v3 is **fully compatible** with [Apidog](https://apidog.com).
-
-| Hephaestus feature | Postman | Apidog |
-|---|---|---|
-| `pm.collectionVariables.get/set` | ✅ | ✅ (Module Variables) |
-| `pm.sendRequest` | ✅ | ✅ |
-| `eval()` | ✅ | ✅ |
-| `pm.test` | ✅ | ✅ |
-| `pm.response.json/text` | ✅ | ✅ |
-| `pm.variables.set/get` | ✅ | ✅ |
-
-> In Apidog, `collectionVariables` are called **Module Variables** in the UI but work identically via `pm.collectionVariables.*`.
-
-**To import into Apidog:** `Import → Postman Collection → select JSON file`. Scripts transfer without changes.
-
----
-
-## 📁 Repository Structure
-
-```
-/
-├── README.md                     — documentation (English)
-├── README.ru.md                  — documentation (Russian)
-├── CHANGELOG.md                  — version history
-├── LICENSE                       — MIT license
-├── docs/
-│   └── banner.png                — project banner
-├── .github/
-│   ├── ISSUE_TEMPLATE/           — bug report / feature request forms
-│   └── workflows/lint.yml        — engine syntax check on push
-├── engine/
-│   ├── pre-request.js            — pre-request engine  → hephaestus.v3.pre
-│   └── post-request.js           — post-request engine → hephaestus.v3.post
-├── templates/
-│   ├── method.pre-request.js     — method template (pre)
-│   └── method.post-request.js    — method template (post)
-├── setup/
-│   ├── defaults.json             — hephaestus.defaults template
-│   ├── engine-update.js          — fetch engine from Git
-│   ├── snapshot-clear.js         — clear snapshots
-│   └── snapshot-view.js          — view snapshots
-└── collection/
-    ├── README.md                 — import instructions
-    └── hephaestus-template.postman_collection.json
-```
-
----
-
-## 🎲 ctx.random — Test Data Generators (v3.8)
-
-Built-in random data generators available in pre-request plugins and scripts:
-
-```javascript
-ctx.random.uuid()           // "550e8400-e29b-41d4-a716-446655440000"
-ctx.random.email()          // "user_a3f2c1@test.com"
-ctx.random.str(16)          // "xk8mP2nQ7w3bRz9v"
-ctx.random.int(1, 1000)     // 742
-ctx.random.float(0.1, 9.9)  // 4.37
-ctx.random.bool()           // true
-ctx.random.pick(["a","b"])  // "b"
-ctx.random.date()           // "2025-08-14"
-```
-
-Auto-populate pm.variables with `randomData` config:
-
-```javascript
-const override = {
-    randomData: {
-        email:  "random.email",      // → {{email}}
-        userId: "random.int:1:9999", // → {{userId}}
-        token:  "random.uuid",       // → {{token}}
-    }
-};
-```
-
-## 🔑 assertUnique (v3.8)
-
-```javascript
-const override = {
-    assertUnique: { path: "data.items", by: "id" }
-    // All item.id values must be unique
-};
-```
-
-## 🔇 softFail + logLevel (v3.8)
-
-```javascript
-// In hephaestus.defaults — make all assertions non-blocking:
-{ "softFail": true }
-
-// Control console verbosity:
-{ "logLevel": "minimal" }  // one line per request
-{ "logLevel": "silent"  }  // no console output (CI JSON still emitted)
-{ "logLevel": "verbose" }  // box + response headers
-```
-
-## 👁️ Watch Mode (v3.8)
-
-```bash
-npm run watch -- -c collection.json -e env.json
-# Re-runs Newman automatically on file change. Press R to force re-run.
-```
-
-## 🔍 Run Comparison (v3.8)
-
-```bash
-npm run compare -- before.json after.json
-npm run compare -- before.json after.json --md   # Markdown for PRs
-```
-
-Highlights: new failures, resolved failures, performance regressions (>20%), status code changes.
-
----
-
-## ⚡ retryOnStatus (v3.7)
-
-Автоматически повторяет запрос, если статус входит в список. Пропускает assertions и snapshot на промежуточных попытках:
-
-```javascript
-const override = {
-    retryOnStatus: {
-        statuses:   [503, 429],  // retry on these statuses
-        maxRetries: 3
-    }
-};
-```
-
-Счётчик хранится в `pm.variables` и автоматически очищается при успехе или исчерпании попыток.
-
-## 📝 API Docs from Collection (v3.7)
-
-```bash
-# Generate Markdown docs from your Postman collection
-npm run docs -- collection.json -o API.md
-
-# Get raw structured data as JSON (for tooling)
-npm run docs -- collection.json --json
-```
-
-Output includes: method, URL, expected status, assertShape contract, assertions table, sort order — all extracted automatically from your test scripts.
-
-## 📊 Newman Run Summary (v3.7)
-
-```bash
-# Pretty console summary after Newman run
-npm run summary -- results.json
-
-# Markdown output (for PR comments, Confluence, etc.)
-npm run summary -- results.json --md > summary.md
-```
-
-Shows: overall pass rate, per-folder breakdown, slowest endpoints, most-failed assertions, and **response-time percentiles** (p50 / p90 / p95 / p99).
-
-**SLA gate** — fail the run when p95 exceeds a threshold (ideal for CI):
-
-```bash
-npm run summary -- results.json --sla=500        # or: hephaestus summary results.json --sla=500
-# exits 1 if p95 > 500 ms and lists the over-SLA requests
-```
-
-## 🧙 Interactive Init Wizard (v3.7)
-
-```bash
-npm run init
-```
-
-Answers a series of questions and generates a ready-to-use `hephaestus.defaults` JSON and a Postman environment file template.
-
----
-
-## 🧩 assertShape + assertOrder (v3.6)
-
-**`assertShape`** — one-liner type declarations per field, ideal for verifying the response contract before detailed assertions:
-
-```javascript
-const override = {
-    assertShape: {
-        "data":        "object",
-        "data.id":     "number",
-        "data.name":   "string",
-        "data.items":  "array",
-        "data.active": "boolean",
-        "meta":        "any",     // exists, any type
-        "error":       "absent",  // must NOT exist
-    }
-};
-```
-
-**`assertOrder`** — verify array is sorted by a field:
-
-```javascript
-const override = {
-    assertOrder: {
-        path:      "data.items",
-        by:        "createdAt",
-        direction: "desc",   // "asc" | "desc"
-        type:      "date"    // "string" | "number" | "date"
-    }
-};
-```
-
-## 🐳 Docker (v3.6)
-
-Run Newman tests in Docker without a local Node.js install:
-
-```bash
-# Build once
-docker build -t hephaestus-runner .
-
-# Run collection + generate reports
-bash scripts/docker-run.sh -c collection.json -e env.json -o reports/
-
-# Or via compose
-docker-compose run --rm newman run /data/collection.json -e /data/env.json \
-  --reporter-json-export /data/results.json -r json
-```
-
-## 📖 Config Reference (v3.6)
-
-Full searchable reference of every config option with types, defaults, and examples:
-
-👉 **[docs/config-reference.html](https://bogdanov-igor.github.io/hephaestus-postman-framework/config-reference.html)**
-
-## 🔬 npm test (v3.6)
-
-```bash
-npm test
-```
-
-Runs 18 automated tests across all tooling scripts: syntax check, version consistency, build validation, migrate classification, JUnit XML output, HTML report generation.
-
----
-
-## 🔢 assertEach — Array item validation (v3.5)
-
-Validate every element of an array against a rule set in a single declaration:
-
-```javascript
-const override = {
-    assertEach: {
-        path:     "data.items",   // JSONPath to the array
-        minCount: 1,              // at least 1 element
-        maxCount: 200,            // at most 200 elements
-        rules: {
-            "id":     { type: "number", gt: 0 },
-            "name":   { type: "string", minLen: 1 },
-            "status": { eq: "active" },
-            "email":  { matches: "@", soft: true },  // soft — warn, don't fail
-        }
-    }
-};
-```
-
-All violations are aggregated into a single `pm.test`, showing up to 10 problem entries with their index and field path (e.g. `[3].status: eq "active", got "inactive"`).
-
-Supports all operators from the `assertions` shorthand map: `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, `type`, `minLen`, `maxLen`, `includes`, `matches`, `exists`, `absent`, `soft`.
-
-## ✅ envRequired — Pre-flight env validation (v3.5)
-
-Prevent cryptic failures by declaring which environment variables are required:
-
-```javascript
-// In hephaestus.defaults (apply to all requests):
-{
-    "envRequired": ["BASE_URL", "OAUTH_CLIENT_ID", "OAUTH_CLIENT_SECRET"]
-}
-
-// Or per-request override:
-const override = {
-    envRequired: ["PAYMENT_API_KEY"]
-};
-```
-
-If any variable is empty or missing, the request is blocked with a clear error listing all missing variables and the current environment name.
-
----
-
-## 🧪 Assertions shorthand (v3.4)
-
-A concise map syntax alongside the classic `keysToFind` array:
-
-```javascript
-const override = {
-    assertions: {
-        "data.id":     { exists: true },
-        "data.status": { eq: "active" },
-        "data.count":  { gte: 1, lte: 100 },
-        "data.items":  { type: "array", minLen: 1 },
-        "data.email":  { matches: "@" },
-        "meta.error":  { absent: true },
-
-        // Soft assertion — logs warning, doesn't fail pm.test
-        "data.extra":  { exists: true, soft: true },
-
-        // Conditional — only runs when status is 200
-        "data.token":  { exists: true, when: "ctx.api.status === 200" },
-    },
-    // keysToFind also supports `when` now
-    keysToFind: [
-        { path: "data.role", when: "ctx.api.body && ctx.api.body.type !== 'guest'" }
-    ]
-};
-```
-
-Operators: `exists`, `absent`, `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, `type`, `minLen`, `maxLen`, `includes`, `matches`, `soft`, `when`.
-
-## 🔐 OAuth2 client_credentials (v3.4)
-
-Auto-refreshing OAuth2 tokens. Add to your pre-request override:
-
-```javascript
-const override = {
-    auth: {
-        enabled: true,
-        type: "oauth2cc",
-        oauth2cc: {
-            tokenUrl:     "https://auth.example.com/oauth/token",
-            clientId:     "{{oauth_client_id}}",
-            clientSecret: "{{oauth_client_secret}}",
-            scope:        "api:read api:write"
-        }
-    }
-};
-```
-
-- Token cached in `hephaestus.oauth2.{clientId}.*` collection variables
-- Auto-refreshed 60 seconds before expiry
-- Supports `extraParams` for additional token request fields (e.g. `audience`)
-
-## 📊 HTML Report (v3.4)
-
-Generate a beautiful standalone HTML report from Newman output:
-
-```bash
-# Run Newman with JSON export
+```sh
 newman run collection.json -e env.json --reporter-json-export results.json -r json
-
-# Generate HTML report
-node scripts/generate-report.js results.json report.html
+node bin/hephaestus.js summary results.json --sla=500   # p95 gate, exits 1 over budget
 ```
 
-The report includes: pass-rate SVG gauge, per-request timing bars, expandable assertion details, failed-only filter, and search. Works offline — single self-contained `.html` file.
+### Updating the engine
 
-## 📡 Request Body & Headers in plugins (v3.4)
+The embedded engine already runs. To pull a newer build from Git in place,
+send the `engine-update` request in the `Hephaestus System` folder. It fetches
+`engine/pre-request.js` and `engine/post-request.js`, verifies both against
+[`engine/checksums.json`](engine/checksums.json) (SHA-256, inside the sandbox)
+before installing, and saves them to `hephaestus.v3.pre` / `hephaestus.v3.post`.
 
-Access the sent request body and headers inside post-request plugins and assertions:
+## What's inside
 
-```javascript
-// In a plugin or assertSoft rule:
-ctx.request.body       // raw body string
-ctx.request.bodyParsed // parsed JSON object (or null)
-ctx.request.headers    // { "content-type": "application/json", ... }
+- **The engine.** ES modules in `engine/src/**`, bundled by esbuild into two
+  files (~172 KB total) and eval'd inside the Postman sandbox — engine-as-data,
+  no plugin install, no external runtime. One pre-request pipeline and one
+  post-request pipeline drive a chain of modules through a shared `ctx`.
+- **Zero-download collection.** The shipped collection embeds the current
+  engine at build time. A fresh import runs offline; `engine-update` is only
+  for pulling newer code later.
+- **Snapshot regression.** Baselines live in `hephaestus.snapshots`, keyed by
+  `collection::request::status::format`. `strict` diffs the whole body,
+  `non-strict` checks only `checkPaths`. `snapshotRecord` force-rewrites a
+  stale baseline in one run when the API legitimately changed.
+- **Schema validation.** JSON Schema via a bundled `tv4` — no dependency.
+- **Security audit.** Opt-in passive checks on the response: missing protective
+  headers, server-version disclosure, stack-trace / debug leaks in the body,
+  insecure CORS. Each emits its own test, so a policy breach fails the run.
+- **SLA percentiles.** The CLI summary reports p50/p90/p95/p99 response times
+  and gates a run on `--sla=<ms>`.
+- **OpenAPI / Swagger import.** Turn an OpenAPI 3.x or Swagger 2.0 spec (JSON,
+  or a common subset of YAML) into a ready collection — `expectedStatus` and
+  `schema` pre-filled per operation — with zero dependencies.
+- **Snapshots → Postman Examples.** Sync saved snapshots into native Example
+  Responses, usable with the Mock Server.
+- **Secret masking.** Keys named in `secrets`, and matching URL query params,
+  are masked in log output only — saved values are never altered.
 
-// Echo-testing example (assert response echoes the request):
-const sent     = ctx.request.bodyParsed;
-const received = ctx.api.body;
-pm.test("Echo: id matches", () => pm.expect(received.id).to.eql(sent.id));
+## What it leaves out
+
+- **No test runner of its own.** Hephaestus is the logic; Postman and Newman
+  run it. There is no daemon, no hosted service, no dashboard, no database.
+- **State lives in the collection.** Snapshots, OAuth2 tokens and plugins are
+  collection variables. That keeps everything portable and diffable, but it is
+  not a datastore — large snapshot sets belong in a real regression pipeline.
+- **The integrity check is tamper-evidence, not authenticity.** `engine-update`
+  proves the code it fetched matches `checksums.json` in transit. It does not
+  prove who authored that checksum — there is no signature. Trust the source
+  you pull from. This is stated the same way in [SECURITY.md](SECURITY.md).
+- **Schema is JSON Schema draft 4** (the bundled `tv4`), not the newest drafts
+  — the price of zero runtime dependencies.
+- **OpenAPI import parses JSON and a common YAML subset**, not the full YAML
+  spec. Odd specs may need a JSON conversion first.
+
+## Configuration
+
+Everything is one merged config: `hephaestus.defaults` (collection-wide)
+deep-merged with a per-request `override`. Common fields:
+
+| Field | Default | Purpose |
+|---|---|---|
+| `baseUrl` | `""` | API base; protocol prepended from `defaultProtocol` if omitted |
+| `locale` | `"ru"` | Engine output language — `"ru"` or `"en"` |
+| `auth` | `none` | `none` · `basic` · `bearer` · `headers` · `variables` · `oauth2cc` |
+| `contentType` | `"json"` | Response parsing: `json` · `xml` · `text` |
+| `expectedStatus` | `[200,201,202]` | Expected HTTP status — a number or list; drives negative testing |
+| `maxResponseTime` | `1000` | Fail if the response is slower (ms) |
+| `snapshot` | disabled | `mode`, `checkPaths`, `ignorePaths`, `autoSaveMissing`, `record` |
+| `schema` | disabled | JSON Schema definition validated via `tv4` |
+| `securityAudit` | disabled | Passive header / disclosure / CORS checks |
+| `secrets` | `[…]` | Key names masked in logs |
+| `ci` | `false` | Emit a structured `[HEPHAESTUS_CI]` JSON line per request |
+
+The full field-by-field reference lives in
+[`docs/config-reference.html`](docs/config-reference.html).
+
+## Modules
+
+The engine is a fixed set of modules run through a shared `ctx` — this is an
+inventory, not the exact call order:
+
+**Pre-request** — `configMerge` · `envRequired` · `iterationData` · `random` ·
+`urlBuilder` · `auth` · `dateUtils` · `logger`.
+
+**Post-request** — `configMerge` · `normalizeResponse` · `metrics` ·
+`extractor` · `assertions` · `assertEach` · `assertShape` · `assertOrder` ·
+`assertUnique` · `assertHeaders` · `retryOnStatus` · `snapshot` · `schema` ·
+`securityAudit` · `plugins` · `logger`.
+
+`assertions` covers `keysToFind` / `varsToSave` / `keysToCount` / `assertMap` /
+`maxResponseTime`; `extractor` exposes `ctx.api` with `get / find / all /
+count / save` over JSON and XML, dot-paths and `[*]` wildcards. Custom
+`plugins` extend the engine from collection variables without forking. Per-module
+detail and examples are in [`docs/features.html`](docs/features.html).
+
+## CLI
+
+Zero-dependency Node tooling, one binary, propagates exit codes so every
+command works as a CI gate. From a clone of this repo:
+
+```sh
+node bin/hephaestus.js <command> [args]
+# the same tools are wired as npm scripts:
+npm run <command> -- [args]
 ```
 
----
-
-## ⚒️ CLI — the `hephaestus` command
-
-All Node tools are also available through a single command — no repo clone needed:
-
-```bash
-# via npx (no install)
-npx hephaestus-postman-framework report results.json
-
-# or after installing the package
-npm i -D hephaestus-postman-framework
-npx hephaestus report results.json
-```
+> Not yet published to npm. Once it is, the same commands will run as
+> `npx hephaestus <command>` without a clone.
 
 | Command | Does |
 |---|---|
-| `hephaestus summary <results.json>` | Console/Markdown summary of a Newman run |
-| `hephaestus compare <before> <after>` | Diff two runs — CI regression gate (exit 1 on regression) |
-| `hephaestus report <results.json> [out.html]` | Self-contained HTML report |
-| `hephaestus junit <results.json> [out.xml]` | Newman JSON → JUnit XML (`-` reads stdin) |
-| `hephaestus migrate <collection.json>` | Classify a collection's migration state |
-| `hephaestus docs <collection.json>` | Generate API docs from a collection |
-| `hephaestus init` | Interactive config/environment wizard |
-| `hephaestus watch -c <collection.json>` | Re-run Newman on file changes |
+| `summary <results.json> [--md] [--sla=<ms>]` | Run summary + p50/p90/p95/p99, SLA gate |
+| `compare <before> <after> [--md]` | Diff two runs — regression gate, exit 1 on regression |
+| `report <results.json> [out.html]` | Self-contained HTML report |
+| `junit <results.json\|-> [out.xml]` | Newman JSON → JUnit XML |
+| `migrate <collection.json>` | Classify a collection's migration state |
+| `docs <collection.json>` | API docs from a collection's test scripts |
+| `sync-examples <collection.json>` | Snapshots → Postman Example Responses |
+| `openapi <spec>` | OpenAPI / Swagger → Hephaestus collection |
+| `init` | Interactive config / environment wizard |
+| `watch -c <collection.json>` | Re-run Newman on file change |
 
-Exit codes propagate, so `compare`/`summary` work as CI gates. Run `hephaestus --help` for the full list. The same tools also work as `npm run <name>` inside the repo.
+`node bin/hephaestus.js --help` lists everything.
 
----
+## Tests & integrity
 
-## 🧬 OpenAPI / Swagger Import
+- **Engine golden harness** — the real engine runs under Newman against a mock
+  server and its output is compared byte-for-byte to a golden baseline:
+  **200 assertions across 17 requests**, both locales pinned. It catches any
+  drift in engine behaviour, not just in the tooling.
+- **`npm test`** — **46 tests** over the CLI scripts (docs, summary, compare,
+  JUnit, migrate, OpenAPI import, sync-examples) and the secret-redaction check.
+- **`npm run build`** — **10 checks**: engine bundle in sync with `engine/src`,
+  version single-sourced, `checksums.json` and the embedded collection current,
+  defaults and collection valid JSON.
+- **eslint** clean across `engine/`, `setup/`, `templates/`.
 
-Generate a ready-to-use Hephaestus collection from an OpenAPI 3.x or Swagger 2.0 spec (JSON, or a common subset of YAML — zero dependencies):
+Zero runtime dependencies. Dev-only: `esbuild` (pinned), `newman`, `eslint`.
 
-```bash
-hephaestus openapi openapi.yaml -o api.postman_collection.json
-```
+## Documentation
 
-One request per operation, grouped by tag, with the Test-script `override` pre-filled: **`expectedStatus`** (from the documented 2xx responses) and **`schema`** (the JSON response schema, with `$ref` inlined). Path params `{id}` become Postman `:id`. Then import it, set `hephaestus.defaults`, and run `🔧 engine-update`.
-
----
-
-## 🛠 Ecosystem Tools (v3.3)
-
-| Tool | Description |
+| Doc | What's in it |
 |---|---|
-| [**Snapshot Viewer**](https://bogdanov-igor.github.io/hephaestus-postman-framework/snapshot-viewer.html) | Visual browser for `hephaestus.snapshots` — filter, inspect, size gauge |
-| [**migrate.js**](scripts/migrate.js) | Scans a Postman collection and reports migration status per request |
-| [**ci-to-junit.js**](scripts/ci-to-junit.js) | Converts Newman JSON reporter output to JUnit XML (Jenkins, GitHub, GitLab) |
-| [**docs/plugins/**](docs/plugins/) | Ready-to-use plugins: Slack, Teams, custom assertions |
-| [**Newman + CI Guide**](docs/newman-ci.md) | GitHub Actions, GitLab CI, Jenkins — full setup guide |
+| [quickstart](docs/quickstart.html) | Import → defaults → first request, end to end |
+| [config reference](docs/config-reference.html) | Every config field, typed, with defaults |
+| [features](docs/features.html) | Module-by-module guide with examples |
+| [newman & CI](docs/newman-ci.md) | GitHub Actions, GitLab CI, Jenkins setups |
+| [snapshot viewer](docs/snapshot-viewer.html) | Visual browser for `hephaestus.snapshots` |
+| [docs home](docs/index.html) | Local documentation site index |
 
-### Migration Assistant
+The full guide is bilingual: this file (English) and
+[README.ru.md](README.ru.md) (Русский).
 
-```bash
-# Check how many requests need migration
-node scripts/migrate.js my-collection.json
+## Licence
 
-# Show scripts for unmigrated requests + suggest override starters
-node scripts/migrate.js my-collection.json --verbose --template
+[MIT](LICENSE) © 2026 **Igor Bogdanov** · <bogdanov.ig.alex@gmail.com>
 
-# Machine-readable output
-node scripts/migrate.js my-collection.json --json > migration.json
-```
-
-### Newman → JUnit XML
-
-```bash
-# Run Newman with JSON export
-newman run collection.json -e env.json --reporter-json-export results.json -r json
-
-# Convert to JUnit XML
-node scripts/ci-to-junit.js results.json junit-report.xml
-```
-
-```yaml
-# GitHub Actions — publish test summary
-- uses: dorny/test-reporter@v1
-  with:
-    files: junit-report.xml
-    reporter: java-junit
-```
-
-### Data-driven Testing (v3.3)
-
-`ctx.iteration` is now available in all plugins and post-request scripts:
-
-```javascript
-// In custom-assertions plugin or override assertHeaders
-const userId = ctx.iteration.get('userId');       // from CSV/JSON row
-const email   = ctx.iteration.data.email;         // same
-const rowNum  = ctx.iteration.index + 1;          // 1-based
-
-// Newman: use {{iter.userId}} in URL / Body / Headers
-// newman run col.json --iteration-data data.csv
-```
-
----
-
-## 📝 Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for version history.
-
----
-
-## 👤 Author
-
-**Bogdanov Igor** · ✉️ [bogdanov.ig.alex@gmail.com](mailto:bogdanov.ig.alex@gmail.com) · 💼 [LinkedIn](https://www.linkedin.com/in/i-a-bogdanov/)
-
----
-
-## 📄 License
-
-Distributed under the **MIT License** — see [LICENSE](LICENSE).
-
-```
-Copyright (c) 2026 Bogdanov Igor
-```
+Free to use, fork and build on, commercially included. Keep the attribution.
