@@ -137,6 +137,8 @@ footer{text-align:center;padding:20px;font-size:.75rem;color:var(--muted);border
   <h3>v3.9</h3>
   <a href="#v39">locale</a>
   <a href="#v39">securityAudit</a>
+  <h3>Editor</h3>
+  <a href="#editor">Config schema</a>
 </nav>
 
 <main>
@@ -832,6 +834,37 @@ newman run col.json --env-var ci=true</pre>
     }
 };</pre>
     <p style="font-size:.78rem;color:var(--muted);margin-top:8px"><strong>requireHeaders</strong> — each must be present. <strong>forbidHeaders</strong> — server-disclosure headers that must be absent. <strong>forbidBodyPatterns</strong> — substrings that must NOT appear in the body (leaked errors/stack traces). <strong>checkCors</strong> — fails when <code>Access-Control-Allow-Origin: *</code> is paired with credentials. Providing a list replaces the corresponding built-in default for that field.</p>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════ EDITOR / SCHEMA ════════ -->
+<div class="section" id="editor">
+<div class="section-title">🧩 Config schema (editor autocomplete)</div>
+
+<div class="opt open">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">docs/override.schema.json</div>
+      <div class="opt-desc">A zero-dependency JSON Schema (draft-07) describing every <code>defaults</code> / <code>override</code> key. Point your editor at it to get key autocomplete, enum hints, and inline error highlighting while editing config — no extension required.</div>
+    </div>
+    <span class="opt-type">draft-07</span><span class="opt-since">v3.9</span>
+  </div>
+  <div class="opt-body">
+    <p style="font-size:.78rem;color:var(--muted);margin-top:10px"><strong>Shipped by default.</strong> <code>setup/defaults.json</code> already carries a <code>$schema</code> key, so opening it in VS Code (or any editor that honours <code>$schema</code>) gives autocomplete, enum hints and inline error highlighting straight away — no extension, no settings:</p>
+    <pre class="example">{
+  <span class="key">"$schema"</span>: <span class="str">"../docs/override.schema.json"</span>,
+  <span class="key">"baseUrl"</span>: <span class="str">"https://api.example.com"</span>
+}</pre>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:12px">The build strips <code>$schema</code> when it embeds the defaults into the template collection, so the shipped engine config stays clean — the key is purely an editor hint. Add the same line to any other config JSON you edit to associate it too.</p>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:12px"><strong>Prefer a workspace mapping?</strong> Instead of the in-file key, map the schema in <code>.vscode/settings.json</code> (git-ignored, so create it locally):</p>
+    <pre class="example"><span class="cmt">// .vscode/settings.json</span>
+{
+  <span class="key">"json.schemas"</span>: [
+    { <span class="key">"fileMatch"</span>: [<span class="str">"setup/defaults.json"</span>], <span class="key">"url"</span>: <span class="str">"./docs/override.schema.json"</span> }
+  ]
+}</pre>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:12px">The schema autocompletes known keys and <em>tolerates</em> unknown ones (<code>additionalProperties</code> is open), so custom plugin fields are never flagged. Remove any <code>$schema</code> / <code>_comment</code> keys before pasting a config into <code>collectionVariables["hephaestus.defaults"]</code> — the engine ignores them, but they keep the stored config clean.</p>
   </div>
 </div>
 </div>
