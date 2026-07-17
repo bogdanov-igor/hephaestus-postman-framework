@@ -271,6 +271,7 @@ if (collection && defaultsObj && preSource && postSource) {
     // (an empty baseUrl makes the engine emit a loud "not configured" test).
     const defaultsForCollection = Object.assign({}, defaultsObj);
     delete defaultsForCollection._comment;
+    delete defaultsForCollection.$schema;   // editor-only hint; never embedded
     defaultsForCollection.baseUrl = '';
     const desiredDefaults = JSON.stringify(defaultsForCollection);
 

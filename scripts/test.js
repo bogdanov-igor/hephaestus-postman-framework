@@ -800,6 +800,392 @@ test('flaky subcommand delegates through the CLI (bin/hephaestus.js)', function(
     assert(code === 1, 'CLI should propagate flaky --fail-on-flaky exit 1, got ' + code);
 });
 
+// ─── 15. trends.js + summary --history ────────────────────────────────────────
+
+console.log('\n⑮ trends.js + summary --history');
+
+const histFile = path.join(TMP, 'history.jsonl');
+
+test('summary --history appends one JSONL line with numeric fields', function() {
+    // NEWMAN_FIXTURE has a failing assertion → summary exits 1; the history line
+    // is still appended (append runs before process.exit). Tolerate the exit.
+    try {
+        run(NODE + ' "' + path.join(ROOT, 'scripts/summary.js') + '" "' + newmanFixtureFile + '" --history "' + histFile + '" --no-color');
+    } catch (e) { /* expected: exit 1 due to fixture failures */ }
+    assert(fs.existsSync(histFile), 'history file not created');
+    const lines = fs.readFileSync(histFile, 'utf8').trim().split('\n').filter(Boolean);
+    assert(lines.length === 1, 'expected exactly 1 history line, got ' + lines.length);
+    const rec = JSON.parse(lines[0]);
+    ['passRate', 'p95', 'total', 'failed', 'requests', 'durationMs'].forEach(function(k) {
+        assert(typeof rec[k] === 'number', 'field "' + k + '" should be numeric, got ' + typeof rec[k]);
+    });
+    assert(typeof rec.ts === 'string', 'ts should be an ISO string');
+    assert(rec.passRate === 75, 'passRate should be 75 (3/4 assertions), got ' + rec.passRate);
+    assert(rec.p95 === 100, 'p95 should be 100 ms, got ' + rec.p95);
+    assert(rec.failed === 1, 'failed should be 1, got ' + rec.failed);
+});
+
+test('summary --history appends (not overwrites) on a second run', function() {
+    try {
+        run(NODE + ' "' + path.join(ROOT, 'scripts/summary.js') + '" "' + newmanFixtureFile + '" --history "' + histFile + '" --no-color');
+    } catch (e) { /* exit 1 expected */ }
+    const lines = fs.readFileSync(histFile, 'utf8').trim().split('\n').filter(Boolean);
+    assert(lines.length === 2, 'expected 2 history lines after running twice, got ' + lines.length);
+});
+
+const trendsFixture = path.join(TMP, 'trends-history.jsonl');
+fs.writeFileSync(trendsFixture, [
+    JSON.stringify({ ts: '2026-07-01T00:00:00.000Z', passRate: 80,  p95: 150, total: 10, failed: 2, requests: 5, durationMs: 1000 }),
+    JSON.stringify({ ts: '2026-07-02T00:00:00.000Z', passRate: 90,  p95: 120, total: 10, failed: 1, requests: 5, durationMs: 1100 }),
+    JSON.stringify({ ts: '2026-07-03T00:00:00.000Z', passRate: 100, p95: 90,  total: 10, failed: 0, requests: 5, durationMs: 900 }),
+    '',                                     // blank line — must be tolerated
+    '# comment line — must be skipped'
+].join('\n'));
+
+test('trends renders sparklines + latest values', function() {
+    const out = run(NODE + ' "' + path.join(ROOT, 'scripts/trends.js') + '" "' + trendsFixture + '" --no-color');
+    assert(/[▁▂▃▄▅▆▇█]/.test(out), 'expected unicode sparkline block chars in output');
+    assertContains(out, '100%', 'latest pass rate');
+    assertContains(out, '90ms', 'latest p95');
+    assertContains(out, '3 runs', 'run count');
+});
+
+test('trends shows deltas vs the previous run', function() {
+    const out = run(NODE + ' "' + path.join(ROOT, 'scripts/trends.js') + '" "' + trendsFixture + '" --no-color');
+    assertContains(out, '+10%',  'pass-rate delta +10%');
+    assertContains(out, '-30ms', 'p95 delta -30ms');
+});
+
+test('trends --json has the right shape', function() {
+    const out = run(NODE + ' "' + path.join(ROOT, 'scripts/trends.js') + '" "' + trendsFixture + '" --json');
+    const obj = JSON.parse(out);
+    assert(obj.count === 3, 'count should be 3, got ' + obj.count);
+    assert(JSON.stringify(obj.passRate.values) === JSON.stringify([80, 90, 100]), 'passRate.values mismatch');
+    assert(obj.passRate.latest === 100, 'passRate.latest should be 100');
+    assert(obj.passRate.delta === 10, 'passRate.delta should be 10');
+    assert(typeof obj.passRate.spark === 'string' && obj.passRate.spark.length === 3, 'passRate.spark should be a 3-char string');
+    assert(obj.p95.latest === 90, 'p95.latest should be 90');
+    assert(obj.p95.delta === -30, 'p95.delta should be -30');
+});
+
+test('trends sparkline glyphs map low→high (pins exact bars — catches an inverted mapping)', function() {
+    const obj = JSON.parse(run(NODE + ' "' + path.join(ROOT, 'scripts/trends.js') + '" "' + trendsFixture + '" --json'));
+    assert(obj.passRate.spark === '▁▅█', 'passRate 80/90/100 → "▁▅█", got "' + obj.passRate.spark + '"');
+    assert(obj.p95.spark === '█▅▁', 'p95 150/120/90 → "█▅▁" (highest value = tallest bar), got "' + obj.p95.spark + '"');
+});
+
+test('summary --history=<file> (equals form) also appends, mirroring --sla=', function() {
+    const eqHist = path.join(TMP, 'history-eq.jsonl');
+    try {
+        run(NODE + ' "' + path.join(ROOT, 'scripts/summary.js') + '" "' + newmanFixtureFile + '" --history=' + eqHist + ' --no-color');
+    } catch (e) { /* exit 1 expected — the fixture has a failing assertion */ }
+    assert(fs.existsSync(eqHist), '--history=<file> should create the history file');
+    assert(fs.readFileSync(eqHist, 'utf8').trim().split('\n').filter(Boolean).length === 1, 'exactly one line appended');
+});
+
+test('trends --last N limits to the most recent N runs', function() {
+    const out = run(NODE + ' "' + path.join(ROOT, 'scripts/trends.js') + '" "' + trendsFixture + '" --last 2 --json');
+    const obj = JSON.parse(out);
+    assert(obj.count === 2, 'count should be 2 with --last 2, got ' + obj.count);
+    assert(JSON.stringify(obj.passRate.values) === JSON.stringify([90, 100]), 'should keep the last 2 runs');
+});
+
+test('trends exits 1 on missing history', function() {
+    let code = 0;
+    try { run(NODE + ' "' + path.join(ROOT, 'scripts/trends.js') + '" "' + path.join(TMP, 'does-not-exist.jsonl') + '"'); }
+    catch (e) { code = e.status || 1; }
+    assert(code === 1, 'missing history should exit 1, got ' + code);
+});
+
+test('CLI --help lists trends', function() {
+    assertContains(run(NODE + ' "' + CLI + '" --help'), 'trends', 'trends command in help');
+});
+
+test('CLI trends --help exits 0', function() {
+    // execSync throws on a non-zero exit, so reaching the end == exit 0.
+    run(NODE + ' "' + CLI + '" trends --help');
+});
+
+test('CLI trends delegates → renders from history', function() {
+    assertContains(run(NODE + ' "' + CLI + '" trends "' + trendsFixture + '" --no-color'), '100%', 'CLI trends render');
+});
+
+// ─── 16. coverage.js ──────────────────────────────────────────────────────────
+
+console.log('\n⑯ coverage.js');
+
+const coverage = require(path.join(ROOT, 'scripts/coverage.js'));
+const COVERAGE = path.join(ROOT, 'scripts/coverage.js');
+
+const COV_SPEC = {
+    openapi: '3.0.0', info: { title: 'T' },
+    paths: {
+        '/users':      { get: { tags: ['u'] }, post: { tags: ['u'] } },
+        '/users/{id}': { get: { tags: ['u'] }, delete: { tags: ['u'] } },
+        '/health':     { get: { tags: ['sys'] } }
+    }
+};
+const COV_COLLECTION = {
+    info: { name: 'C' },
+    item: [
+        { name: 'list', request: { method: 'GET', url: { raw: '{{baseUrl}}/users', path: ['users'] } } },
+        { name: 'one',  request: { method: 'GET', url: { raw: '{{baseUrl}}/users/:id', path: ['users', ':id'] } } },
+        { name: 'hc',   request: { method: 'GET', url: '{{baseUrl}}/health' } }
+    ]
+};
+const covSpecFile = path.join(TMP, 'cov-spec.json');
+const covColFile  = path.join(TMP, 'cov-col.json');
+fs.writeFileSync(covSpecFile, JSON.stringify(COV_SPEC));
+fs.writeFileSync(covColFile, JSON.stringify(COV_COLLECTION));
+
+test('coverage computeCoverage counts covered/uncovered and normalizes :id ↔ {id}', function() {
+    const c = coverage.computeCoverage(COV_SPEC, COV_COLLECTION);
+    assert(c.total === 5, 'spec has 5 operations, got ' + c.total);
+    assert(c.covered === 3, 'GET /users, GET /users/:id (↔{id}), GET /health → 3 covered, got ' + c.covered);
+    assert(c.pct === 60, 'coverage 3/5 = 60%, got ' + c.pct);
+    const missKeys = c.uncovered.map(function(o) { return o.method + ' ' + o.path; }).sort();
+    assert(missKeys.join('|') === 'DELETE /users/{id}|POST /users', 'uncovered = POST /users + DELETE /users/{id}, got ' + missKeys.join('|'));
+});
+
+test('coverage normPath / urlPath collapse {{var}} / {id} / :id and tidy slashes', function() {
+    assert(coverage.normPath('/users/{id}') === '/users/{}', '{id} → {}');
+    assert(coverage.normPath('/users/:id') === '/users/{}', ':id → {}');
+    assert(coverage.normPath('/users/{{userId}}') === '/users/{}', '{{var}} → {}');
+    assert(coverage.normPath('/a//b/') === '/a/b', 'collapse + trim slashes');
+    assert(coverage.urlPath({ path: ['users', ':id'] }) === '/users/:id', 'path array');
+    assert(coverage.urlPath('{{baseUrl}}/health') === '/health', 'strip {{var}} host');
+});
+
+test('coverage CLI reports % (--json) and gates on --min (exit 1 below, 0 at/above)', function() {
+    const doc = JSON.parse(run(NODE + ' "' + COVERAGE + '" --spec "' + covSpecFile + '" "' + covColFile + '" --json'));
+    assert(doc.total === 5 && doc.covered === 3 && doc.pct === 60, 'CLI --json should report 3/5 = 60%');
+    let code = 0;
+    try { run(NODE + ' "' + COVERAGE + '" --spec "' + covSpecFile + '" "' + covColFile + '" --json --min 80'); }
+    catch (e) { code = e.status || 1; }
+    assert(code === 1, 'coverage below --min should exit 1 (CI gate), got ' + code);
+    run(NODE + ' "' + COVERAGE + '" --spec "' + covSpecFile + '" "' + covColFile + '" --json --min 50');   // meets → exit 0 (run throws on non-zero)
+});
+
+test('CLI exposes coverage: --help lists it and `coverage --help` exits 0', function() {
+    assertContains(run(NODE + ' "' + CLI + '" --help'), 'coverage', 'CLI help should list coverage');
+    assertContains(run(NODE + ' "' + CLI + '" coverage --help'), 'Hephaestus Coverage', '`coverage --help` should print its help');
+});
+
+test('coverage normPath is symmetric for literal-suffix / multi-param paths (:id.pdf ↔ {id}.pdf)', function() {
+    assert(coverage.normPath('/reports/:id.pdf') === coverage.normPath('/reports/{id}.pdf'), ':id.pdf must normalise like {id}.pdf');
+    assert(coverage.normPath('/reports/:id.pdf') === '/reports/{}.pdf', 'a literal suffix stays literal');
+    assert(coverage.normPath('/tiles/:z/:x/:y.png') === coverage.normPath('/tiles/{z}/{x}/{y}.png'), 'map-tile multi-param must match');
+    assert(coverage.normPath('/geo/:lat,:lng') === coverage.normPath('/geo/{lat},{lng}'), 'matrix-style params must match');
+    // round-trip: a /reports/{id}.pdf operation is counted as covered by a :id.pdf request
+    const spec = { openapi: '3.0.0', paths: { '/reports/{id}.pdf': { get: {} } } };
+    const col  = { item: [{ name: 'r', request: { method: 'GET', url: { path: ['reports', ':id.pdf'] } } }] };
+    assert(coverage.computeCoverage(spec, col).pct === 100, ':id.pdf should cover /reports/{id}.pdf (expected 100%)');
+});
+
+test('coverage --min errors (exit 1) on missing/empty/non-numeric value — no silent false-green', function() {
+    ['--min', '--min ""', '--min abc'].forEach(function(variant) {
+        let code = 0;
+        try { run(NODE + ' "' + COVERAGE + '" --spec "' + covSpecFile + '" "' + covColFile + '" ' + variant); }
+        catch (e) { code = e.status || 1; }
+        assert(code === 1, '`' + variant + '` must exit 1 (not silently disable the gate), got ' + code);
+    });
+});
+
+// ─── 17. mock.js ──────────────────────────────────────────────────────────────
+
+console.log('\n⑰ mock.js');
+
+const mock = require(path.join(ROOT, 'scripts/mock.js'));
+const MOCK = path.join(ROOT, 'scripts/mock.js');
+
+const MOCK_COLLECTION = {
+    info: { name: 'MockCol' },
+    variable: [{ key: 'hephaestus.snapshots', value: JSON.stringify({
+        'MockCol::GetThing::404::json': { statusCode: 404, format: 'json', data: { error: 'nope' } },
+        'MockCol::GetThing::200::json': { statusCode: 200, format: 'json', data: { id: 1, name: 'Widget' } },
+        'MockCol::GetText::200::text':  { statusCode: 200, format: 'text', data: 'plain hello' }
+    }) }],
+    item: [
+        { name: 'GetThing', request: { method: 'GET', url: { raw: '{{baseUrl}}/thing', path: ['thing'] } } },
+        { name: 'GetText',  request: { method: 'GET', url: '{{baseUrl}}/text' } },
+        { name: 'Orphan',   request: { method: 'GET', url: { raw: '{{baseUrl}}/orphan', path: ['orphan'] } } }
+    ]
+};
+const mockCollectionFile = path.join(TMP, 'mock-collection.json');
+fs.writeFileSync(mockCollectionFile, JSON.stringify(MOCK_COLLECTION));
+
+test('mock buildRoutes maps requests to routes and prefers a 2xx/json snapshot', function() {
+    const b = mock.buildRoutes(MOCK_COLLECTION);
+    assert(b.routes['GET /thing'], 'expected a GET /thing route');
+    assert(b.routes['GET /thing'].statusCode === 200, 'should prefer 200 over 404, got ' + b.routes['GET /thing'].statusCode);
+    assert(b.routes['GET /text'], 'expected a GET /text route (string url)');
+    assert(b.routes['GET /text'].contentType.indexOf('text/plain') === 0, 'text snapshot → text/plain');
+    assert(b.routes['GET /orphan'] === undefined, 'a request with no snapshot must not be mounted');
+});
+
+test('mock matchRoute normalizes the path and is method-sensitive', function() {
+    const b = mock.buildRoutes(MOCK_COLLECTION);
+    assert(mock.matchRoute(b.routes, 'GET', '/thing'),  'exact match');
+    assert(mock.matchRoute(b.routes, 'GET', '/thing/'), 'trailing slash should still match');
+    assert(mock.matchRoute(b.routes, 'get', '/thing'),  'method is case-insensitive');
+    assert(!mock.matchRoute(b.routes, 'POST', '/thing'), 'wrong method must not match');
+    assert(!mock.matchRoute(b.routes, 'GET', '/missing'), 'unknown path must not match');
+});
+
+test('mock urlPath / normalizePath handle string, path[] and {{var}} URLs', function() {
+    assert(mock.urlPath('https://api.example.com/a/b?q=1') === '/a/b', 'strip proto/host/query');
+    assert(mock.urlPath({ path: ['a', 'b'] }) === '/a/b', 'path array');
+    assert(mock.urlPath('{{baseUrl}}/y') === '/y', 'strip {{var}} host');
+    assert(mock.normalizePath('/a//b/') === '/a/b', 'collapse + trim slashes');
+    assert(mock.normalizePath('') === '/', 'empty → root');
+});
+
+test('mock serialize round-trips value types and clamps invalid status codes', function() {
+    assert(mock.serialize({ format: 'json', data: 'tok' }).body === '"tok"', 'top-level string → quoted JSON, got ' + mock.serialize({ format: 'json', data: 'tok' }).body);
+    assert(mock.serialize({ format: 'json', data: null }).body === 'null', 'null → "null"');
+    assert(mock.serialize({ format: 'json', data: 42 }).body === '42', 'number → 42');
+    const txt = mock.serialize({ format: 'text', data: 'hello' });
+    assert(txt.body === 'hello' && txt.contentType.indexOf('text/plain') === 0, 'text → raw body + text/plain');
+    assert(mock.serialize({ statusCode: 1000, format: 'json', data: {} }).statusCode === 200, 'out-of-range status → 200');
+    assert(mock.serialize({ statusCode: 'OK', format: 'json', data: {} }).statusCode === 200, 'non-numeric status → 200');
+    assert(mock.serialize({ statusCode: 404, format: 'json', data: {} }).statusCode === 404, 'valid status kept');
+});
+
+test('mock buildRoutes reports route collisions and tolerates a non-object snapshots value', function() {
+    const collided = {
+        variable: [{ key: 'hephaestus.snapshots', value: JSON.stringify({
+            'C::A::200::json': { statusCode: 200, format: 'json', data: { a: 1 } },
+            'C::B::200::json': { statusCode: 200, format: 'json', data: { b: 2 } }
+        }) }],
+        item: [
+            { name: 'A', request: { method: 'GET', url: { path: ['dup'] } } },
+            { name: 'B', request: { method: 'GET', url: { path: ['dup'] } } }
+        ]
+    };
+    const b = mock.buildRoutes(collided);
+    assert(Object.keys(b.routes).length === 1, 'two requests at one path → a single route');
+    assert(b.collisions.length === 1, 'the collision should be reported, got ' + b.collisions.length);
+    const nullSnaps = mock.buildRoutes({ variable: [{ key: 'hephaestus.snapshots', value: 'null' }], item: [] });
+    assert(Object.keys(nullSnaps.routes).length === 0, 'a "null" snapshots value must not throw and yields zero routes');
+});
+
+test('CLI exposes mock: --help lists it and `mock --help` exits 0', function() {
+    assertContains(run(NODE + ' "' + CLI + '" --help'), 'mock', 'CLI help should list mock');
+    assertContains(run(NODE + ' "' + CLI + '" mock --help'), 'Hephaestus Mock', '`mock --help` should print mock help (and exit 0)');
+});
+
+test('mock serves a matching request over HTTP and 404s an unknown path', function() {
+    const { spawn } = require('child_process');
+    const PORT = 49517;
+    // Standalone client so the script isn't fragile through the shell; retries
+    // until the spawned server has bound the port.
+    const clientFile = path.join(TMP, 'mock-client.js');
+    fs.writeFileSync(clientFile, [
+        'const http=require("http");const PORT=+process.argv[2];',
+        'function go(p,n,cb){const r=http.get({host:"127.0.0.1",port:PORT,path:p},res=>{let b="";res.on("data",d=>b+=d);res.on("end",()=>cb(res.statusCode+"|"+(res.headers["x-hephaestus-mock"]||"")+"|"+b));});',
+        'r.on("error",()=>{if(n>0)setTimeout(()=>go(p,n-1,cb),100);else{process.stdout.write("ERR|"+p);process.exit(0);}});}',
+        'go("/thing",40,hit=>go("/missing",5,miss=>process.stdout.write(hit+"~~"+miss)));'
+    ].join('\n'));
+
+    const srv = spawn(NODE, [MOCK, mockCollectionFile, '-p', String(PORT), '--quiet', '--no-color'], { stdio: 'ignore' });
+    try {
+        const out = run(NODE + ' "' + clientFile + '" ' + PORT);
+        const parts = out.split('~~');
+        assert(/^200\|hit\|/.test(parts[0]), 'GET /thing → "200|hit|…", got: ' + parts[0]);
+        assertContains(parts[0], 'Widget', 'replayed body should contain the recorded data');
+        assert(/^404\|miss\|/.test(parts[1] || ''), 'GET /missing → "404|miss|…", got: ' + parts[1]);
+    } finally {
+        srv.kill('SIGKILL');
+    }
+});
+
+// ─── 18. doctor.js ────────────────────────────────────────────────────────────
+// Pre-flight diagnostic. These tests DO NOT touch the real engine files; the
+// checksum-mismatch FAIL path is proven out-of-band (see the framework docs /
+// PR notes) against a throwaway mirror. Here we exercise the honest exit-code
+// contract instead: clean checkout → exit 0, a real FAIL → exit 1.
+
+console.log('\n⑱ doctor.js');
+
+const DOCTOR = path.join(ROOT, 'scripts/doctor.js');
+
+test('doctor exits 0 and prints a healthy summary on clean checkout', function() {
+    // run() throws on any non-zero exit, so reaching the asserts already proves exit 0.
+    const out = run(NODE + ' "' + DOCTOR + '" --no-color');
+    assertContains(out, 'Pre-flight Doctor', 'missing doctor header');
+    assertContains(out, 'passed', 'missing pass summary line');
+});
+
+test('doctor --json reports ok:true with all 6 checks on clean checkout', function() {
+    const doc = JSON.parse(run(NODE + ' "' + DOCTOR + '" --json'));
+    assert(doc.ok === true, 'expected ok:true on clean checkout');
+    assert(Array.isArray(doc.checks) && doc.checks.length === 6, 'expected 6 checks, got ' + (doc.checks && doc.checks.length));
+    const integrity = doc.checks.find(function(ch) { return ch.name === 'Engine integrity'; });
+    assert(integrity && integrity.status === 'PASS', 'engine integrity should PASS on clean checkout');
+    const version = doc.checks.find(function(ch) { return ch.name === 'Version consistency'; });
+    assert(version && version.status === 'PASS', 'version consistency should PASS on clean checkout');
+    const drift = doc.checks.find(function(ch) { return ch.name === 'Defaults drift'; });
+    assert(drift && drift.status === 'PASS', 'defaults drift should PASS on clean checkout');
+});
+
+test('doctor without -e never FAILs the environment check (honest INFO, no false requirement)', function() {
+    const doc = JSON.parse(run(NODE + ' "' + DOCTOR + '" --json'));
+    const env = doc.checks.find(function(ch) { return ch.name === 'Environment'; });
+    assert(env && env.status === 'INFO', 'without -e the env check must be INFO, not FAIL/PASS');
+});
+
+test('doctor gates CI: a real FAIL (invalid -e env) exits 1 and sets ok:false', function() {
+    const badEnv = path.join(TMP, 'doctor-bad-env.json');
+    fs.writeFileSync(badEnv, '{ this is not valid json');
+    let code = 0, out = '';
+    try {
+        run(NODE + ' "' + DOCTOR + '" -e "' + badEnv + '" --json');
+    } catch (e) {
+        code = e.status || 1;
+        out  = (e.stdout || '').toString();
+    }
+    assert(code === 1, 'invalid env should exit 1 (CI gate), got ' + code);
+    const doc = JSON.parse(out);
+    assert(doc.ok === false, 'JSON ok should be false when a check FAILs');
+    const env = doc.checks.find(function(ch) { return ch.name === 'Environment'; });
+    assert(env && env.status === 'FAIL', 'Environment check should FAIL on invalid env JSON');
+});
+
+test('doctor -e with a valid Postman environment PASSes and stays exit 0', function() {
+    const goodEnv = path.join(TMP, 'doctor-good-env.json');
+    fs.writeFileSync(goodEnv, JSON.stringify({
+        name: 'dev',
+        values: [
+            { key: 'baseUrl', value: 'https://api.example.com', enabled: true },
+            { key: 'token',   value: '',                        enabled: true }
+        ]
+    }));
+    const doc = JSON.parse(run(NODE + ' "' + DOCTOR + '" -e "' + goodEnv + '" --json'));
+    assert(doc.ok === true, 'valid env + clean checkout should be ok:true');
+    const env = doc.checks.find(function(ch) { return ch.name === 'Environment'; });
+    assert(env && env.status === 'PASS', 'env check should PASS for a valid environment');
+    assertContains(env.detail, '2 variable(s)', 'env detail should report variable count');
+});
+
+test('doctor -e with no path FAILs (an unset/empty env var must not silently pass)', function() {
+    let code = 0, out = '';
+    try {
+        run(NODE + ' "' + DOCTOR + '" -e --json');
+    } catch (e) {
+        code = e.status || 1;
+        out  = (e.stdout || '').toString();
+    }
+    assert(code === 1, '-e without a path should exit 1 (no false all-clear), got ' + code);
+    const env = JSON.parse(out).checks.find(function(ch) { return ch.name === 'Environment'; });
+    assert(env && env.status === 'FAIL', '-e without a path should FAIL the env check, got ' + (env && env.status));
+});
+
+test('CLI exposes doctor: --help lists it and the subcommand delegates (exit 0)', function() {
+    assertContains(run(NODE + ' "' + CLI + '" --help'), 'doctor', 'help should list doctor');
+    const doc = JSON.parse(run(NODE + ' "' + CLI + '" doctor --json'));
+    assert(doc.ok === true, 'CLI doctor --json should report ok:true on clean checkout');
+});
+
 // ─── Cleanup ─────────────────────────────────────────────────────────────────
 
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch(e) { /* ignore */ }

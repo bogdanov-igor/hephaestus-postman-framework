@@ -23,7 +23,29 @@ const path = require('path');
 // ─── CLI ──────────────────────────────────────────────────────────────────────
 
 const args      = process.argv.slice(2);
-const inputFile = args.find(function(a) { return !a.startsWith('-'); });
+
+// --history [file] — opt-in run-history append (Phase E). Parsed BEFORE inputFile
+// so a path given right after the flag is never mistaken for <results.json>.
+const DEFAULT_HISTORY = '.hephaestus/history.jsonl';
+const historyEqArg    = args.find(function(a) { return a.indexOf('--history=') === 0; });
+const historyIdx      = args.indexOf('--history');
+const historyOn       = historyIdx !== -1 || historyEqArg !== undefined;
+let historyValueIdx   = -1;
+let historyFile       = DEFAULT_HISTORY;
+if (historyEqArg !== undefined) {
+    // --history=<file> (equals form, mirroring --sla=<ms>); empty value → default path.
+    const v = historyEqArg.slice('--history='.length);
+    if (v) historyFile = v;
+} else if (historyIdx !== -1) {
+    const next = args[historyIdx + 1];
+    if (next && next.indexOf('-') !== 0) {
+        historyValueIdx = historyIdx + 1;
+        historyFile     = next;
+    }
+}
+
+// The first non-flag arg is <results.json> — but skip the --history value's slot.
+const inputFile = args.find(function(a, i) { return !a.startsWith('-') && i !== historyValueIdx; });
 const mdMode    = args.includes('--md');
 const noColor   = args.includes('--no-color') || mdMode;
 const slaArg    = args.find(function(a) { return a.indexOf('--sla=') === 0; });
@@ -34,7 +56,7 @@ if (slaArg && !slaOn) {
 }
 
 if (!inputFile) {
-    console.error('Usage: node scripts/summary.js <results.json> [--md] [--no-color] [--sla=<ms>]');
+    console.error('Usage: node scripts/summary.js <results.json> [--md] [--no-color] [--sla=<ms>] [--history [file]]');
     process.exit(1);
 }
 
@@ -158,6 +180,11 @@ const totalAsserts  = (stats.assertions && stats.assertions.total) || 0;
 const failedAsserts = (stats.assertions && stats.assertions.failed) || 0;
 const passedAsserts = totalAsserts - failedAsserts;
 
+// Numeric pass-rate for the machine-readable history line. Mirrors passRate()'s
+// rounding exactly; the only divergence is the no-assertions case, which the
+// display shows as '—' but here becomes 100 ("nothing failed") to stay a number.
+const passRateNum   = totalAsserts === 0 ? 100 : Math.round(passedAsserts / totalAsserts * 100);
+
 const durationMs = timings.completed && timings.started
     ? timings.completed - timings.started
     : requests.reduce(function(s, r) { return s + r.time; }, 0);
@@ -170,6 +197,31 @@ const envName        = data.environment && data.environment.name || '—';
 // Failure gate: assertion failures, request failures, or an SLA p95 breach.
 // Computed before the mdMode branch so Markdown output propagates it too.
 const exitCode = failedAsserts > 0 || failedReqs > 0 || slaFailed ? 1 : 0;
+
+// ─── Opt-in history append (--history) ────────────────────────────────────────
+// Appends ONE JSON line per run to a JSONL history file, reusing the values
+// already computed above. Fully wrapped in try/catch: a write failure warns on
+// stderr but never touches stdout or the exit code the summary would otherwise
+// have produced.
+function appendHistory() {
+    try {
+        const record = {
+            ts:         new Date().toISOString(),
+            passRate:   passRateNum,
+            p95:        pct.p95,
+            total:      totalAsserts,
+            failed:     failedAsserts,
+            requests:   totalReqs,
+            durationMs: durationMs
+        };
+        const target = path.resolve(historyFile);
+        const dir    = path.dirname(target);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.appendFileSync(target, JSON.stringify(record) + '\n');
+    } catch (err) {
+        console.error('⚠️  --history: could not append to "' + historyFile + '" — ' + err.message + ' (summary unaffected).');
+    }
+}
 
 if (mdMode) {
     const now = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
@@ -243,6 +295,7 @@ if (mdMode) {
     }
 
     process.stdout.write(lines.join('\n') + '\n');
+    if (historyOn) appendHistory();
     process.exit(exitCode);
 }
 
@@ -362,4 +415,5 @@ console.log(exitCode === 0
 );
 console.log('');
 
+if (historyOn) appendHistory();
 process.exit(exitCode);
