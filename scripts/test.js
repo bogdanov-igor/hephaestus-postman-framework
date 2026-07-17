@@ -658,6 +658,137 @@ test('openapi handles flush-style YAML (same-indent lists, server vars, response
     assert(override.schema && override.schema.definition && override.schema.definition.properties && override.schema.definition.properties.id, 'response-level $ref schema should be inlined');
 });
 
+// ─── 14. flaky.js ─────────────────────────────────────────────────────────────
+
+console.log('\n⑭ flaky.js');
+
+const FLAKY = path.join(ROOT, 'scripts/flaky.js');
+
+// Three repeated runs of the SAME collection. "Flaky check" flaps pass→fail→pass;
+// everything else ("Status is 200", "Has id", "Stable ok") is rock-stable.
+function flakyRun(flapErr) {
+    return {
+        collection: { info: { name: 'Flaky Demo' } },
+        run: { executions: [
+            { item: { id: 'u1', name: 'GET User' }, assertions: [
+                { assertion: 'Status is 200', skipped: false, error: null },
+                { assertion: 'Has id',        skipped: false, error: null } ] },
+            { item: { id: 'l1', name: 'POST Login' }, assertions: [
+                { assertion: 'Stable ok',   skipped: false, error: null },
+                { assertion: 'Flaky check', skipped: false, error: flapErr } ] }
+        ] }
+    };
+}
+
+const flakyR1 = path.join(TMP, 'flaky-r1.json');
+const flakyR2 = path.join(TMP, 'flaky-r2.json');
+const flakyR3 = path.join(TMP, 'flaky-r3.json');
+fs.writeFileSync(flakyR1, JSON.stringify(flakyRun(null)));                                    // pass
+fs.writeFileSync(flakyR2, JSON.stringify(flakyRun({ message: 'expected 500 to equal 200' }))); // fail
+fs.writeFileSync(flakyR3, JSON.stringify(flakyRun(null)));                                    // pass
+const flakyArgs = '"' + flakyR1 + '" "' + flakyR2 + '" "' + flakyR3 + '"';
+
+test('flags exactly the flapping assertion (--json)', function() {
+    const out = JSON.parse(run(NODE + ' "' + FLAKY + '" ' + flakyArgs + ' --json'));
+    assert(out.flaky.length === 1, 'expected exactly 1 flaky assertion, got ' + out.flaky.length);
+    const f = out.flaky[0];
+    assert(f.assertion === 'Flaky check', 'wrong assertion flagged: ' + f.assertion);
+    assert(f.request === 'POST Login', 'wrong request: ' + f.request);
+    assert(f.pass === 2 && f.fail === 1, 'expected 2 pass / 1 fail, got ' + f.pass + '/' + f.fail);
+});
+
+test('stable assertions are NOT flagged (counted as stable-pass)', function() {
+    const out = JSON.parse(run(NODE + ' "' + FLAKY + '" ' + flakyArgs + ' --json'));
+    assert(out.stablePass === 3, 'expected 3 stable-pass (Status is 200, Has id, Stable ok), got ' + out.stablePass);
+    assert(out.stableFail === 0, 'expected 0 stable-fail, got ' + out.stableFail);
+    const names = out.flaky.map(function(f) { return f.assertion; });
+    ['Status is 200', 'Has id', 'Stable ok'].forEach(function(n) {
+        assert(names.indexOf(n) === -1, n + ' must not be flagged as flaky');
+    });
+});
+
+test('--json shape: { runs, flaky:[{request,assertion,pass,fail,rate}], stablePass, stableFail }', function() {
+    const out = JSON.parse(run(NODE + ' "' + FLAKY + '" ' + flakyArgs + ' --json'));
+    assert(out.runs === 3, 'runs should be 3, got ' + out.runs);
+    assert(Array.isArray(out.flaky), 'flaky should be an array');
+    assert(typeof out.stablePass === 'number', 'stablePass should be a number');
+    assert(typeof out.stableFail === 'number', 'stableFail should be a number');
+    const f = out.flaky[0];
+    ['request', 'assertion', 'pass', 'fail', 'rate'].forEach(function(k) {
+        assert(k in f, 'flaky entry missing key: ' + k);
+    });
+    assert(f.rate > 0.33 && f.rate < 0.34, 'rate should be ~0.3333 (1 fail / 3), got ' + f.rate);
+});
+
+test('--fail-on-flaky exits 1 when flaky found', function() {
+    let code = 0;
+    try { run(NODE + ' "' + FLAKY + '" ' + flakyArgs + ' --fail-on-flaky --no-color'); }
+    catch(e) { code = e.status || 1; }
+    assert(code === 1, '--fail-on-flaky should exit 1 with flaky present, got ' + code);
+});
+
+test('exits 0 by default despite flaky (diagnostic, not a gate)', function() {
+    // run() throws on non-zero exit — a clean return proves exit 0.
+    run(NODE + ' "' + FLAKY + '" ' + flakyArgs + ' --no-color');
+});
+
+test('human render names the flapping request, assertion and tally', function() {
+    const out = run(NODE + ' "' + FLAKY + '" ' + flakyArgs + ' --no-color');
+    assertContains(out, 'Runs analyzed: 3', 'missing run count header');
+    assertContains(out, 'POST Login', 'flapping request not shown');
+    assertContains(out, 'Flaky check', 'flapping assertion not shown');
+    assertContains(out, '2✓/1✗', 'missing pass/fail tally');
+    assertContains(out, '1 flaky · 3 stable-pass · 0 stable-fail', 'missing summary line');
+});
+
+test('needs at least TWO result files (usage error, exit 1)', function() {
+    let code = 0;
+    try { run(NODE + ' "' + FLAKY + '" "' + flakyR1 + '"'); } catch(e) { code = e.status || 1; }
+    assert(code === 1, 'single file should exit 1, got ' + code);
+});
+
+test('reports no flaky when every run is identical-pass', function() {
+    const out = JSON.parse(run(NODE + ' "' + FLAKY + '" "' + flakyR1 + '" "' + flakyR3 + '" "' + flakyR1 + '" --json'));
+    assert(out.flaky.length === 0, 'no assertion should flap across identical passing runs');
+    const human = run(NODE + ' "' + FLAKY + '" "' + flakyR1 + '" "' + flakyR3 + '" --no-color');
+    assertContains(human, '✓ no flaky assertions across 2 runs', 'missing clean-bill-of-health line');
+});
+
+test('skipped assertions are ignored (skip ≠ fail, no false flake)', function() {
+    // "Flaky check" is skipped in the middle run — pass, skip, pass → stable-pass, never flaky.
+    const skipRun = flakyRun(null);
+    skipRun.run.executions[1].assertions[1].skipped = true;
+    const skipFile = path.join(TMP, 'flaky-skip.json');
+    fs.writeFileSync(skipFile, JSON.stringify(skipRun));
+    const out = JSON.parse(run(NODE + ' "' + FLAKY + '" "' + flakyR1 + '" "' + skipFile + '" "' + flakyR3 + '" --json'));
+    assert(out.flaky.length === 0, 'a skipped run must not make an otherwise-passing assertion flaky');
+});
+
+test('an assertion absent from some runs is stable-pass, not flaky (presence-agnostic)', function() {
+    // Middle run omits "Flaky check" entirely; the other two pass it → stable-pass.
+    const missRun = flakyRun(null);
+    missRun.run.executions[1].assertions = [{ assertion: 'Stable ok', skipped: false, error: null }];
+    const missFile = path.join(TMP, 'flaky-miss.json');
+    fs.writeFileSync(missFile, JSON.stringify(missRun));
+    const out = JSON.parse(run(NODE + ' "' + FLAKY + '" "' + flakyR1 + '" "' + missFile + '" "' + flakyR3 + '" --json'));
+    assert(out.flaky.length === 0, 'absence in one run must not be treated as a failure');
+});
+
+test('malformed result file → clear error, exit 1', function() {
+    const badFile = path.join(TMP, 'flaky-bad.json');
+    fs.writeFileSync(badFile, '{ not json');
+    let code = 0;
+    try { run(NODE + ' "' + FLAKY + '" "' + flakyR1 + '" "' + badFile + '"'); } catch(e) { code = e.status || 1; }
+    assert(code === 1, 'malformed JSON should exit 1, got ' + code);
+});
+
+test('flaky subcommand delegates through the CLI (bin/hephaestus.js)', function() {
+    let code = 0;
+    try { run(NODE + ' "' + CLI + '" flaky ' + flakyArgs + ' --fail-on-flaky --no-color'); }
+    catch(e) { code = e.status || 1; }
+    assert(code === 1, 'CLI should propagate flaky --fail-on-flaky exit 1, got ' + code);
+});
+
 // ─── Cleanup ─────────────────────────────────────────────────────────────────
 
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch(e) { /* ignore */ }
