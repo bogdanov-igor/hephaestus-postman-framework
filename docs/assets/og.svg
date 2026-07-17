@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="Hephaestus — modular API-testing framework for Postman">
+  <defs>
+    <!-- forge wordmark: white-hot crown cooling to ember red -->
+    <linearGradient id="forge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#fdf2ec"/>
+      <stop offset="42%" stop-color="#f6d0ba"/>
+      <stop offset="72%" stop-color="#e3966c"/>
+      <stop offset="100%" stop-color="#b5502e"/>
+    </linearGradient>
+    <!-- accent underline: forge fire quenched in cool water -->
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"  stop-color="#e0523a"/>
+      <stop offset="55%" stop-color="#f0a04a"/>
+      <stop offset="100%" stop-color="#4a9fd8"/>
+    </linearGradient>
+    <!-- forge glow breathing in the upper left -->
+    <radialGradient id="halo" cx="15%" cy="28%" r="52%">
+      <stop offset="0%"  stop-color="#8a2f1a" stop-opacity="0.32"/>
+      <stop offset="55%" stop-color="#3d1810" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#0c0706" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- deep, coal-black field -->
+  <rect width="1200" height="630" fill="#0c0706"/>
+  <rect width="1200" height="630" fill="url(#halo)"/>
+
+  <!-- eyebrow: dot + tracked kicker -->
+  <circle cx="88" cy="203" r="5" fill="#e0654a"/>
+  <circle cx="88" cy="203" r="9.5" fill="none" stroke="#e0654a" stroke-opacity="0.28" stroke-width="1"/>
+  <text x="112" y="209"
+        font-family="'SF Mono', SFMono-Regular, Menlo, Consolas, monospace"
+        font-size="16" letter-spacing="6.5" fill="#9d8175">HEPHAESTUS · POSTMAN TESTING FRAMEWORK · v3.9 · BOGDANOV</text>
+
+  <!-- wordmark -->
+  <text x="72" y="410"
+        font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+        font-size="165" font-weight="800" letter-spacing="-3.5" fill="url(#forge)">hephaestus</text>
+
+  <!-- subtitle, two lines, lit by the forge -->
+  <text x="80" y="462"
+        font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+        font-size="22" font-weight="500" fill="#e5936b">A modular API-testing framework for Postman.</text>
+  <text x="80" y="493"
+        font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+        font-size="22" font-weight="500" fill="#e5936b">Scattered scripts, forged into one engine.</text>
+
+  <!-- accent underline -->
+  <rect x="80" y="524" width="232" height="3" rx="1.5" fill="url(#accent)"/>
+</svg>

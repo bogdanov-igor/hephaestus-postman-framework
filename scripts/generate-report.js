@@ -74,21 +74,21 @@ function esc(s) {
 }
 
 function methodColor(m) {
-    const colors = { GET:'#3fb950', POST:'#58a6ff', PUT:'#d29922', PATCH:'#ffa657', DELETE:'#f85149', HEAD:'#bc8cff', OPTIONS:'#8b949e' };
-    return colors[(m||'').toUpperCase()] || '#8b949e';
+    const colors = { GET:'#5fbf6b', POST:'#4a9fd8', PUT:'#f0a04a', PATCH:'#e3966c', DELETE:'#e0654a', HEAD:'#b58a72', OPTIONS:'#9d8175' };
+    return colors[(m||'').toUpperCase()] || '#9d8175';
 }
 
 function statusColor(code) {
-    if (!code) return '#8b949e';
-    if (code < 300) return '#3fb950';
-    if (code < 400) return '#d29922';
-    return '#f85149';
+    if (!code) return '#9d8175';
+    if (code < 300) return '#5fbf6b';
+    if (code < 400) return '#f0a04a';
+    return '#e0654a';
 }
 
 function timeColor(ms) {
-    if (ms <= 500) return '#3fb950';
-    if (ms <= 2000) return '#d29922';
-    return '#f85149';
+    if (ms <= 500) return '#5fbf6b';
+    if (ms <= 2000) return '#f0a04a';
+    return '#e0654a';
 }
 
 // SVG donut gauge
@@ -96,16 +96,16 @@ function donut(pct) {
     const r = 44, cx = 50, cy = 50;
     const circ = 2 * Math.PI * r;
     const fill = circ * pct / 100;
-    const color = pct >= 95 ? '#3fb950' : pct >= 80 ? '#d29922' : '#f85149';
+    const color = pct >= 95 ? '#4a9fd8' : pct >= 80 ? '#f0a04a' : '#e0654a';
     return `<svg viewBox="0 0 100 100" width="120" height="120" style="display:block;margin:0 auto">
-      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#30363d" stroke-width="10"/>
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#2a1c15" stroke-width="10"/>
       <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="10"
         stroke-dasharray="${fill.toFixed(2)} ${(circ-fill).toFixed(2)}"
         stroke-dashoffset="${(circ/4).toFixed(2)}" stroke-linecap="round"/>
       <text x="${cx}" y="${cy+2}" text-anchor="middle" dominant-baseline="middle"
         font-family="-apple-system,sans-serif" font-weight="700" font-size="16" fill="${color}">${pct}%</text>
       <text x="${cx}" y="${cy+16}" text-anchor="middle" dominant-baseline="middle"
-        font-family="-apple-system,sans-serif" font-weight="400" font-size="7" fill="#8b949e">PASS RATE</text>
+        font-family="-apple-system,sans-serif" font-weight="400" font-size="7" fill="#9d8175">PASS RATE</text>
     </svg>`;
 }
 
@@ -169,18 +169,21 @@ const html = `<!DOCTYPE html>
 <title>Hephaestus Report — ${esc(colName)}</title>
 <style>
   :root {
-    --bg:#0d1117; --bg-card:#161b22; --border:#30363d; --border-h:#58a6ff;
-    --text:#c9d1d9; --muted:#8b949e; --accent:#58a6ff; --green:#3fb950;
-    --yellow:#d29922; --red:#f85149; --radius:8px;
+    --bg:#0c0706; --bg-card:#17100d; --border:#2a1c15; --border-h:#4a9fd8;
+    --text:#e8dcd4; --muted:#9d8175; --accent:#4a9fd8; --green:#5fbf6b;
+    --yellow:#f0a04a; --red:#e0654a; --quench:#4a9fd8; --radius:8px;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:24px 16px 64px;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background-color:var(--bg);background-image:radial-gradient(1100px 560px at 12% -6%,rgba(138,47,26,.16) 0%,rgba(61,24,16,.05) 42%,rgba(12,7,6,0) 72%);background-attachment:fixed;background-repeat:no-repeat;color:var(--text);min-height:100vh;padding:24px 16px 64px;}
   a{color:var(--accent);text-decoration:none;}
 
   /* Header */
   header{max-width:960px;margin:0 auto 28px;}
-  .logo{font-size:1.4rem;font-weight:700;margin-bottom:4px;}
-  .logo span{color:var(--accent);}
+  .logo{font-size:1.5rem;font-weight:800;letter-spacing:-.02em;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .logo .mark{font-size:1.3rem;line-height:1;filter:drop-shadow(0 0 9px rgba(224,101,74,.5));}
+  .logo .wordmark{background:linear-gradient(180deg,#fdf2ec 0%,#f6d0ba 40%,#e3966c 72%,#b5502e 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;}
+  .logo .logo-suffix{font-size:.8rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);}
+  .accent-rule{height:3px;width:220px;max-width:55%;border-radius:2px;background:linear-gradient(90deg,#e0523a 0%,#f0a04a 55%,#4a9fd8 100%);margin:2px 0 14px;}
   .meta-row{font-size:0.78rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:16px;margin-top:6px;}
   .meta-row span::before{margin-right:4px;}
 
@@ -197,15 +200,15 @@ const html = `<!DOCTYPE html>
   #search:focus{border-color:var(--border-h);}
   .fb{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:.75rem;padding:6px 12px;cursor:pointer;transition:all .15s;}
   .fb.active,.fb:hover{border-color:var(--border-h);color:var(--accent);}
-  .fb.active{background:rgba(88,166,255,.08);}
+  .fb.active{background:rgba(74,159,216,.10);}
 
   /* Request cards */
   .cards{max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:8px;}
   .req-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color .15s;}
-  .req-card.nok{border-color:rgba(248,81,73,.35);}
+  .req-card.nok{border-color:rgba(224,101,74,.38);}
   .req-card:hover{border-color:var(--border-h);}
   .req-header{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;user-select:none;flex-wrap:wrap;}
-  .req-header:hover{background:rgba(255,255,255,.02);}
+  .req-header:hover{background:rgba(240,160,74,.05);}
   .method-badge{font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:4px;color:#000;white-space:nowrap;flex-shrink:0;}
   .req-name{font-size:.86rem;font-weight:600;flex:1;word-break:break-word;}
   .req-meta{display:flex;align-items:center;gap:10px;margin-left:auto;}
@@ -221,8 +224,8 @@ const html = `<!DOCTYPE html>
   .req-body{border-top:1px solid var(--border);}
   .assert-list{padding:12px 14px;display:flex;flex-direction:column;gap:5px;}
   .assertion{font-size:.78rem;padding:5px 10px;border-radius:5px;line-height:1.4;}
-  .assertion.pass{background:rgba(63,185,80,.06);border:1px solid rgba(63,185,80,.15);color:var(--text);}
-  .assertion.fail{background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.2);color:var(--text);}
+  .assertion.pass{background:rgba(95,191,107,.07);border:1px solid rgba(95,191,107,.18);color:var(--text);}
+  .assertion.fail{background:rgba(224,101,74,.10);border:1px solid rgba(224,101,74,.24);color:var(--text);}
   .assertion.muted{color:var(--muted);font-style:italic;}
   .a-err{font-size:.72rem;color:var(--red);margin-top:3px;font-family:'SF Mono',monospace;word-break:break-word;}
 
@@ -238,7 +241,8 @@ const html = `<!DOCTYPE html>
 <body>
 
 <header>
-  <div class="logo">🔥 <span>Hephaestus</span> Test Report</div>
+  <div class="logo"><span class="mark">⚒</span><span class="wordmark">hephaestus</span> <span class="logo-suffix">Test Report</span></div>
+  <div class="accent-rule"></div>
   <div class="meta-row">
     <span>📋 ${esc(colName)}</span>
     <span>🌍 ${esc(envName)}</span>

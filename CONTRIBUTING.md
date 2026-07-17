@@ -52,7 +52,7 @@ templates/
 scripts/
   build.js          ← Build utilities (configMerge sync check)
 docs/
-  banner.png
+  assets/           ← banner.svg + og.png (brand art)
   newman-ci.md      ← Newman + CI integration guide
 ```
 

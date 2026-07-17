@@ -1,4 +1,5 @@
 {
+  "$schema": "../docs/override.schema.json",
   "_comment": "Скопировать в collectionVariables['hephaestus.defaults']. Удалить _comment перед использованием.",
 
   "baseUrl": "https://your-api.example.com",
