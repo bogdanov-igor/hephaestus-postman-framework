@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="description" content="Full feature reference for Hephaestus v3.8 — assertion operators, snapshot regression, auth patterns, array validation, CLI tools, and more.">
+<meta name="description" content="Full feature reference for Hephaestus v3.9 — assertion operators, snapshot regression, auth patterns, array validation, localization, security audit, CLI tools, and more.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://bogdanov-igor.github.io/hephaestus-postman-framework/features.html">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://bogdanov-igor.github.io/hephaestus-postman-framework/features.html">
 <meta property="og:title" content="All Features — Hephaestus API Testing Framework">
-<meta property="og:description" content="Complete reference for all modules, assertion operators, auth patterns and CLI tools in Hephaestus v3.8.">
+<meta property="og:description" content="Complete reference for all modules, assertion operators, auth patterns and CLI tools in Hephaestus v3.9.">
 <meta property="og:image" content="https://bogdanov-igor.github.io/hephaestus-postman-framework/banner.png">
 <title>Features — Hephaestus</title>
 <style>
@@ -69,6 +69,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;backdrop-filter:blur(12px);b
 .v3-6{background:rgba(88,166,255,.1);color:var(--blue);border:1px solid rgba(88,166,255,.2)}
 .v3-7{background:rgba(63,185,80,.1);color:var(--green);border:1px solid rgba(63,185,80,.2)}
 .v3-8{background:rgba(247,127,0,.1);color:var(--accent);border:1px solid rgba(247,127,0,.2)}
+.v3-9{background:rgba(247,120,186,.1);color:#f778ba;border:1px solid rgba(247,120,186,.2)}
 
 .mini-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px}
 .mini-card h4{font-size:.85rem;font-weight:700;margin-bottom:6px}
@@ -97,7 +98,7 @@ footer{text-align:center;padding:32px;font-size:.75rem;color:var(--muted);border
 
 <div class="hero-sm">
   <h1>All Features</h1>
-  <p>Complete reference for every module, assertion operator, and tool in Hephaestus v3.8.</p>
+  <p>Complete reference for every module, assertion operator, and tool in Hephaestus v3.9.</p>
 </div>
 
 <div class="page-inner">
@@ -290,7 +291,7 @@ footer{text-align:center;padding:32px;font-size:.75rem;color:var(--muted);border
     <span class="c-str">"meta.timestamp"</span>
   ],
   <span class="c-key">checkPaths</span>: [<span class="c-str">"data.status"</span>, <span class="c-str">"data.type"</span>],
-  <span class="c-key">update</span>: <span class="c-kw">false</span>,  <span class="c-cmt">// set true to reset baseline</span>
+  <span class="c-key">record</span>: <span class="c-kw">false</span>,  <span class="c-cmt">// set true to force-rewrite the baseline (snapshotRecord)</span>
 },</pre>
     </div>
   </div>
@@ -515,6 +516,233 @@ footer{text-align:center;padding:32px;font-size:.75rem;color:var(--muted);border
     <h4>🐳 docker-run.sh</h4>
     <p>Run full Newman + report pipeline in Docker. No local Node.js needed.</p>
     <p style="margin-top:8px;font-size:.7rem;color:var(--accent)">bash scripts/docker-run.sh -c col.json</p>
+  </div>
+</div>
+</div>
+
+<!-- LOCALIZATION / i18n -->
+<div class="section" id="i18n">
+<div class="section-header">
+  <div class="section-icon">🌍</div>
+  <h2>Localization — locale ru · en<span class="version-badge v3-9">v3.9</span></h2>
+  <span class="section-tag">global config</span>
+</div>
+<div class="two-col">
+  <div>
+    <div class="desc-box" style="margin-bottom:16px">
+      <h3>One engine, two languages</h3>
+      <p>The <code>locale</code> setting selects the language of every user-facing string the engine emits: generated test names, console logs, error messages, and status labels.</p>
+      <ul>
+        <li><code>"ru"</code> — <strong>default</strong>. Byte-identical output to prior releases.</li>
+        <li><code>"en"</code> — the exact same engine, rendered in English.</li>
+      </ul>
+      <p style="margin-top:10px">Nothing about assertions or request behaviour changes — only the text you read. Defined in <code>setup/defaults.json</code>, resolved through the shared i18n catalog.</p>
+    </div>
+    <div class="desc-box">
+      <h3>Why default "ru"</h3>
+      <p>Existing suites keep their exact wording — test IDs, snapshots, and log-scraping stay stable across the upgrade. Opt into English by setting a single field.</p>
+    </div>
+  </div>
+  <div class="code-window">
+    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">locale</span></div>
+    <div class="code-body"><pre><span class="c-cmt">// setup/defaults.json (or per-request override)</span>
+<span class="c-key">locale</span>: <span class="c-str">"ru"</span>,   <span class="c-cmt">// default — unchanged output</span>
+
+<span class="c-cmt">// switch the whole engine to English:</span>
+<span class="c-key">locale</span>: <span class="c-str">"en"</span>,
+
+<span class="c-cmt">// affects test names, logs, errors, status labels:</span>
+<span class="c-cmt">//   ru → "🟢 Статус: 200 — Успешно"</span>
+<span class="c-cmt">//   en → "🟢 Status: 200 — OK"</span></pre>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- SECURITY AUDIT -->
+<div class="section" id="security">
+<div class="section-header">
+  <div class="section-icon">🛡️</div>
+  <h2>Security Audit<span class="version-badge v3-9">v3.9</span></h2>
+  <span class="section-tag">post-request</span>
+</div>
+<div class="two-col">
+  <div>
+    <div class="desc-box" style="margin-bottom:16px">
+      <h3>Response hardening checks</h3>
+      <p>Opt-in module (<code>enabled: false</code> by default). When on, each check emits its own <code>pm.test</code> so failures surface individually.</p>
+      <ul>
+        <li><code>requireHeaders</code> — security headers that must be present</li>
+        <li><code>forbidHeaders</code> — headers that must NOT leak (server, tech fingerprints)</li>
+        <li><code>forbidBodyPatterns</code> — strings that must not appear in the body (stack traces, DB errors)</li>
+        <li><code>checkCors</code> — flags a wildcard <code>Access-Control-Allow-Origin</code> combined with <code>Allow-Credentials</code></li>
+      </ul>
+    </div>
+    <div class="desc-box">
+      <h3>Sensible built-in defaults</h3>
+      <p>When enabled without lists, the engine applies OWASP-style defaults: requires HSTS, CSP, <code>X-Frame-Options</code>, <code>X-Content-Type-Options</code>; forbids <code>server</code>, <code>x-powered-by</code>, <code>x-aspnet-version</code>; and scans the body for <code>SQLSTATE</code>, stack traces, <code>ORA-0</code>, and MySQL warnings. Default <code>{ enabled: false, checkCors: true }</code>.</p>
+    </div>
+  </div>
+  <div class="code-window">
+    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">securityAudit</span></div>
+    <div class="code-body"><pre><span class="c-key">securityAudit</span>: {
+  <span class="c-key">enabled</span>:   <span class="c-kw">true</span>,
+  <span class="c-key">checkCors</span>: <span class="c-kw">true</span>,   <span class="c-cmt">// wildcard ACAO + credentials</span>
+  <span class="c-key">requireHeaders</span>: [
+    <span class="c-str">"strict-transport-security"</span>,
+    <span class="c-str">"content-security-policy"</span>,
+    <span class="c-str">"x-frame-options"</span>,
+    <span class="c-str">"x-content-type-options"</span>,
+  ],
+  <span class="c-key">forbidHeaders</span>: [
+    <span class="c-str">"server"</span>, <span class="c-str">"x-powered-by"</span>, <span class="c-str">"x-aspnet-version"</span>,
+  ],
+  <span class="c-key">forbidBodyPatterns</span>: [
+    <span class="c-str">"SQLSTATE"</span>, <span class="c-str">"stack trace"</span>, <span class="c-str">"ORA-0"</span>,
+  ],
+},
+<span class="c-cmt">// each check → its own pm.test</span></pre>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- SNAPSHOT RECORD -->
+<div class="section" id="snapshot-record">
+<div class="section-header">
+  <div class="section-icon">⏺️</div>
+  <h2>snapshotRecord — force-rewrite baseline<span class="version-badge v3-9">v3.9</span></h2>
+  <span class="section-tag">post-request</span>
+</div>
+<div class="two-col">
+  <div>
+    <div class="desc-box" style="margin-bottom:16px">
+      <h3>Rewrite a snapshot in one run</h3>
+      <p>When an endpoint intentionally changes, you need a fresh baseline. Set <code>snapshot.record: true</code> (or top-level <code>snapshotRecord: true</code>), run <strong>once</strong>, then remove the flag.</p>
+      <ul>
+        <li>Ignores the existing snapshot entirely</li>
+        <li>Writes the current response as the new baseline</li>
+        <li>Stored in the <code>collection-vars</code> backend</li>
+      </ul>
+    </div>
+    <div class="desc-box">
+      <h3>Snapshot storage</h3>
+      <p><code>snapshot.storage</code> defaults to <code>"collection-vars"</code>, the only backend that works offline. <code>"postman-api"</code> is unavailable offline — the engine warns once and falls back to <code>collection-vars</code> automatically.</p>
+    </div>
+  </div>
+  <div class="code-window">
+    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">snapshotRecord</span></div>
+    <div class="code-body"><pre><span class="c-cmt">// Step 1 — force a new baseline this run:</span>
+<span class="c-key">snapshot</span>: {
+  <span class="c-key">enabled</span>: <span class="c-kw">true</span>,
+  <span class="c-key">record</span>:  <span class="c-kw">true</span>,   <span class="c-cmt">// rewrite baseline, ignore old</span>
+  <span class="c-key">storage</span>: <span class="c-str">"collection-vars"</span>,
+},
+
+<span class="c-cmt">// or the top-level shorthand:</span>
+<span class="c-key">snapshotRecord</span>: <span class="c-kw">true</span>,
+
+<span class="c-cmt">// Step 2 — run once.
+// Step 3 — remove the flag; back to compare mode.</span></pre>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- SLA PERCENTILES -->
+<div class="section" id="sla">
+<div class="section-header">
+  <div class="section-icon">📈</div>
+  <h2>SLA Percentiles — summary --sla<span class="version-badge v3-9">v3.9</span></h2>
+  <span class="section-tag">CLI · summary.js</span>
+</div>
+<div class="two-col">
+  <div class="desc-box">
+    <h3>Latency percentiles &amp; a hard gate</h3>
+    <p>The <code>summary</code> tool now reports <strong>p50 / p90 / p95 / p99</strong> response times across the run. Pass <code>--sla=&lt;ms&gt;</code> to turn it into a gate.</p>
+    <ul>
+      <li>Exits <code>1</code> when <strong>p95</strong> exceeds the budget</li>
+      <li>Failed / no-response executions are excluded so they don't deflate percentiles</li>
+      <li>Drop it into CI to fail builds on latency regressions</li>
+    </ul>
+  </div>
+  <div class="code-window">
+    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">summary --sla</span></div>
+    <div class="code-body"><pre><span class="c-cmt"># percentiles in the summary output</span>
+<span class="c-var">node</span> scripts/summary.js results.json
+
+<span class="c-cmt"># gate the run: fail if p95 &gt; 800ms</span>
+<span class="c-var">node</span> scripts/summary.js results.json <span class="c-key">--sla=800</span>
+
+<span class="c-cmt"># → Response time  p50 120ms  p90 410ms
+#                  p95 690ms  p99 1.2s
+# → SLA OK: p95 690ms &lt;= 800ms  (exit 0)</span></pre>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- OPENAPI IMPORT -->
+<div class="section" id="openapi">
+<div class="section-header">
+  <div class="section-icon">📥</div>
+  <h2>OpenAPI / Swagger Import<span class="version-badge v3-9">v3.9</span></h2>
+  <span class="section-tag">CLI · openapi-import.js</span>
+</div>
+<div class="two-col">
+  <div class="desc-box">
+    <h3>Spec → Hephaestus collection</h3>
+    <p>Turn an existing API spec into a ready-to-run collection. Reads <strong>OpenAPI 3.x</strong> and <strong>Swagger 2.0</strong> (JSON, or a common YAML subset).</p>
+    <ul>
+      <li>One request per path + method</li>
+      <li><code>expectedStatus</code> pre-filled from the spec's 2xx responses</li>
+      <li>Response <code>schema</code> pre-filled from the spec's schemas</li>
+      <li>Start asserting immediately, no hand-wiring</li>
+    </ul>
+  </div>
+  <div class="code-window">
+    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">openapi</span></div>
+    <div class="code-body"><pre><span class="c-cmt"># OpenAPI 3.x or Swagger 2.0 → collection</span>
+<span class="c-var">node</span> bin/hephaestus.js openapi openapi.json
+
+<span class="c-cmt"># YAML subset also accepted</span>
+<span class="c-var">node</span> bin/hephaestus.js openapi swagger.yaml
+
+<span class="c-cmt"># each generated request comes with:
+#   expectedStatus  (from 2xx responses)
+#   schema          (from spec component schemas)</span></pre>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- SYNC EXAMPLES -->
+<div class="section" id="sync-examples">
+<div class="section-header">
+  <div class="section-icon">🔁</div>
+  <h2>Snapshots → Postman Examples<span class="version-badge v3-9">v3.9</span></h2>
+  <span class="section-tag">CLI · sync-examples.js</span>
+</div>
+<div class="two-col">
+  <div class="desc-box">
+    <h3>Saved snapshots become native Examples</h3>
+    <p>The <code>sync-examples</code> tool writes your saved snapshot baselines into a collection's native <strong>Postman Example Responses</strong>.</p>
+    <ul>
+      <li>Turns regression baselines into documentation you can browse in Postman</li>
+      <li>Examples render in the Postman UI and in generated docs</li>
+      <li>Keeps captured responses and the collection in sync</li>
+    </ul>
+  </div>
+  <div class="code-window">
+    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">sync-examples</span></div>
+    <div class="code-body"><pre><span class="c-cmt"># write saved snapshots into native</span>
+<span class="c-cmt"># Postman Example Responses</span>
+<span class="c-var">node</span> bin/hephaestus.js sync-examples collection.json
+
+<span class="c-cmt"># → each request with a snapshot baseline
+#   gains a matching Example Response,
+#   visible in the Postman app.</span></pre>
+    </div>
   </div>
 </div>
 </div>
