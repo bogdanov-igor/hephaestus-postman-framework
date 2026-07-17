@@ -25,6 +25,7 @@ const SCRIPTS = path.join(ROOT, 'scripts');
 const COMMANDS = {
     summary: { script: 'summary.js',         usage: 'summary <results.json> [--md] [--sla=<ms>]',        about: 'Newman run summary + p50/p95/p99 (SLA gate via --sla)' },
     compare: { script: 'compare.js',         usage: 'compare <before.json> <after.json> [--md]',         about: 'Diff two Newman runs (CI regression gate)' },
+    flaky:   { script: 'flaky.js',           usage: 'flaky <run1.json> <run2.json> ... [--fail-on-flaky]', about: 'Find assertions that flap across repeated runs' },
     report:  { script: 'generate-report.js', usage: 'report <results.json> [out.html]',                  about: 'Self-contained HTML report' },
     junit:   { script: 'ci-to-junit.js',     usage: 'junit <results.json|-> [out.xml]',                  about: 'Convert Newman JSON to JUnit XML' },
     migrate: { script: 'migrate.js',         usage: 'migrate <collection.json> [--template] [--json]',   about: 'Classify a collection\'s migration state' },
