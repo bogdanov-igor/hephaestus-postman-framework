@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/banner.svg" alt="Hephaestus — modular API-testing framework for Postman" width="100%">
+  <img src="docs/assets/banner.svg?v=3.9" alt="Hephaestus — modular API-testing framework for Postman" width="100%">
 </p>
 
 <p align="center">
