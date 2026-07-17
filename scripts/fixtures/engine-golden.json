@@ -46,6 +46,61 @@
       "ok": true
     },
     {
+      "item": "headers-assert-en",
+      "name": "⚠️ URL: insecure http protocol",
+      "ok": true
+    },
+    {
+      "item": "headers-assert-en",
+      "name": "🌐 URL: base address is set",
+      "ok": true
+    },
+    {
+      "item": "headers-assert-en",
+      "name": "📨 Header \"X-Version\" = \"v2\"",
+      "ok": true
+    },
+    {
+      "item": "headers-assert-en",
+      "name": "📨 Header absent: X-Absent",
+      "ok": true
+    },
+    {
+      "item": "headers-assert-en",
+      "name": "📨 Header present: X-Request-Id",
+      "ok": true
+    },
+    {
+      "item": "headers-assert-en",
+      "name": "📨 Header present: X-Version",
+      "ok": true
+    },
+    {
+      "item": "headers-assert-en",
+      "name": "📭 Response body: not empty",
+      "ok": true
+    },
+    {
+      "item": "headers-assert-en",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "headers-assert-en",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "headers-assert-en",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "headers-assert-en",
+      "name": "🟢 Status: 200 — OK",
+      "ok": true
+    },
+    {
       "item": "headers-assert",
       "name": "⚠️ URL: небезопасный протокол http",
       "ok": true
@@ -98,6 +153,76 @@
     {
       "item": "headers-assert",
       "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts-en",
+      "name": "⚠️ URL: insecure http protocol",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts-en",
+      "name": "🌐 URL: base address is set",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts-en",
+      "name": "📊 assertOrder[items] by \"id\" asc — ✅",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts-en",
+      "name": "📭 Response body: not empty",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts-en",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts-en",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts-en",
+      "name": "🔑 assertUnique[items].by(\"id\") — ✅",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts-en",
+      "name": "🔢 assertEach[items]: 3 items × 2 rules — ✅ all passed",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts-en",
+      "name": "🧩 shape \"items.0.id\": number",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts-en",
+      "name": "🧩 shape \"items.0.kind\": string",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts-en",
+      "name": "🧩 shape \"items.0.price\": number",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts-en",
+      "name": "🧩 shape \"items\": array",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts-en",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "list-array-asserts-en",
+      "name": "🟢 Status: 200 — OK",
       "ok": true
     },
     {
@@ -168,6 +293,141 @@
     {
       "item": "list-array-asserts",
       "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
+      "item": "locale-en",
+      "name": "⚠️ URL: insecure http protocol",
+      "ok": true
+    },
+    {
+      "item": "locale-en",
+      "name": "🌐 URL: base address is set",
+      "ok": true
+    },
+    {
+      "item": "locale-en",
+      "name": "📭 Response body: not empty",
+      "ok": true
+    },
+    {
+      "item": "locale-en",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "locale-en",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "locale-en",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "locale-en",
+      "name": "🟢 Status: 200 — OK",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions-en",
+      "name": "⚠️ URL: insecure http protocol",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions-en",
+      "name": "🌐 URL: base address is set",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions-en",
+      "name": "💾 Saved: 'savedIdEn' ← data.id",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions-en",
+      "name": "📏 Count 'tags': 2 / 2 ✅",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions-en",
+      "name": "📭 Response body: not empty",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions-en",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions-en",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions-en",
+      "name": "🔎 Found: 'data.id' (data.id)",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions-en",
+      "name": "🔎 Found: 'data.name' (data.name)",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions-en",
+      "name": "🔬 > 0 [data.id]",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions-en",
+      "name": "🔬 >= 2 [count]",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions-en",
+      "name": "🔬 eq \"active\" [data.status]",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions-en",
+      "name": "🔬 eq \"Alice\" [data.name]",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions-en",
+      "name": "🔬 eq 42 [data.id]",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions-en",
+      "name": "🔬 exists [count]",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions-en",
+      "name": "🔬 exists [data.id]",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions-en",
+      "name": "🔬 exists [data.name]",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions-en",
+      "name": "🔬 exists [data.status]",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions-en",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "obj-assertions-en",
+      "name": "🟢 Status: 200 — OK",
       "ok": true
     },
     {
@@ -271,6 +531,46 @@
       "ok": true
     },
     {
+      "item": "schema-validate-en",
+      "name": "⚠️ URL: insecure http protocol",
+      "ok": true
+    },
+    {
+      "item": "schema-validate-en",
+      "name": "🌐 URL: base address is set",
+      "ok": true
+    },
+    {
+      "item": "schema-validate-en",
+      "name": "📭 Response body: not empty",
+      "ok": true
+    },
+    {
+      "item": "schema-validate-en",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "schema-validate-en",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "schema-validate-en",
+      "name": "🔬 Schema: ✅ valid",
+      "ok": true
+    },
+    {
+      "item": "schema-validate-en",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "schema-validate-en",
+      "name": "🟢 Status: 200 — OK",
+      "ok": true
+    },
+    {
       "item": "schema-validate",
       "name": "⚠️ URL: небезопасный протокол http",
       "ok": true
@@ -311,6 +611,81 @@
       "ok": true
     },
     {
+      "item": "security-audit-en",
+      "name": "⚠️ URL: insecure http protocol",
+      "ok": true
+    },
+    {
+      "item": "security-audit-en",
+      "name": "🌐 URL: base address is set",
+      "ok": true
+    },
+    {
+      "item": "security-audit-en",
+      "name": "📭 Response body: not empty",
+      "ok": true
+    },
+    {
+      "item": "security-audit-en",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "security-audit-en",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "security-audit-en",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "security-audit-en",
+      "name": "🛡️ No debug leaks in response body",
+      "ok": true
+    },
+    {
+      "item": "security-audit-en",
+      "name": "🛡️ No server disclosure: server",
+      "ok": true
+    },
+    {
+      "item": "security-audit-en",
+      "name": "🛡️ No server disclosure: x-aspnet-version",
+      "ok": true
+    },
+    {
+      "item": "security-audit-en",
+      "name": "🛡️ No server disclosure: x-powered-by",
+      "ok": true
+    },
+    {
+      "item": "security-audit-en",
+      "name": "🛡️ Security header: content-security-policy",
+      "ok": true
+    },
+    {
+      "item": "security-audit-en",
+      "name": "🛡️ Security header: strict-transport-security",
+      "ok": true
+    },
+    {
+      "item": "security-audit-en",
+      "name": "🛡️ Security header: x-content-type-options",
+      "ok": true
+    },
+    {
+      "item": "security-audit-en",
+      "name": "🛡️ Security header: x-frame-options",
+      "ok": true
+    },
+    {
+      "item": "security-audit-en",
+      "name": "🟢 Status: 200 — OK",
+      "ok": true
+    },
+    {
       "item": "security-audit-malformed",
       "name": "⚠️ URL: небезопасный протокол http",
       "ok": true
@@ -457,6 +832,46 @@
     },
     {
       "item": "security-audit",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
+      "item": "snapshot-postman-api-fallback",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "snapshot-postman-api-fallback",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "snapshot-postman-api-fallback",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "snapshot-postman-api-fallback",
+      "name": "📸 Snapshot: ✅ baseline сохранён",
+      "ok": true
+    },
+    {
+      "item": "snapshot-postman-api-fallback",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "snapshot-postman-api-fallback",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "snapshot-postman-api-fallback",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "snapshot-postman-api-fallback",
       "name": "🟢 Статус: 200 — Успешно",
       "ok": true
     },
@@ -630,6 +1045,33 @@
       "security": null,
       "errors": []
     },
+    "headers-assert-en": {
+      "request": "headers-assert-en",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [
+        {
+          "name": "X-Request-Id",
+          "ok": true
+        },
+        {
+          "name": "X-Version",
+          "ok": true
+        },
+        {
+          "name": "X-Absent",
+          "ok": true
+        }
+      ],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
     "list-array-asserts": {
       "request": "list-array-asserts",
       "method": "GET",
@@ -638,6 +1080,36 @@
       "found": [
         "assertEach:items"
       ],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "list-array-asserts-en": {
+      "request": "list-array-asserts-en",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [
+        "assertEach:items"
+      ],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "locale-en": {
+      "request": "locale-en",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
       "saved": [],
       "counts": [],
       "headers": [],
@@ -676,8 +1148,54 @@
       "security": null,
       "errors": []
     },
+    "obj-assertions-en": {
+      "request": "obj-assertions-en",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [
+        "data.id",
+        "data.name",
+        "data.id",
+        "data.name",
+        "data.status",
+        "count"
+      ],
+      "saved": [
+        "savedIdEn"
+      ],
+      "counts": [
+        {
+          "alias": "tags",
+          "length": 2,
+          "expected": 2,
+          "ok": true
+        }
+      ],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
     "schema-validate": {
       "request": "schema-validate",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": {
+        "valid": true
+      },
+      "security": null,
+      "errors": []
+    },
+    "schema-validate-en": {
+      "request": "schema-validate-en",
       "method": "GET",
       "status": 200,
       "format": "json",
@@ -709,6 +1227,23 @@
       },
       "errors": []
     },
+    "security-audit-en": {
+      "request": "security-audit-en",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": {
+        "findings": 0,
+        "ok": true
+      },
+      "errors": []
+    },
     "security-audit-malformed": {
       "request": "security-audit-malformed",
       "method": "GET",
@@ -725,6 +1260,25 @@
         "ok": true
       },
       "errors": []
+    },
+    "snapshot-postman-api-fallback": {
+      "request": "snapshot-postman-api-fallback",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": {
+        "status": "saved",
+        "key": "EngineTest::snapshot-postman-api-fallback::200::json"
+      },
+      "schema": null,
+      "security": null,
+      "errors": [
+        "snapshot: storage \"postman-api\" недоступен offline — используется collection-vars"
+      ]
     },
     "snapshot-record": {
       "request": "snapshot-record",

@@ -22,10 +22,744 @@
     }
   };
 
+  // engine/src/shared/i18n.js
+  function locOf(ctx2) {
+    return ctx2 && ctx2.config && ctx2.config.locale === "en" ? "en" : "ru";
+  }
+  function statusLabel(ctx2, code2) {
+    const loc = locOf(ctx2);
+    return STATUS[loc] && STATUS[loc][code2] || (loc === "en" ? "Unknown status" : "\u041D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u044B\u0439 \u0441\u0442\u0430\u0442\u0443\u0441");
+  }
+  function t(ctx2, id) {
+    const entry2 = M[id];
+    if (!entry2) return id;
+    const args = Array.prototype.slice.call(arguments, 2);
+    const fn = entry2[locOf(ctx2)] || entry2.ru;
+    return fn.apply(null, args);
+  }
+  var STATUS, M;
+  var init_i18n = __esm({
+    "engine/src/shared/i18n.js"() {
+      STATUS = {
+        ru: {
+          200: "\u0423\u0441\u043F\u0435\u0448\u043D\u043E",
+          201: "\u0421\u043E\u0437\u0434\u0430\u043D",
+          202: "\u041F\u0440\u0438\u043D\u044F\u0442\u043E",
+          204: "\u041D\u0435\u0442 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0433\u043E",
+          301: "\u041F\u0435\u0440\u0435\u043C\u0435\u0449\u0451\u043D",
+          302: "\u041D\u0430\u0439\u0434\u0435\u043D",
+          400: "\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u0437\u0430\u043F\u0440\u043E\u0441",
+          401: "\u041D\u0435\u0430\u0432\u0442\u043E\u0440\u0438\u0437\u043E\u0432\u0430\u043D",
+          403: "\u0414\u043E\u0441\u0442\u0443\u043F \u0437\u0430\u043F\u0440\u0435\u0449\u0451\u043D",
+          404: "\u041D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D",
+          405: "\u041C\u0435\u0442\u043E\u0434 \u0437\u0430\u043F\u0440\u0435\u0449\u0451\u043D",
+          409: "\u041A\u043E\u043D\u0444\u043B\u0438\u043A\u0442",
+          422: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0435 \u0434\u0430\u043D\u043D\u044B\u0435",
+          429: "\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u043C\u043D\u043E\u0433\u043E \u0437\u0430\u043F\u0440\u043E\u0441\u043E\u0432",
+          500: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430",
+          502: "\u041F\u043B\u043E\u0445\u043E\u0439 \u0448\u043B\u044E\u0437",
+          503: "\u0421\u0435\u0440\u0432\u0438\u0441 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D",
+          504: "\u0422\u0430\u0439\u043C\u0430\u0443\u0442 \u0448\u043B\u044E\u0437\u0430"
+        },
+        en: {
+          200: "OK",
+          201: "Created",
+          202: "Accepted",
+          204: "No Content",
+          301: "Moved Permanently",
+          302: "Found",
+          400: "Bad Request",
+          401: "Unauthorized",
+          403: "Forbidden",
+          404: "Not Found",
+          405: "Method Not Allowed",
+          409: "Conflict",
+          422: "Unprocessable Entity",
+          429: "Too Many Requests",
+          500: "Internal Server Error",
+          502: "Bad Gateway",
+          503: "Service Unavailable",
+          504: "Gateway Timeout"
+        }
+      };
+      M = {
+        "metrics.status": {
+          ru: function(e2, c, l) {
+            return e2 + " \u0421\u0442\u0430\u0442\u0443\u0441: " + c + " \u2014 " + l;
+          },
+          en: function(e2, c, l) {
+            return e2 + " Status: " + c + " \u2014 " + l;
+          }
+        },
+        "metrics.statusExpect": {
+          ru: function(c, a) {
+            return "\u{1F6AB} \u0421\u0442\u0430\u0442\u0443\u0441 " + c + " \u043D\u0435 \u0432\u0445\u043E\u0434\u0438\u0442 \u0432 \u043E\u0436\u0438\u0434\u0430\u0435\u043C\u044B\u0435: " + a;
+          },
+          en: function(c, a) {
+            return "\u{1F6AB} Status " + c + " not in expected: " + a;
+          }
+        },
+        "metrics.bodyName": {
+          ru: function(e2) {
+            return "\u{1F4ED} \u0422\u0435\u043B\u043E \u043E\u0442\u0432\u0435\u0442\u0430: " + (e2 ? "\u043F\u0443\u0441\u0442\u043E\u0435 \u2713" : "\u043D\u0435 \u043F\u0443\u0441\u0442\u043E\u0435");
+          },
+          en: function(e2) {
+            return "\u{1F4ED} Response body: " + (e2 ? "empty \u2713" : "not empty");
+          }
+        },
+        "metrics.bodyEmpty": {
+          ru: function() {
+            return "\u{1F6AB} \u041E\u0442\u0432\u0435\u0442 \u043F\u0443\u0441\u0442\u043E\u0439";
+          },
+          en: function() {
+            return "\u{1F6AB} Response is empty";
+          }
+        },
+        "metrics.bodyNotEmpty": {
+          ru: function() {
+            return "\u{1F6AB} \u041E\u0442\u0432\u0435\u0442 \u043D\u0435 \u043F\u0443\u0441\u0442\u043E\u0439";
+          },
+          en: function() {
+            return "\u{1F6AB} Response is not empty";
+          }
+        },
+        "metrics.contentType": {
+          ru: function(ct) {
+            return "\u{1F9FE} Content-Type: " + ct;
+          },
+          en: function(ct) {
+            return "\u{1F9FE} Content-Type: " + ct;
+          }
+        },
+        "metrics.contentTypeExpect": {
+          ru: function(t2) {
+            return '\u{1F6AB} \u041E\u0436\u0438\u0434\u0430\u043B\u0441\u044F "' + t2 + '"';
+          },
+          en: function(t2) {
+            return '\u{1F6AB} Expected "' + t2 + '"';
+          }
+        },
+        "headers.absent": {
+          ru: function(l) {
+            return "\u{1F4E8} Header \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442: " + l;
+          },
+          en: function(l) {
+            return "\u{1F4E8} Header absent: " + l;
+          }
+        },
+        "headers.absentExpect": {
+          ru: function(h) {
+            return '\u{1F6AB} Header "' + h + '" \u043F\u0440\u0438\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442, \u043D\u043E \u0434\u043E\u043B\u0436\u0435\u043D \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u043E\u0432\u0430\u0442\u044C';
+          },
+          en: function(h) {
+            return '\u{1F6AB} Header "' + h + '" is present but must be absent';
+          }
+        },
+        "headers.exists": {
+          ru: function(l) {
+            return "\u{1F4E8} Header \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442: " + l;
+          },
+          en: function(l) {
+            return "\u{1F4E8} Header present: " + l;
+          }
+        },
+        "headers.existsExpect": {
+          ru: function(h) {
+            return '\u{1F6AB} Header "' + h + '" \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442 \u0432 \u043E\u0442\u0432\u0435\u0442\u0435';
+          },
+          en: function(h) {
+            return '\u{1F6AB} Header "' + h + '" missing from response';
+          }
+        },
+        "headers.equals": {
+          ru: function(l, v2) {
+            return '\u{1F4E8} Header "' + l + '" = "' + v2 + '"';
+          },
+          en: function(l, v2) {
+            return '\u{1F4E8} Header "' + l + '" = "' + v2 + '"';
+          }
+        },
+        "headers.equalsExpect": {
+          ru: function(e2, g) {
+            return '\u{1F6AB} \u041E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C "' + e2 + '", \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043E "' + g + '"';
+          },
+          en: function(e2, g) {
+            return '\u{1F6AB} Expected "' + e2 + '", got "' + g + '"';
+          }
+        },
+        "headers.cond": {
+          ru: function(l) {
+            return '\u{1F4E8} Header "' + l + '": \u0443\u0441\u043B\u043E\u0432\u0438\u0435';
+          },
+          en: function(l) {
+            return '\u{1F4E8} Header "' + l + '": condition';
+          }
+        },
+        "headers.condExpect": {
+          ru: function(h, v2) {
+            return '\u{1F6AB} Header "' + h + '": \u0443\u0441\u043B\u043E\u0432\u0438\u0435 \u043D\u0435 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u043E (\u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435: "' + v2 + '")';
+          },
+          en: function(h, v2) {
+            return '\u{1F6AB} Header "' + h + '": condition failed (value: "' + v2 + '")';
+          }
+        },
+        "headers.includes": {
+          ru: function(l, e2) {
+            return '\u{1F4E8} Header "' + l + '" \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u0442 "' + e2 + '"';
+          },
+          en: function(l, e2) {
+            return '\u{1F4E8} Header "' + l + '" contains "' + e2 + '"';
+          }
+        },
+        "headers.includesExpect": {
+          ru: function(h, e2) {
+            return '\u{1F6AB} Header "' + h + '" \u043D\u0435 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u0442 "' + e2 + '"';
+          },
+          en: function(h, e2) {
+            return '\u{1F6AB} Header "' + h + '" does not contain "' + e2 + '"';
+          }
+        },
+        // ─── retryOnStatus ───
+        "retryOnStatus.rerunLog": { ru: function(attempt, maxRetries, code2, requestName) {
+          return "[HEPHAESTUS] \u26A1 retryOnStatus: \u043F\u043E\u043F\u044B\u0442\u043A\u0430 " + attempt + "/" + maxRetries + ", status=" + code2 + ", re-running: " + requestName;
+        }, en: function(attempt, maxRetries, code2, requestName) {
+          return "[HEPHAESTUS] \u26A1 retryOnStatus: attempt " + attempt + "/" + maxRetries + ", status=" + code2 + ", re-running: " + requestName;
+        } },
+        "retryOnStatus.exhausted": { ru: function(maxRetries, code2) {
+          return "\u26A1 retryOnStatus: \u0438\u0441\u0447\u0435\u0440\u043F\u0430\u043D\u044B \u0432\u0441\u0435 " + maxRetries + " \u043F\u043E\u0432\u0442\u043E\u0440\u043E\u0432 (status=" + code2 + ")";
+        }, en: function(maxRetries, code2) {
+          return "\u26A1 retryOnStatus: exhausted all " + maxRetries + " retries (status=" + code2 + ")";
+        } },
+        "retryOnStatus.allFailed": { ru: function(maxRetries, code2, expected) {
+          return "\u0412\u0441\u0435 " + maxRetries + " \u043F\u043E\u043F\u044B\u0442\u043A\u0438 \u0432\u0435\u0440\u043D\u0443\u043B\u0438 \u0441\u0442\u0430\u0442\u0443\u0441 " + code2 + ". \u041E\u0436\u0438\u0434\u0430\u043B\u0441\u044F \u043D\u0435 " + expected + ".";
+        }, en: function(maxRetries, code2, expected) {
+          return "All " + maxRetries + " attempts returned status " + code2 + ". Expected not " + expected + ".";
+        } },
+        // ─── assertions ───
+        "assertions.found": { ru: function(soft2, name2, path2) {
+          return (soft2 ? "\u26AA [soft] " : "\u{1F50E} ") + "\u041D\u0430\u0439\u0434\u0435\u043D\u043E: '" + name2 + "' (" + path2 + ")";
+        }, en: function(soft2, name2, path2) {
+          return (soft2 ? "\u26AA [soft] " : "\u{1F50E} ") + "Found: '" + name2 + "' (" + path2 + ")";
+        } },
+        "assertions.softFieldNotFound": { ru: function(path2) {
+          return "\u26AA [soft] \u041F\u043E\u043B\u0435 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E: " + path2 + " \u2014 \u043F\u0440\u043E\u043F\u0443\u0449\u0435\u043D\u043E";
+        }, en: function(path2) {
+          return "\u26AA [soft] Field not found: " + path2 + " \u2014 skipped";
+        } },
+        "assertions.valueNotFound": { ru: function(path2) {
+          return "\u{1F6AB} \u0417\u043D\u0430\u0447\u0435\u043D\u0438\u0435 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E \u043F\u043E \u043F\u0443\u0442\u0438: " + path2;
+        }, en: function(path2) {
+          return "\u{1F6AB} Value not found at path: " + path2;
+        } },
+        "assertions.conditionFailed": { ru: function(name2) {
+          return "\u{1F6AB} '" + name2 + "': \u0443\u0441\u043B\u043E\u0432\u0438\u0435 \u043D\u0435 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u043E";
+        }, en: function(name2) {
+          return "\u{1F6AB} '" + name2 + "': condition not met";
+        } },
+        "assertions.expectedValue": { ru: function(name2, expect2) {
+          return "\u{1F6AB} '" + name2 + `': \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C "` + expect2 + '"';
+        }, en: function(name2, expect2) {
+          return "\u{1F6AB} '" + name2 + `': expected "` + expect2 + '"';
+        } },
+        "assertions.saved": { ru: function(name2, path2) {
+          return "\u{1F4BE} \u0421\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u043E: '" + name2 + "' \u2190 " + path2;
+        }, en: function(name2, path2) {
+          return "\u{1F4BE} Saved: '" + name2 + "' \u2190 " + path2;
+        } },
+        "assertions.notFoundAtPath": { ru: function(name2, path2) {
+          return "\u{1F6AB} '" + name2 + "': \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430 \u043F\u043E \u043F\u0443\u0442\u0438 '" + path2 + "'";
+        }, en: function(name2, path2) {
+          return "\u{1F6AB} '" + name2 + "': not found at path '" + path2 + "'";
+        } },
+        "assertions.unknownScope": { ru: function(scope, name2) {
+          return 'varsToSave: \u043D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u044B\u0439 scope "' + scope + '" \u0434\u043B\u044F "' + name2 + '", \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D collection';
+        }, en: function(scope, name2) {
+          return 'varsToSave: unknown scope "' + scope + '" for "' + name2 + '", collection used';
+        } },
+        "assertions.varsSaveNotFound": { ru: function(name2, path2) {
+          return "varsToSave: '" + name2 + "' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430 \u043F\u043E \u043F\u0443\u0442\u0438 '" + path2 + "'";
+        }, en: function(name2, path2) {
+          return "varsToSave: '" + name2 + "' not found at path '" + path2 + "'";
+        } },
+        "assertions.countLabel": { ru: function(length, expected, ok) {
+          return expected !== void 0 ? length + " / " + expected + (ok ? " \u2705" : " \u274C") : length + " \u044D\u043B.";
+        }, en: function(length, expected, ok) {
+          return expected !== void 0 ? length + " / " + expected + (ok ? " \u2705" : " \u274C") : length + " items";
+        } },
+        "assertions.countTest": { ru: function(alias, label2) {
+          return "\u{1F4CF} \u041A\u043E\u043B-\u0432\u043E '" + alias + "': " + label2;
+        }, en: function(alias, label2) {
+          return "\u{1F4CF} Count '" + alias + "': " + label2;
+        } },
+        "assertions.countMismatch": { ru: function(alias, expected, length) {
+          return "\u{1F6AB} '" + alias + "': \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C " + expected + ", \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043E " + length;
+        }, en: function(alias, expected, length) {
+          return "\u{1F6AB} '" + alias + "': expected " + expected + ", got " + length;
+        } },
+        "assertions.notExists": { ru: function() {
+          return "\u043D\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442";
+        }, en: function() {
+          return "does not exist";
+        } },
+        "assertions.mustBeAbsent": { ru: function(fieldPath2) {
+          return '\u{1F6AB} "' + fieldPath2 + '" \u0434\u043E\u043B\u0436\u0435\u043D \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u043E\u0432\u0430\u0442\u044C';
+        }, en: function(fieldPath2) {
+          return '\u{1F6AB} "' + fieldPath2 + '" must be absent';
+        } },
+        "assertions.fieldNotFound": { ru: function(fieldPath2) {
+          return '\u{1F6AB} "' + fieldPath2 + '" \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E';
+        }, en: function(fieldPath2) {
+          return '\u{1F6AB} "' + fieldPath2 + '" not found';
+        } },
+        "assertions.expectedArray": { ru: function() {
+          return "\u{1F6AB} \u043E\u0436\u0438\u0434\u0430\u043B\u0441\u044F array";
+        }, en: function() {
+          return "\u{1F6AB} expected array";
+        } },
+        "assertions.expectedNull": { ru: function() {
+          return "\u{1F6AB} \u043E\u0436\u0438\u0434\u0430\u043B\u0441\u044F null";
+        }, en: function() {
+          return "\u{1F6AB} expected null";
+        } },
+        "assertions.expectedType": { ru: function(type) {
+          return "\u{1F6AB} \u043E\u0436\u0438\u0434\u0430\u043B\u0441\u044F \u0442\u0438\u043F " + type;
+        }, en: function(type) {
+          return "\u{1F6AB} expected type " + type;
+        } },
+        "assertions.lenBelow": { ru: function(len, minLen) {
+          return "\u{1F6AB} \u0434\u043B\u0438\u043D\u0430 " + len + " < " + minLen;
+        }, en: function(len, minLen) {
+          return "\u{1F6AB} length " + len + " < " + minLen;
+        } },
+        "assertions.lenAbove": { ru: function(len, maxLen) {
+          return "\u{1F6AB} \u0434\u043B\u0438\u043D\u0430 " + len + " > " + maxLen;
+        }, en: function(len, maxLen) {
+          return "\u{1F6AB} length " + len + " > " + maxLen;
+        } },
+        "assertions.notMatch": { ru: function(raw2, re) {
+          return '\u{1F6AB} "' + raw2 + '" \u043D\u0435 \u0441\u043E\u043E\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0443\u0435\u0442 ' + re;
+        }, en: function(raw2, re) {
+          return '\u{1F6AB} "' + raw2 + '" does not match ' + re;
+        } },
+        "assertions.notParsed": { ru: function() {
+          return "assertions: \u043E\u0442\u0432\u0435\u0442 \u043D\u0435 \u0440\u0430\u0441\u043F\u0430\u0440\u0441\u0435\u043D, \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0438 \u043F\u0440\u043E\u043F\u0443\u0449\u0435\u043D\u044B";
+        }, en: function() {
+          return "assertions: response not parsed, checks skipped";
+        } },
+        // ─── assertEach ───
+        "assertEach.ruleAbsentGot": { ru: function(path2, serVal) {
+          return path2 + ": \u0434\u043E\u043B\u0436\u0435\u043D \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u043E\u0432\u0430\u0442\u044C, \u043D\u043E = " + serVal;
+        }, en: function(path2, serVal) {
+          return path2 + ": must be absent, but = " + serVal;
+        } },
+        "assertEach.ruleFieldMissing": { ru: function(path2) {
+          return path2 + ": \u043F\u043E\u043B\u0435 \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442";
+        }, en: function(path2) {
+          return path2 + ": field is missing";
+        } },
+        "assertEach.ruleAbsent": { ru: function(path2) {
+          return path2 + ": \u0434\u043E\u043B\u0436\u0435\u043D \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u043E\u0432\u0430\u0442\u044C";
+        }, en: function(path2) {
+          return path2 + ": must be absent";
+        } },
+        "assertEach.notArray": { ru: function(path2) {
+          return "\u{1F522} assertEach[" + path2 + "]: \u043D\u0435 \u043C\u0430\u0441\u0441\u0438\u0432";
+        }, en: function(path2) {
+          return "\u{1F522} assertEach[" + path2 + "]: not an array";
+        } },
+        "assertEach.notArrayMsg": { ru: function(path2, type) {
+          return '\u{1F6AB} "' + path2 + '" \u043D\u0435 \u044F\u0432\u043B\u044F\u0435\u0442\u0441\u044F \u043C\u0430\u0441\u0441\u0438\u0432\u043E\u043C (\u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043E: ' + type + ")";
+        }, en: function(path2, type) {
+          return '\u{1F6AB} "' + path2 + '" is not an array (received: ' + type + ")";
+        } },
+        "assertEach.minCount": { ru: function(minCount, count, ok) {
+          return "\u{1F522} assertEach: minCount=" + minCount + " (" + count + " \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432) " + (ok ? "\u2705" : "\u274C");
+        }, en: function(minCount, count, ok) {
+          return "\u{1F522} assertEach: minCount=" + minCount + " (" + count + " elements) " + (ok ? "\u2705" : "\u274C");
+        } },
+        "assertEach.minCountMsg": { ru: function(minCount, count) {
+          return "\u{1F6AB} \u041E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C \u043C\u0438\u043D\u0438\u043C\u0443\u043C " + minCount + " \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432, \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043E " + count;
+        }, en: function(minCount, count) {
+          return "\u{1F6AB} Expected at least " + minCount + " elements, got " + count;
+        } },
+        "assertEach.maxCount": { ru: function(maxCount, count, ok) {
+          return "\u{1F522} assertEach: maxCount=" + maxCount + " (" + count + " \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432) " + (ok ? "\u2705" : "\u274C");
+        }, en: function(maxCount, count, ok) {
+          return "\u{1F522} assertEach: maxCount=" + maxCount + " (" + count + " elements) " + (ok ? "\u2705" : "\u274C");
+        } },
+        "assertEach.maxCountMsg": { ru: function(maxCount, count) {
+          return "\u{1F6AB} \u041E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C \u043C\u0430\u043A\u0441\u0438\u043C\u0443\u043C " + maxCount + " \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432, \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043E " + count;
+        }, en: function(maxCount, count) {
+          return "\u{1F6AB} Expected at most " + maxCount + " elements, got " + count;
+        } },
+        "assertEach.label": { ru: function(globalSoft, path2, count, ruleCount) {
+          return (globalSoft ? "\u26AA [soft] " : "") + "\u{1F522} assertEach[" + path2 + "]: " + count + " \u044D\u043B. \xD7 " + ruleCount + " \u043F\u0440\u0430\u0432\u0438\u043B";
+        }, en: function(globalSoft, path2, count, ruleCount) {
+          return (globalSoft ? "\u26AA [soft] " : "") + "\u{1F522} assertEach[" + path2 + "]: " + count + " items \xD7 " + ruleCount + " rules";
+        } },
+        "assertEach.result": { ru: function(label2, hardFailed) {
+          return label2 + " \u2014 " + (hardFailed === 0 ? "\u2705 \u0432\u0441\u0435 \u043F\u0440\u043E\u0448\u043B\u0438" : "\u274C " + hardFailed + " \u043D\u0430\u0440\u0443\u0448\u0435\u043D\u0438\u0439");
+        }, en: function(label2, hardFailed) {
+          return label2 + " \u2014 " + (hardFailed === 0 ? "\u2705 all passed" : "\u274C " + hardFailed + " violations");
+        } },
+        "assertEach.violations": { ru: function(hardFailed, totalChecks, preview, total) {
+          return hardFailed + "/" + totalChecks + " \u043D\u0430\u0440\u0443\u0448\u0435\u043D\u0438\u0439:\n" + preview + (total > 10 ? "\n... +" + (total - 10) + " \u0435\u0449\u0451" : "");
+        }, en: function(hardFailed, totalChecks, preview, total) {
+          return hardFailed + "/" + totalChecks + " violations:\n" + preview + (total > 10 ? "\n... +" + (total - 10) + " more" : "");
+        } },
+        // ─── assertShape ───
+        "assertShape.mustBeAbsent": { ru: function(fieldPath2, valJson) {
+          return '\u{1F6AB} "' + fieldPath2 + '" \u0434\u043E\u043B\u0436\u0435\u043D \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u043E\u0432\u0430\u0442\u044C, \u043D\u043E = ' + valJson;
+        }, en: function(fieldPath2, valJson) {
+          return '\u{1F6AB} "' + fieldPath2 + '" must be absent, but = ' + valJson;
+        } },
+        "assertShape.notFound": { ru: function(fieldPath2) {
+          return '\u{1F6AB} "' + fieldPath2 + '" \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E';
+        }, en: function(fieldPath2) {
+          return '\u{1F6AB} "' + fieldPath2 + '" not found';
+        } },
+        "assertShape.typeMismatch": { ru: function(fieldPath2, expected, actual) {
+          return '\u{1F6AB} "' + fieldPath2 + '": \u043E\u0436\u0438\u0434\u0430\u043B\u0441\u044F ' + expected + ", \u043F\u043E\u043B\u0443\u0447\u0435\u043D " + actual;
+        }, en: function(fieldPath2, expected, actual) {
+          return '\u{1F6AB} "' + fieldPath2 + '": expected ' + expected + ", got " + actual;
+        } },
+        // ─── assertOrder ───
+        "assertOrder.violationsCount": { ru: function(count) {
+          return "\u274C " + count + " \u043D\u0430\u0440\u0443\u0448\u0435\u043D\u0438\u0439";
+        }, en: function(count) {
+          return "\u274C " + count + " violations";
+        } },
+        "assertOrder.violationsMsg": { ru: function(dir, by, violations) {
+          return "\u041D\u0430\u0440\u0443\u0448\u0435\u043D\u0438\u044F \u043F\u043E\u0440\u044F\u0434\u043A\u0430 \u0441\u043E\u0440\u0442\u0438\u0440\u043E\u0432\u043A\u0438 (" + dir + ' by "' + by + '"):\n' + violations;
+        }, en: function(dir, by, violations) {
+          return "Sort order violations (" + dir + ' by "' + by + '"):\n' + violations;
+        } },
+        // ─── assertUnique ───
+        "assertUnique.dupeCount": { ru: function(count) {
+          return count === 0 ? "\u2705" : "\u274C " + count + " \u0434\u0443\u0431\u043B\u0435\u0439";
+        }, en: function(count) {
+          return count === 0 ? "\u2705" : "\u274C " + count + " duplicates";
+        } },
+        "assertUnique.dupesMsg": { ru: function(path2, by, list2) {
+          return "\u041D\u0430\u0439\u0434\u0435\u043D\u044B \u0434\u0443\u0431\u043B\u0438 (" + path2 + (by ? "." + by : "") + "):\n" + list2;
+        }, en: function(path2, by, list2) {
+          return "Duplicates found (" + path2 + (by ? "." + by : "") + "):\n" + list2;
+        } },
+        // ─── snapshot ───
+        "snapshot.storeSizeWarn": { ru: function() {
+          return "\u0418\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439 checkPaths \u0434\u043B\u044F \u0441\u043E\u043A\u0440\u0430\u0449\u0435\u043D\u0438\u044F \u0438\u043B\u0438 \u043E\u0447\u0438\u0441\u0442\u0438 \u0447\u0435\u0440\u0435\u0437 snapshot-clear \u043C\u0435\u0442\u043E\u0434.";
+        }, en: function() {
+          return "Use checkPaths to shorten it or clear it via the snapshot-clear method.";
+        } },
+        "snapshot.recordWarn": { ru: function(rkey) {
+          return '\u{1F4F8} snapshotRecord: baseline \u043F\u0435\u0440\u0435\u0437\u0430\u043F\u0438\u0441\u0430\u043D \u0434\u043B\u044F "' + rkey + '" \u2014 \u043D\u0435 \u0437\u0430\u0431\u0443\u0434\u044C \u0443\u0431\u0440\u0430\u0442\u044C \u0444\u043B\u0430\u0433 record (\u0438\u043D\u0430\u0447\u0435 \u0440\u0435\u0433\u0440\u0435\u0441\u0441\u0438\u0438 \u043D\u0435 \u043B\u043E\u0432\u044F\u0442\u0441\u044F)';
+        }, en: function(rkey) {
+          return '\u{1F4F8} snapshotRecord: baseline overwritten for "' + rkey + `" \u2014 don't forget to remove the record flag (otherwise regressions will not be caught)`;
+        } },
+        "snapshot.recordTest": { ru: function() {
+          return "\u{1F4F8} Snapshot: \u{1F534} baseline \u043F\u0435\u0440\u0435\u0437\u0430\u043F\u0438\u0441\u0430\u043D (record)";
+        }, en: function() {
+          return "\u{1F4F8} Snapshot: \u{1F534} baseline overwritten (record)";
+        } },
+        "snapshot.postmanApiFallback": { ru: function() {
+          return 'snapshot: storage "postman-api" \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D offline \u2014 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0435\u0442\u0441\u044F collection-vars';
+        }, en: function() {
+          return 'snapshot: storage "postman-api" is unavailable offline \u2014 falling back to collection-vars';
+        } },
+        "snapshot.missingTest": { ru: function() {
+          return "\u{1F4F8} Snapshot: \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D (autoSaveMissing \u043E\u0442\u043A\u043B\u044E\u0447\u0451\u043D)";
+        }, en: function() {
+          return "\u{1F4F8} Snapshot: not found (autoSaveMissing disabled)";
+        } },
+        "snapshot.missingMsg": { ru: function(key) {
+          return '\u{1F6AB} \u0421\u043D\u0430\u043F\u0448\u043E\u0442 "' + key + '" \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D';
+        }, en: function(key) {
+          return '\u{1F6AB} Snapshot "' + key + '" not found';
+        } },
+        "snapshot.savedTest": { ru: function() {
+          return "\u{1F4F8} Snapshot: \u2705 baseline \u0441\u043E\u0445\u0440\u0430\u043D\u0451\u043D";
+        }, en: function() {
+          return "\u{1F4F8} Snapshot: \u2705 baseline saved";
+        } },
+        "snapshot.compareTest": { ru: function(mode, pathsLabel, isEqual) {
+          return "\u{1F4F8} Snapshot " + mode + " " + pathsLabel + ": " + (isEqual ? "\u2705 \u0441\u043E\u0432\u043F\u0430\u0434\u0430\u0435\u0442" : "\u274C \u0440\u0430\u0441\u0445\u043E\u0436\u0434\u0435\u043D\u0438\u0435");
+        }, en: function(mode, pathsLabel, isEqual) {
+          return "\u{1F4F8} Snapshot " + mode + " " + pathsLabel + ": " + (isEqual ? "\u2705 matches" : "\u274C mismatch");
+        } },
+        "snapshot.diffMsg": { ru: function(diffStr, diffLen) {
+          return "\u{1F6AB} Snapshot \u0440\u0430\u0441\u0445\u043E\u0436\u0434\u0435\u043D\u0438\u0435:\n" + diffStr + (diffLen > 5 ? "\n  ... \u0438 \u0435\u0449\u0451 " + (diffLen - 5) : "");
+        }, en: function(diffStr, diffLen) {
+          return "\u{1F6AB} Snapshot mismatch:\n" + diffStr + (diffLen > 5 ? "\n  ... and " + (diffLen - 5) + " more" : "");
+        } },
+        "snapshot.diffWarn": { ru: function(count, diffStr) {
+          return "\u{1F4F8} Snapshot diff (" + count + " \u0440\u0430\u0437\u043B\u0438\u0447\u0438\u0439):\n" + diffStr;
+        }, en: function(count, diffStr) {
+          return "\u{1F4F8} Snapshot diff (" + count + " differences):\n" + diffStr;
+        } },
+        "snapshot.typeDiff_helper_findDiff_noCtx": { ru: function(path2, storedType, currentType) {
+          return path2 + ': \u0442\u0438\u043F "' + storedType + '" \u2192 "' + currentType + '"';
+        }, en: function(path2, storedType, currentType) {
+          return path2 + ': type "' + storedType + '" \u2192 "' + currentType + '"';
+        } },
+        "snapshot.arrayObjectMismatch_helper_findDiff_noCtx": { ru: function(path2) {
+          return path2 + ": array/object \u043D\u0435\u0441\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u0435";
+        }, en: function(path2) {
+          return path2 + ": array/object mismatch";
+        } },
+        "snapshot.keyRemoved_helper_findDiff_noCtx": { ru: function(np, val) {
+          return np + ": \u043A\u043B\u044E\u0447 \u0443\u0434\u0430\u043B\u0451\u043D (\u0431\u044B\u043B " + val + ")";
+        }, en: function(np, val) {
+          return np + ": key removed (was " + val + ")";
+        } },
+        "snapshot.keyAdded_helper_findDiff_noCtx": { ru: function(np, val) {
+          return np + ": \u043A\u043B\u044E\u0447 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D = " + val;
+        }, en: function(np, val) {
+          return np + ": key added = " + val;
+        } },
+        "snapshot.expectedArray_helper_nonStrictMatch_noCtx": { ru: function(path2) {
+          return path2 + ": \u043E\u0436\u0438\u0434\u0430\u043B\u0441\u044F \u043C\u0430\u0441\u0441\u0438\u0432";
+        }, en: function(path2) {
+          return path2 + ": expected an array";
+        } },
+        "snapshot.keyMissing_helper_nonStrictMatch_noCtx": { ru: function(np) {
+          return np + ": \u043A\u043B\u044E\u0447 \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442";
+        }, en: function(np) {
+          return np + ": key missing";
+        } },
+        // ─── schema ───
+        "schema.noData": { ru: function() {
+          return "schema: \u043D\u0435\u0442 \u0434\u0430\u043D\u043D\u044B\u0445 \u0434\u043B\u044F \u0432\u0430\u043B\u0438\u0434\u0430\u0446\u0438\u0438 (\u043E\u0442\u0432\u0435\u0442 \u043D\u0435 \u0440\u0430\u0441\u043F\u0430\u0440\u0441\u0435\u043D)";
+        }, en: function() {
+          return "schema: no data to validate (response was not parsed)";
+        } },
+        "schema.tv4Missing": { ru: function() {
+          return "schema: tv4 \u043D\u0435 \u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D \u0432 \u044D\u0442\u043E\u0439 \u0432\u0435\u0440\u0441\u0438\u0438 Postman";
+        }, en: function() {
+          return "schema: tv4 is not available in this version of Postman";
+        } },
+        "schema.testName": { ru: function(valid, count) {
+          return "\u{1F52C} Schema: " + (valid ? "\u2705 \u0432\u0430\u043B\u0438\u0434\u043D\u0430" : "\u274C \u043E\u0448\u0438\u0431\u043A\u0438 (" + count + ")");
+        }, en: function(valid, count) {
+          return "\u{1F52C} Schema: " + (valid ? "\u2705 valid" : "\u274C errors (" + count + ")");
+        } },
+        "schema.validationError": { ru: function(message) {
+          return "schema: \u043E\u0448\u0438\u0431\u043A\u0430 \u0432\u0430\u043B\u0438\u0434\u0430\u0446\u0438\u0438 \u2014 " + message;
+        }, en: function(message) {
+          return "schema: validation error \u2014 " + message;
+        } },
+        // ─── plugins ───
+        "plugins.parseError": { ru: function(message) {
+          return "plugins: \u043E\u0448\u0438\u0431\u043A\u0430 \u0440\u0430\u0437\u0431\u043E\u0440\u0430 hephaestus.plugins \u2014 " + message;
+        }, en: function(message) {
+          return "plugins: error parsing hephaestus.plugins \u2014 " + message;
+        } },
+        "plugins.readFailed": { ru: function(name2, post, message) {
+          return 'plugin "' + name2 + '": \u043D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u0442\u044C "' + post + '" \u2014 ' + message;
+        }, en: function(name2, post, message) {
+          return 'plugin "' + name2 + '": failed to read "' + post + '" \u2014 ' + message;
+        } },
+        "plugins.varEmpty": { ru: function(name2, post) {
+          return 'plugin "' + name2 + '": \u043F\u0435\u0440\u0435\u043C\u0435\u043D\u043D\u0430\u044F "' + post + '" \u043F\u0443\u0441\u0442\u0430';
+        }, en: function(name2, post) {
+          return 'plugin "' + name2 + '": variable "' + post + '" is empty';
+        } },
+        "plugins.execError": { ru: function(name2, message) {
+          return 'plugin "' + name2 + '": \u043E\u0448\u0438\u0431\u043A\u0430 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u044F \u2014 ' + message;
+        }, en: function(name2, message) {
+          return 'plugin "' + name2 + '": execution error \u2014 ' + message;
+        } },
+        "plugins.testError": { ru: function(name2) {
+          return '\u{1F50C} Plugin "' + name2 + '": \u043E\u0448\u0438\u0431\u043A\u0430';
+        }, en: function(name2) {
+          return '\u{1F50C} Plugin "' + name2 + '": error';
+        } },
+        // ─── securityAudit ───
+        "securityAudit.requireHeaderName": { ru: function(h) {
+          return "\u0417\u0430\u0433\u043E\u043B\u043E\u0432\u043E\u043A \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u0438: " + h;
+        }, en: function(h) {
+          return "Security header: " + h;
+        } },
+        "securityAudit.requireHeaderDetail": { ru: function(h) {
+          return '\u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442 \u0437\u0430\u0449\u0438\u0442\u043D\u044B\u0439 \u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043E\u043A "' + h + '"';
+        }, en: function(h) {
+          return 'missing security header "' + h + '"';
+        } },
+        "securityAudit.forbidHeaderName": { ru: function(h) {
+          return "\u041D\u0435\u0442 \u0440\u0430\u0441\u043A\u0440\u044B\u0442\u0438\u044F \u0441\u0435\u0440\u0432\u0435\u0440\u0430: " + h;
+        }, en: function(h) {
+          return "No server disclosure: " + h;
+        } },
+        "securityAudit.forbidHeaderDetail": { ru: function(h, v2) {
+          return '\u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043E\u043A "' + h + '" \u0440\u0430\u0441\u043A\u0440\u044B\u0432\u0430\u0435\u0442 "' + v2 + '"';
+        }, en: function(h, v2) {
+          return 'header "' + h + '" discloses "' + v2 + '"';
+        } },
+        "securityAudit.bodyLeakName": { ru: function() {
+          return "\u041D\u0435\u0442 \u0443\u0442\u0435\u0447\u0435\u043A \u043E\u0442\u043B\u0430\u0434\u043A\u0438 \u0432 \u0442\u0435\u043B\u0435 \u043E\u0442\u0432\u0435\u0442\u0430";
+        }, en: function() {
+          return "No debug leaks in response body";
+        } },
+        "securityAudit.bodyLeakDetail": { ru: function(leaks) {
+          return "\u043D\u0430\u0439\u0434\u0435\u043D\u044B \u0443\u0442\u0435\u0447\u043A\u0438: " + leaks;
+        }, en: function(leaks) {
+          return "leaks found: " + leaks;
+        } },
+        "securityAudit.corsName": { ru: function() {
+          return "CORS: \u043D\u0435\u0442 wildcard-origin \u0441 credentials";
+        }, en: function() {
+          return "CORS: no wildcard-origin with credentials";
+        } },
+        "securityAudit.corsDetail": { ru: function() {
+          return "Access-Control-Allow-Origin: * \u0432\u043C\u0435\u0441\u0442\u0435 \u0441 Allow-Credentials: true";
+        }, en: function() {
+          return "Access-Control-Allow-Origin: * together with Allow-Credentials: true";
+        } },
+        // ─── logger ───
+        "logger.snapshotDiffCount": { ru: function(count) {
+          return " (" + count + " \u0440\u0430\u0437\u043B\u0438\u0447\u0438\u0439)";
+        }, en: function(count) {
+          return " (" + count + " differences)";
+        } },
+        "logger.schemaValid": { ru: function() {
+          return "\u2705 \u0432\u0430\u043B\u0438\u0434\u043D\u0430";
+        }, en: function() {
+          return "\u2705 valid";
+        } },
+        "logger.schemaErrors": { ru: function(count) {
+          return "\u274C " + count + " \u043E\u0448\u0438\u0431\u043E\u043A";
+        }, en: function(count) {
+          return "\u274C " + count + " errors";
+        } },
+        "logger.emptyResponse": { ru: function() {
+          return "\u2014 (\u043F\u0443\u0441\u0442\u043E\u0439 \u043E\u0442\u0432\u0435\u0442)";
+        }, en: function() {
+          return "\u2014 (empty response)";
+        } },
+        // ─── envRequired ───
+        "envRequired.noEnv": { ru: function() {
+          return "(\u043D\u0435\u0442 environment)";
+        }, en: function() {
+          return "(no environment)";
+        } },
+        "envRequired.missingTest": { ru: function(missing) {
+          return "\u26A0\uFE0F envRequired: \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u044E\u0442 \u043F\u0435\u0440\u0435\u043C\u0435\u043D\u043D\u044B\u0435 [" + missing.join(", ") + "]";
+        }, en: function(missing) {
+          return "\u26A0\uFE0F envRequired: missing variables [" + missing.join(", ") + "]";
+        } },
+        "envRequired.missingError": { ru: function(missing, envName) {
+          return "\u041E\u0431\u044F\u0437\u0430\u0442\u0435\u043B\u044C\u043D\u044B\u0435 environment variables \u043D\u0435 \u0437\u0430\u0434\u0430\u043D\u044B:\n" + missing.map(function(n) {
+            return "  \u2022 " + n;
+          }).join("\n") + "\n\u0422\u0435\u043A\u0443\u0449\u0438\u0439 environment: " + envName + "\n\u041F\u0440\u043E\u0432\u0435\u0440\u044C \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 environment \u0432 Postman / Newman.";
+        }, en: function(missing, envName) {
+          return "Required environment variables not set:\n" + missing.map(function(n) {
+            return "  \u2022 " + n;
+          }).join("\n") + "\nCurrent environment: " + envName + "\nCheck the environment settings in Postman / Newman.";
+        } },
+        "envRequired.missingPush": { ru: function(missing, envName) {
+          return "envRequired: \u043D\u0435 \u0437\u0430\u0434\u0430\u043D\u044B [" + missing.join(", ") + '] \u0432 environment "' + envName + '"';
+        }, en: function(missing, envName) {
+          return "envRequired: not set [" + missing.join(", ") + '] in environment "' + envName + '"';
+        } },
+        // ─── urlBuilder ───
+        "urlBuilder.protocolSubstituted": { ru: function(defaultProtocol) {
+          return '\u{1F310} urlBuilder: \u043F\u0440\u043E\u0442\u043E\u043A\u043E\u043B \u043D\u0435 \u0443\u043A\u0430\u0437\u0430\u043D \u2014 \u043F\u043E\u0434\u0441\u0442\u0430\u0432\u043B\u0435\u043D "' + defaultProtocol + '://"';
+        }, en: function(defaultProtocol) {
+          return '\u{1F310} urlBuilder: protocol not specified \u2014 substituted "' + defaultProtocol + '://"';
+        } },
+        "urlBuilder.baseUrlSet": { ru: function() {
+          return "\u{1F310} URL: \u0431\u0430\u0437\u043E\u0432\u044B\u0439 \u0430\u0434\u0440\u0435\u0441 \u0437\u0430\u0434\u0430\u043D";
+        }, en: function() {
+          return "\u{1F310} URL: base address is set";
+        } },
+        "urlBuilder.baseUrlMissing": { ru: function() {
+          return "\u{1F6AB} baseUrl \u043D\u0435 \u0437\u0430\u0434\u0430\u043D \u043D\u0438 \u0432 defaults, \u043D\u0438 \u0432 override";
+        }, en: function() {
+          return "\u{1F6AB} baseUrl is not set in either defaults or override";
+        } },
+        "urlBuilder.insecureHttp": { ru: function() {
+          return "\u26A0\uFE0F URL: \u043D\u0435\u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u044B\u0439 \u043F\u0440\u043E\u0442\u043E\u043A\u043E\u043B http";
+        }, en: function() {
+          return "\u26A0\uFE0F URL: insecure http protocol";
+        } },
+        "urlBuilder.httpWarning": { ru: function() {
+          return "\u26A0\uFE0F baseUrl \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0435\u0442 http:// \u2014 \u0443\u0431\u0435\u0434\u0438\u0441\u044C, \u0447\u0442\u043E \u044D\u0442\u043E \u043D\u0430\u043C\u0435\u0440\u0435\u043D\u043D\u043E.";
+        }, en: function() {
+          return "\u26A0\uFE0F baseUrl uses http:// \u2014 make sure this is intentional.";
+        } },
+        // ─── auth ───
+        "auth.oauth2ccNoResponse": { ru: function(err) {
+          return "oauth2cc: " + (err ? err.message : "\u043D\u0435\u0442 \u043E\u0442\u0432\u0435\u0442\u0430");
+        }, en: function(err) {
+          return "oauth2cc: " + (err ? err.message : "no response");
+        } },
+        "auth.oauth2ccInvalidJson": { ru: function() {
+          return "oauth2cc: \u043D\u0435\u0432\u0430\u043B\u0438\u0434\u043D\u044B\u0439 JSON \u0432 \u043E\u0442\u0432\u0435\u0442\u0435 \u0441\u0435\u0440\u0432\u0435\u0440\u0430 \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u0438";
+        }, en: function() {
+          return "oauth2cc: invalid JSON in authorization server response";
+        } },
+        "auth.oauth2ccNoAccessToken": { ru: function() {
+          return "oauth2cc: \u043D\u0435\u0442 access_token \u0432 \u043E\u0442\u0432\u0435\u0442\u0435";
+        }, en: function() {
+          return "oauth2cc: no access_token in response";
+        } },
+        "auth.unknownType": { ru: function(type) {
+          return 'auth: \u043D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u044B\u0439 \u0442\u0438\u043F "' + type + '". \u0414\u043E\u043F\u0443\u0441\u0442\u0438\u043C\u044B\u0435: none, basic, bearer, headers, variables, oauth2cc';
+        }, en: function(type) {
+          return 'auth: unknown type "' + type + '". Allowed: none, basic, bearer, headers, variables, oauth2cc';
+        } },
+        "auth.error": { ru: function(msg) {
+          return "auth: \u043E\u0448\u0438\u0431\u043A\u0430 \u2014 " + msg;
+        }, en: function(msg) {
+          return "auth: error \u2014 " + msg;
+        } },
+        // ─── dateUtils ───
+        "dateUtils.unknownExpr": { ru: function(expr, varName) {
+          return 'dateUtils: \u043D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u043E\u0435 \u0432\u044B\u0440\u0430\u0436\u0435\u043D\u0438\u0435 "' + expr + '" \u0434\u043B\u044F "' + varName + '"';
+        }, en: function(expr, varName) {
+          return 'dateUtils: unknown expression "' + expr + '" for "' + varName + '"';
+        } },
+        // ─── logger ───
+        "logger.authNone": { ru: function() {
+          return "none (\u043E\u0442\u043A\u043B\u044E\u0447\u0435\u043D\u0430)";
+        }, en: function() {
+          return "none (disabled)";
+        } },
+        "logger.unknownAuthType": { ru: function(type) {
+          return type + " (\u043D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u044B\u0439 \u0442\u0438\u043F)";
+        }, en: function(type) {
+          return type + " (unknown type)";
+        } },
+        "logger.initErrors": { ru: function() {
+          return "\u26A0\uFE0F  [Hephaestus] \u041E\u0448\u0438\u0431\u043A\u0438 \u0438\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u0438:\n";
+        }, en: function() {
+          return "\u26A0\uFE0F  [Hephaestus] Initialization errors:\n";
+        } },
+        // ─── configMerge ───
+        "configMerge.parseDefaultsFailed": { ru: function(message) {
+          return "configMerge: \u043D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0440\u0430\u0437\u043E\u0431\u0440\u0430\u0442\u044C hephaestus.defaults \u2014 " + message;
+        }, en: function(message) {
+          return "configMerge: failed to parse hephaestus.defaults \u2014 " + message;
+        } },
+        // ─── engine ───
+        "engine.postCritical": { ru: function() {
+          return "\u{1F6AB} Hephaestus post-request: \u043A\u0440\u0438\u0442\u0438\u0447\u0435\u0441\u043A\u0430\u044F \u043E\u0448\u0438\u0431\u043A\u0430";
+        }, en: function() {
+          return "\u{1F6AB} Hephaestus post-request: critical error";
+        } },
+        "engine.preCritical": { ru: function() {
+          return "\u{1F6AB} Hephaestus pre-request: \u043A\u0440\u0438\u0442\u0438\u0447\u0435\u0441\u043A\u0430\u044F \u043E\u0448\u0438\u0431\u043A\u0430";
+        }, en: function() {
+          return "\u{1F6AB} Hephaestus pre-request: critical error";
+        } }
+      };
+    }
+  });
+
   // engine/src/shared/config-merge.js
   var configMerge;
   var init_config_merge = __esm({
     "engine/src/shared/config-merge.js"() {
+      init_i18n();
       configMerge = {
         _merge(target, source) {
           const out = Object.assign({}, target);
@@ -45,7 +779,7 @@
             const raw2 = pm.collectionVariables.get("hephaestus.defaults");
             if (raw2) defaults = JSON.parse(raw2);
           } catch (e2) {
-            ctx2._meta.errors.push("configMerge: \u043D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0440\u0430\u0437\u043E\u0431\u0440\u0430\u0442\u044C hephaestus.defaults \u2014 " + e2.message);
+            ctx2._meta.errors.push(t(ctx2, "configMerge.parseDefaultsFailed", e2.message));
           }
           ctx2.config = this._merge(defaults, override2 || {});
         }
@@ -53,33 +787,65 @@
     }
   });
 
+  // engine/src/shared/iteration-data.js
+  var iterationData;
+  var init_iteration_data = __esm({
+    "engine/src/shared/iteration-data.js"() {
+      iterationData = {
+        run(ctx2, inject) {
+          var data = {};
+          try {
+            if (typeof pm.iterationData !== "undefined" && pm.iterationData) {
+              data = (pm.iterationData.toObject ? pm.iterationData.toObject() : {}) || {};
+            }
+          } catch (e2) {
+          }
+          ctx2.iteration = {
+            index: pm.info.iteration || 0,
+            count: pm.info.iterationCount || 1,
+            data,
+            get: function(key) {
+              try {
+                return pm.iterationData ? pm.iterationData.get(key) : void 0;
+              } catch (e2) {
+                return void 0;
+              }
+            }
+          };
+          if (inject) {
+            Object.keys(data).forEach(function(key) {
+              var val = data[key];
+              pm.variables.set("iter." + key, val !== null && val !== void 0 ? String(val) : "");
+            });
+          }
+        }
+      };
+    }
+  });
+
+  // engine/src/shared/mask.js
+  function isSensitive(key, secrets) {
+    if (!secrets || secrets.length === 0) return false;
+    const k = String(key).toLowerCase();
+    return secrets.some(function(s) {
+      return k.includes(String(s).toLowerCase());
+    });
+  }
+  var init_mask = __esm({
+    "engine/src/shared/mask.js"() {
+    }
+  });
+
   // engine/src/post-request.js
   var require_post_request = __commonJS({
     "engine/src/post-request.js"(exports, module) {
       init_config_merge();
+      init_iteration_data();
+      init_mask();
+      init_i18n();
       (function hephaestusPostRequest() {
         const VERSION = "3.9.0";
         const _override = typeof override !== "undefined" && override !== null ? override : {};
-        const STATUS_LABELS = {
-          200: "\u0423\u0441\u043F\u0435\u0448\u043D\u043E",
-          201: "\u0421\u043E\u0437\u0434\u0430\u043D",
-          202: "\u041F\u0440\u0438\u043D\u044F\u0442\u043E",
-          204: "\u041D\u0435\u0442 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0433\u043E",
-          301: "\u041F\u0435\u0440\u0435\u043C\u0435\u0449\u0451\u043D",
-          302: "\u041D\u0430\u0439\u0434\u0435\u043D",
-          400: "\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u0437\u0430\u043F\u0440\u043E\u0441",
-          401: "\u041D\u0435\u0430\u0432\u0442\u043E\u0440\u0438\u0437\u043E\u0432\u0430\u043D",
-          403: "\u0414\u043E\u0441\u0442\u0443\u043F \u0437\u0430\u043F\u0440\u0435\u0449\u0451\u043D",
-          404: "\u041D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D",
-          405: "\u041C\u0435\u0442\u043E\u0434 \u0437\u0430\u043F\u0440\u0435\u0449\u0451\u043D",
-          409: "\u041A\u043E\u043D\u0444\u043B\u0438\u043A\u0442",
-          422: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0435 \u0434\u0430\u043D\u043D\u044B\u0435",
-          429: "\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u043C\u043D\u043E\u0433\u043E \u0437\u0430\u043F\u0440\u043E\u0441\u043E\u0432",
-          500: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430",
-          502: "\u041F\u043B\u043E\u0445\u043E\u0439 \u0448\u043B\u044E\u0437",
-          503: "\u0421\u0435\u0440\u0432\u0438\u0441 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D",
-          504: "\u0422\u0430\u0439\u043C\u0430\u0443\u0442 \u0448\u043B\u044E\u0437\u0430"
-        };
         const ctx = {
           config: {},
           request: {
@@ -118,29 +884,6 @@
               schema: null
               // { valid, errors }
             }
-          }
-        };
-        const iterationData = {
-          run(ctx2) {
-            var data = {};
-            try {
-              if (typeof pm.iterationData !== "undefined" && pm.iterationData) {
-                data = (pm.iterationData.toObject ? pm.iterationData.toObject() : {}) || {};
-              }
-            } catch (e2) {
-            }
-            ctx2.iteration = {
-              index: pm.info.iteration || 0,
-              count: pm.info.iterationCount || 1,
-              data,
-              get: function(key) {
-                try {
-                  return pm.iterationData ? pm.iterationData.get(key) : void 0;
-                } catch (e2) {
-                  return void 0;
-                }
-              }
-            };
           }
         };
         const normalizeResponse = {
@@ -239,7 +982,7 @@
           },
           run(ctx2) {
             const { code: code2, size } = ctx2.response;
-            const label2 = STATUS_LABELS[code2] || "\u041D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u044B\u0439 \u0441\u0442\u0430\u0442\u0443\u0441";
+            const label2 = statusLabel(ctx2, code2);
             const allowed = this._resolveAllowed(ctx2.config);
             const isOk = allowed.includes(code2);
             const emoji = isOk ? "\u{1F7E2}" : code2 >= 400 && code2 < 500 ? "\u{1F7E1}" : "\u{1F534}";
@@ -247,18 +990,18 @@
             ctx2.response._statusEmoji = emoji;
             ctx2.response._sizeFormatted = this._formatSize(size);
             const allowedLabel = allowed.length === 1 ? allowed[0] : "[" + allowed.join(", ") + "]";
-            pm.test(emoji + " \u0421\u0442\u0430\u0442\u0443\u0441: " + code2 + " \u2014 " + label2, () => {
-              pm.expect(code2, "\u{1F6AB} \u0421\u0442\u0430\u0442\u0443\u0441 " + code2 + " \u043D\u0435 \u0432\u0445\u043E\u0434\u0438\u0442 \u0432 \u043E\u0436\u0438\u0434\u0430\u0435\u043C\u044B\u0435: " + allowedLabel).to.be.oneOf(allowed);
+            pm.test(t(ctx2, "metrics.status", emoji, code2, label2), () => {
+              pm.expect(code2, t(ctx2, "metrics.statusExpect", code2, allowedLabel)).to.be.oneOf(allowed);
             });
             const expectEmpty = ctx2.config.expectEmpty === true;
-            pm.test("\u{1F4ED} \u0422\u0435\u043B\u043E \u043E\u0442\u0432\u0435\u0442\u0430: " + (expectEmpty ? "\u043F\u0443\u0441\u0442\u043E\u0435 \u2713" : "\u043D\u0435 \u043F\u0443\u0441\u0442\u043E\u0435"), () => {
-              if (!expectEmpty) pm.expect(ctx2.response.raw, "\u{1F6AB} \u041E\u0442\u0432\u0435\u0442 \u043F\u0443\u0441\u0442\u043E\u0439").to.have.length.above(0);
-              else pm.expect(ctx2.response.raw, "\u{1F6AB} \u041E\u0442\u0432\u0435\u0442 \u043D\u0435 \u043F\u0443\u0441\u0442\u043E\u0439").to.have.length.below(10);
+            pm.test(t(ctx2, "metrics.bodyName", expectEmpty), () => {
+              if (!expectEmpty) pm.expect(ctx2.response.raw, t(ctx2, "metrics.bodyEmpty")).to.have.length.above(0);
+              else pm.expect(ctx2.response.raw, t(ctx2, "metrics.bodyNotEmpty")).to.have.length.below(10);
             });
             const expectedType = (ctx2.config.contentType || "").toLowerCase();
             if (!expectEmpty && expectedType) {
-              pm.test("\u{1F9FE} Content-Type: " + (ctx2.response.contentType || "\u2014"), () => {
-                pm.expect(ctx2.response.contentType, '\u{1F6AB} \u041E\u0436\u0438\u0434\u0430\u043B\u0441\u044F "' + expectedType + '"').to.include(expectedType);
+              pm.test(t(ctx2, "metrics.contentType", ctx2.response.contentType || "\u2014"), () => {
+                pm.expect(ctx2.response.contentType, t(ctx2, "metrics.contentTypeExpect", expectedType)).to.include(expectedType);
               });
             }
           }
@@ -337,9 +1080,9 @@
           }
         };
         const assertions = {
-          _transforms(value, t) {
-            if (!t) return value;
-            return (Array.isArray(t) ? t : [t]).reduce((v2, fn) => {
+          _transforms(value, t2) {
+            if (!t2) return value;
+            return (Array.isArray(t2) ? t2 : [t2]).reduce((v2, fn) => {
               try {
                 return typeof fn === "function" ? fn(v2) : v2;
               } catch (e2) {
@@ -381,15 +1124,15 @@
               if (Array.isArray(v) && filter) v = this._filters(v, filter, false);
               if (v !== void 0 && transform) v = this._transforms(v, transform);
               const found = v !== void 0 && v !== null;
-              const label = (soft ? "\u26AA [soft] " : "\u{1F50E} ") + "\u041D\u0430\u0439\u0434\u0435\u043D\u043E: '" + name + "' (" + path + ")";
+              const label = t(ctx, "assertions.found", soft, name, path);
               pm.test(label, () => {
                 if (!found) {
                   if (soft) {
-                    console.log("\u26AA [soft] \u041F\u043E\u043B\u0435 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E: " + path + " \u2014 \u043F\u0440\u043E\u043F\u0443\u0449\u0435\u043D\u043E");
+                    console.log(t(ctx, "assertions.softFieldNotFound", path));
                     pm.expect(true).to.be.true;
                     return;
                   }
-                  pm.expect(v, "\u{1F6AB} \u0417\u043D\u0430\u0447\u0435\u043D\u0438\u0435 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E \u043F\u043E \u043F\u0443\u0442\u0438: " + path).to.exist;
+                  pm.expect(v, t(ctx, "assertions.valueNotFound", path)).to.exist;
                 }
                 if (found && expect !== void 0) {
                   if (typeof expect === "function") pm.expect((() => {
@@ -398,8 +1141,8 @@
                     } catch (e2) {
                       return false;
                     }
-                  })(), "\u{1F6AB} '" + name + "': \u0443\u0441\u043B\u043E\u0432\u0438\u0435 \u043D\u0435 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u043E").to.be.true;
-                  else pm.expect(v, "\u{1F6AB} '" + name + `': \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C "` + expect + '"').to.eql(expect);
+                  })(), t(ctx, "assertions.conditionFailed", name)).to.be.true;
+                  else pm.expect(v, t(ctx, "assertions.expectedValue", name, expect)).to.eql(expect);
                 }
               });
               ctx._meta.results.found.push({ name, path, ok: soft || found });
@@ -416,8 +1159,8 @@
               if (Array.isArray(v2) && filter2) v2 = this._filters(v2, filter2, ignoreCase2);
               if (v2 !== void 0 && transform2) v2 = this._transforms(v2, transform2);
               let ok = false;
-              pm.test("\u{1F4BE} \u0421\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u043E: '" + name2 + "' \u2190 " + path2, () => {
-                pm.expect(raw2, "\u{1F6AB} '" + name2 + "': \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430 \u043F\u043E \u043F\u0443\u0442\u0438 '" + path2 + "'").to.exist;
+              pm.test(t(ctx2, "assertions.saved", name2, path2), () => {
+                pm.expect(raw2, t(ctx2, "assertions.notFoundAtPath", name2, path2)).to.exist;
                 ok = true;
               });
               if (v2 !== void 0) {
@@ -426,9 +1169,9 @@
                 else if (scope === "local") pm.variables.set(name2, sv);
                 else pm.collectionVariables.set(name2, sv);
                 if (scope !== "collection" && scope !== "environment" && scope !== "local")
-                  ctx2._meta.errors.push('varsToSave: \u043D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u044B\u0439 scope "' + scope + '" \u0434\u043B\u044F "' + name2 + '", \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D collection');
+                  ctx2._meta.errors.push(t(ctx2, "assertions.unknownScope", scope, name2));
               } else {
-                ctx2._meta.errors.push("varsToSave: '" + name2 + "' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430 \u043F\u043E \u043F\u0443\u0442\u0438 '" + path2 + "'");
+                ctx2._meta.errors.push(t(ctx2, "assertions.varsSaveNotFound", name2, path2));
               }
               ctx2._meta.results.saved.push({ name: name2, scope, ok });
             });
@@ -469,9 +1212,9 @@
               }
               const length = Array.isArray(extracted) ? extracted.length : 0;
               const ok = expected === void 0 || length === expected;
-              const label2 = expected !== void 0 ? length + " / " + expected + (ok ? " \u2705" : " \u274C") : length + " \u044D\u043B.";
-              pm.test("\u{1F4CF} \u041A\u043E\u043B-\u0432\u043E '" + alias + "': " + label2, () => {
-                if (expected !== void 0) pm.expect(length, "\u{1F6AB} '" + alias + "': \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C " + expected + ", \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043E " + length).to.eql(expected);
+              const label2 = t(ctx2, "assertions.countLabel", length, expected, ok);
+              pm.test(t(ctx2, "assertions.countTest", alias, label2), () => {
+                if (expected !== void 0) pm.expect(length, t(ctx2, "assertions.countMismatch", alias, expected, length)).to.eql(expected);
                 else pm.expect(length).to.be.a("number");
               });
               ctx2._meta.results.counts.push({ alias, length, expected, ok });
@@ -522,20 +1265,20 @@
               }
               if (rule.absent === true) {
                 check("absent", function() {
-                  pm.expect(raw, '\u{1F6AB} "' + fieldPath + '" \u0434\u043E\u043B\u0436\u0435\u043D \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u043E\u0432\u0430\u0442\u044C').to.be.oneOf([void 0, null]);
+                  pm.expect(raw, t(ctx, "assertions.mustBeAbsent", fieldPath)).to.be.oneOf([void 0, null]);
                 });
                 ctx._meta.results.found.push({ name: fieldPath, path: fieldPath, ok: raw === void 0 || raw === null });
                 return;
               }
               if (rule.exists === false) {
-                check("\u043D\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442", function() {
-                  pm.expect(raw, '\u{1F6AB} "' + fieldPath + '" \u0434\u043E\u043B\u0436\u0435\u043D \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u043E\u0432\u0430\u0442\u044C').to.be.oneOf([void 0, null]);
+                check(t(ctx, "assertions.notExists"), function() {
+                  pm.expect(raw, t(ctx, "assertions.mustBeAbsent", fieldPath)).to.be.oneOf([void 0, null]);
                 });
                 ctx._meta.results.found.push({ name: fieldPath, path: fieldPath, ok: raw === void 0 || raw === null });
                 return;
               }
               check("exists", function() {
-                pm.expect(raw, '\u{1F6AB} "' + fieldPath + '" \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E').to.not.be.oneOf([void 0, null]);
+                pm.expect(raw, t(ctx, "assertions.fieldNotFound", fieldPath)).to.not.be.oneOf([void 0, null]);
               });
               ctx._meta.results.found.push({ name: fieldPath, path: fieldPath, ok: raw !== void 0 && raw !== null });
               if (raw === void 0 || raw === null) return;
@@ -565,19 +1308,19 @@
                 });
               if (rule.type !== void 0)
                 check("type=" + rule.type, function() {
-                  if (rule.type === "array") pm.expect(raw, "\u{1F6AB} \u043E\u0436\u0438\u0434\u0430\u043B\u0441\u044F array").to.be.an("array");
-                  else if (rule.type === "null") pm.expect(raw, "\u{1F6AB} \u043E\u0436\u0438\u0434\u0430\u043B\u0441\u044F null").to.be.null;
-                  else pm.expect(typeof raw, "\u{1F6AB} \u043E\u0436\u0438\u0434\u0430\u043B\u0441\u044F \u0442\u0438\u043F " + rule.type).to.equal(rule.type);
+                  if (rule.type === "array") pm.expect(raw, t(ctx, "assertions.expectedArray")).to.be.an("array");
+                  else if (rule.type === "null") pm.expect(raw, t(ctx, "assertions.expectedNull")).to.be.null;
+                  else pm.expect(typeof raw, t(ctx, "assertions.expectedType", rule.type)).to.equal(rule.type);
                 });
               if (rule.minLen !== void 0)
                 check("minLen=" + rule.minLen, function() {
                   const len = Array.isArray(raw) ? raw.length : typeof raw === "string" ? raw.length : -1;
-                  pm.expect(len, "\u{1F6AB} \u0434\u043B\u0438\u043D\u0430 " + len + " < " + rule.minLen).to.be.at.least(rule.minLen);
+                  pm.expect(len, t(ctx, "assertions.lenBelow", len, rule.minLen)).to.be.at.least(rule.minLen);
                 });
               if (rule.maxLen !== void 0)
                 check("maxLen=" + rule.maxLen, function() {
                   const len = Array.isArray(raw) ? raw.length : typeof raw === "string" ? raw.length : Infinity;
-                  pm.expect(len, "\u{1F6AB} \u0434\u043B\u0438\u043D\u0430 " + len + " > " + rule.maxLen).to.be.at.most(rule.maxLen);
+                  pm.expect(len, t(ctx, "assertions.lenAbove", len, rule.maxLen)).to.be.at.most(rule.maxLen);
                 });
               if (rule.includes !== void 0)
                 check("includes " + JSON.stringify(rule.includes), function() {
@@ -587,7 +1330,7 @@
               if (rule.matches !== void 0)
                 check("matches " + rule.matches, function() {
                   const re = rule.matches instanceof RegExp ? rule.matches : new RegExp(rule.matches);
-                  pm.expect(re.test(String(raw)), '\u{1F6AB} "' + raw + '" \u043D\u0435 \u0441\u043E\u043E\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0443\u0435\u0442 ' + re).to.be.true;
+                  pm.expect(re.test(String(raw)), t(ctx, "assertions.notMatch", raw, re)).to.be.true;
                 });
             });
           },
@@ -603,7 +1346,7 @@
           },
           run(ctx2) {
             if (!ctx2.response.parsed && ctx2.response.format !== "text") {
-              ctx2._meta.errors.push("assertions: \u043E\u0442\u0432\u0435\u0442 \u043D\u0435 \u0440\u0430\u0441\u043F\u0430\u0440\u0441\u0435\u043D, \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0438 \u043F\u0440\u043E\u043F\u0443\u0449\u0435\u043D\u044B");
+              ctx2._meta.errors.push(t(ctx2, "assertions.notParsed"));
               return;
             }
             this.runFind(ctx2);
@@ -626,16 +1369,16 @@
             const path2 = "[" + idx + "]." + field;
             const errs = [];
             if (rule2.absent === true) {
-              if (val !== void 0 && val !== null) errs.push(path2 + ": \u0434\u043E\u043B\u0436\u0435\u043D \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u043E\u0432\u0430\u0442\u044C, \u043D\u043E = " + this._serVal(val));
+              if (val !== void 0 && val !== null) errs.push(t(ctx, "assertEach.ruleAbsentGot", path2, this._serVal(val)));
               return errs;
             }
             if (rule2.exists !== false) {
               if (val === void 0 || val === null) {
-                errs.push(path2 + ": \u043F\u043E\u043B\u0435 \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442");
+                errs.push(t(ctx, "assertEach.ruleFieldMissing", path2));
                 return errs;
               }
             } else if (rule2.exists === false) {
-              if (val !== void 0 && val !== null) errs.push(path2 + ": \u0434\u043E\u043B\u0436\u0435\u043D \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u043E\u0432\u0430\u0442\u044C");
+              if (val !== void 0 && val !== null) errs.push(t(ctx, "assertEach.ruleAbsent", path2));
               return errs;
             }
             if (val === void 0 || val === null) return errs;
@@ -667,21 +1410,21 @@
             if (!cfg || typeof cfg !== "object") return;
             const arr = ctx2.api.get(cfg.path);
             if (!Array.isArray(arr)) {
-              pm.test("\u{1F522} assertEach[" + cfg.path + "]: \u043D\u0435 \u043C\u0430\u0441\u0441\u0438\u0432", function() {
-                pm.expect(arr, '\u{1F6AB} "' + cfg.path + '" \u043D\u0435 \u044F\u0432\u043B\u044F\u0435\u0442\u0441\u044F \u043C\u0430\u0441\u0441\u0438\u0432\u043E\u043C (\u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043E: ' + typeof arr + ")").to.be.an("array");
+              pm.test(t(ctx2, "assertEach.notArray", cfg.path), function() {
+                pm.expect(arr, t(ctx2, "assertEach.notArrayMsg", cfg.path, typeof arr)).to.be.an("array");
               });
               return;
             }
             if (cfg.minCount !== void 0) {
               const ok = arr.length >= cfg.minCount;
-              pm.test("\u{1F522} assertEach: minCount=" + cfg.minCount + " (" + arr.length + " \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432) " + (ok ? "\u2705" : "\u274C"), function() {
-                pm.expect(arr.length, "\u{1F6AB} \u041E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C \u043C\u0438\u043D\u0438\u043C\u0443\u043C " + cfg.minCount + " \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432, \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043E " + arr.length).to.be.at.least(cfg.minCount);
+              pm.test(t(ctx2, "assertEach.minCount", cfg.minCount, arr.length, ok), function() {
+                pm.expect(arr.length, t(ctx2, "assertEach.minCountMsg", cfg.minCount, arr.length)).to.be.at.least(cfg.minCount);
               });
             }
             if (cfg.maxCount !== void 0) {
               const ok = arr.length <= cfg.maxCount;
-              pm.test("\u{1F522} assertEach: maxCount=" + cfg.maxCount + " (" + arr.length + " \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432) " + (ok ? "\u2705" : "\u274C"), function() {
-                pm.expect(arr.length, "\u{1F6AB} \u041E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C \u043C\u0430\u043A\u0441\u0438\u043C\u0443\u043C " + cfg.maxCount + " \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432, \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043E " + arr.length).to.be.at.most(cfg.maxCount);
+              pm.test(t(ctx2, "assertEach.maxCount", cfg.maxCount, arr.length, ok), function() {
+                pm.expect(arr.length, t(ctx2, "assertEach.maxCountMsg", cfg.maxCount, arr.length)).to.be.at.most(cfg.maxCount);
               });
             }
             const rules = cfg.rules || {};
@@ -705,12 +1448,12 @@
             const totalChecks = arr.length * ruleKeys.length;
             const hardFailed = allFailures.length;
             const softFailed = softFailures.length;
-            const label2 = (globalSoft ? "\u26AA [soft] " : "") + "\u{1F522} assertEach[" + cfg.path + "]: " + arr.length + " \u044D\u043B. \xD7 " + ruleKeys.length + " \u043F\u0440\u0430\u0432\u0438\u043B";
-            pm.test(label2 + " \u2014 " + (hardFailed === 0 ? "\u2705 \u0432\u0441\u0435 \u043F\u0440\u043E\u0448\u043B\u0438" : "\u274C " + hardFailed + " \u043D\u0430\u0440\u0443\u0448\u0435\u043D\u0438\u0439"), function() {
+            const label2 = t(ctx2, "assertEach.label", globalSoft, cfg.path, arr.length, ruleKeys.length);
+            pm.test(t(ctx2, "assertEach.result", label2, hardFailed), function() {
               if (hardFailed > 0) {
                 const preview = allFailures.slice(0, 10).join("\n");
                 throw new Error(
-                  hardFailed + "/" + totalChecks + " \u043D\u0430\u0440\u0443\u0448\u0435\u043D\u0438\u0439:\n" + preview + (allFailures.length > 10 ? "\n... +" + (allFailures.length - 10) + " \u0435\u0449\u0451" : "")
+                  t(ctx2, "assertEach.violations", hardFailed, totalChecks, preview, allFailures.length)
                 );
               }
             });
@@ -745,14 +1488,14 @@
               pm.variables.set(key, String(count + 1));
               pm.test("\u26A1 Retry " + (count + 1) + "/" + maxRetries + " (status " + code2 + ")", function() {
               });
-              console.log("[HEPHAESTUS] \u26A1 retryOnStatus: \u043F\u043E\u043F\u044B\u0442\u043A\u0430 " + (count + 1) + "/" + maxRetries + ", status=" + code2 + ", re-running: " + pm.info.requestName);
+              console.log(t(_ctx, "retryOnStatus.rerunLog", count + 1, maxRetries, code2, pm.info.requestName));
               pm.setNextRequest(pm.info.requestName);
               return true;
             }
             pm.variables.unset(key);
-            pm.test("\u26A1 retryOnStatus: \u0438\u0441\u0447\u0435\u0440\u043F\u0430\u043D\u044B \u0432\u0441\u0435 " + maxRetries + " \u043F\u043E\u0432\u0442\u043E\u0440\u043E\u0432 (status=" + code2 + ")", function() {
+            pm.test(t(_ctx, "retryOnStatus.exhausted", maxRetries, code2), function() {
               throw new Error(
-                "\u0412\u0441\u0435 " + maxRetries + " \u043F\u043E\u043F\u044B\u0442\u043A\u0438 \u0432\u0435\u0440\u043D\u0443\u043B\u0438 \u0441\u0442\u0430\u0442\u0443\u0441 " + code2 + ". \u041E\u0436\u0438\u0434\u0430\u043B\u0441\u044F \u043D\u0435 " + statuses.join("/") + "."
+                t(_ctx, "retryOnStatus.allFailed", maxRetries, code2, statuses.join("/"))
               );
             });
             return false;
@@ -788,19 +1531,19 @@
               const actual = self._typeOf(val);
               if (expected === "absent") {
                 shapeTest('\u{1F9E9} shape "' + fieldPath2 + '": absent', function() {
-                  pm.expect(val, '\u{1F6AB} "' + fieldPath2 + '" \u0434\u043E\u043B\u0436\u0435\u043D \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u043E\u0432\u0430\u0442\u044C, \u043D\u043E = ' + JSON.stringify(val)).to.be.oneOf([void 0, null]);
+                  pm.expect(val, t(ctx2, "assertShape.mustBeAbsent", fieldPath2, JSON.stringify(val))).to.be.oneOf([void 0, null]);
                 });
                 return;
               }
               if (expected === "any") {
                 shapeTest('\u{1F9E9} shape "' + fieldPath2 + '": exists', function() {
-                  pm.expect(val, '\u{1F6AB} "' + fieldPath2 + '" \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E').to.not.be.oneOf([void 0, null]);
+                  pm.expect(val, t(ctx2, "assertShape.notFound", fieldPath2)).to.not.be.oneOf([void 0, null]);
                 });
                 return;
               }
               shapeTest('\u{1F9E9} shape "' + fieldPath2 + '": ' + expected, function() {
-                pm.expect(val, '\u{1F6AB} "' + fieldPath2 + '" \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E').to.not.be.oneOf([void 0, null]);
-                pm.expect(actual, '\u{1F6AB} "' + fieldPath2 + '": \u043E\u0436\u0438\u0434\u0430\u043B\u0441\u044F ' + expected + ", \u043F\u043E\u043B\u0443\u0447\u0435\u043D " + actual).to.equal(expected);
+                pm.expect(val, t(ctx2, "assertShape.notFound", fieldPath2)).to.not.be.oneOf([void 0, null]);
+                pm.expect(actual, t(ctx2, "assertShape.typeMismatch", fieldPath2, expected, actual)).to.equal(expected);
               });
             });
           }
@@ -837,9 +1580,9 @@
             }
             const isSoft = !!ctx2.config.softFail;
             const label2 = (isSoft ? "\u26AA [soft] " : "") + "\u{1F4CA} assertOrder[" + cfg.path + '] by "' + by + '" ' + dir;
-            pm.test(label2 + " \u2014 " + (violations.length === 0 ? "\u2705" : "\u274C " + violations.length + " \u043D\u0430\u0440\u0443\u0448\u0435\u043D\u0438\u0439"), function() {
+            pm.test(label2 + " \u2014 " + (violations.length === 0 ? "\u2705" : t(ctx2, "assertOrder.violationsCount", violations.length)), function() {
               if (violations.length > 0) {
-                const msg = "\u041D\u0430\u0440\u0443\u0448\u0435\u043D\u0438\u044F \u043F\u043E\u0440\u044F\u0434\u043A\u0430 \u0441\u043E\u0440\u0442\u0438\u0440\u043E\u0432\u043A\u0438 (" + dir + ' by "' + by + '"):\n' + violations.join("\n");
+                const msg = t(ctx2, "assertOrder.violationsMsg", dir, by, violations.join("\n"));
                 if (isSoft) {
                   console.warn("\u26AA [soft] assertOrder: " + msg);
                 } else {
@@ -869,9 +1612,9 @@
                 seen.push(key);
               }
             });
-            pm.test(label2 + " \u2014 " + (dupes.length === 0 ? "\u2705" : "\u274C " + dupes.length + " \u0434\u0443\u0431\u043B\u0435\u0439"), function() {
+            pm.test(label2 + " \u2014 " + t(ctx2, "assertUnique.dupeCount", dupes.length), function() {
               if (dupes.length > 0) {
-                const msg = "\u041D\u0430\u0439\u0434\u0435\u043D\u044B \u0434\u0443\u0431\u043B\u0438 (" + cfg.path + (by ? "." + by : "") + "):\n" + dupes.slice(0, 5).join("\n");
+                const msg = t(ctx2, "assertUnique.dupesMsg", cfg.path, by, dupes.slice(0, 5).join("\n"));
                 if (isSoft) {
                   console.warn("\u26AA [soft] assertUnique: " + msg);
                 } else {
@@ -891,19 +1634,19 @@
               const headerValue = pm.response.headers.get(headerName);
               const label2 = entry2.label || headerName;
               if (entry2.absent) {
-                pm.test("\u{1F4E8} Header \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442: " + label2, function() {
-                  pm.expect(headerValue, '\u{1F6AB} Header "' + headerName + '" \u043F\u0440\u0438\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442, \u043D\u043E \u0434\u043E\u043B\u0436\u0435\u043D \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u043E\u0432\u0430\u0442\u044C').to.be.oneOf([null, void 0, ""]);
+                pm.test(t(ctx2, "headers.absent", label2), function() {
+                  pm.expect(headerValue, t(ctx2, "headers.absentExpect", headerName)).to.be.oneOf([null, void 0, ""]);
                 });
                 ctx2._meta.results.headers = ctx2._meta.results.headers || [];
                 ctx2._meta.results.headers.push({ name: headerName, status: "absent", ok: !headerValue });
                 return;
               }
-              pm.test("\u{1F4E8} Header \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442: " + label2, function() {
-                pm.expect(headerValue, '\u{1F6AB} Header "' + headerName + '" \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442 \u0432 \u043E\u0442\u0432\u0435\u0442\u0435').to.be.a("string").and.have.length.above(0);
+              pm.test(t(ctx2, "headers.exists", label2), function() {
+                pm.expect(headerValue, t(ctx2, "headers.existsExpect", headerName)).to.be.a("string").and.have.length.above(0);
               });
               if (entry2.equals !== void 0) {
-                pm.test('\u{1F4E8} Header "' + label2 + '" = "' + entry2.equals + '"', function() {
-                  pm.expect(headerValue, '\u{1F6AB} \u041E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C "' + entry2.equals + '", \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043E "' + headerValue + '"').to.equal(String(entry2.equals));
+                pm.test(t(ctx2, "headers.equals", label2, entry2.equals), function() {
+                  pm.expect(headerValue, t(ctx2, "headers.equalsExpect", entry2.equals, headerValue)).to.equal(String(entry2.equals));
                 });
               } else if (typeof entry2.expect === "function") {
                 var fnResult;
@@ -912,12 +1655,12 @@
                 } catch (e2) {
                   fnResult = false;
                 }
-                pm.test('\u{1F4E8} Header "' + label2 + '": \u0443\u0441\u043B\u043E\u0432\u0438\u0435', function() {
-                  pm.expect(fnResult, '\u{1F6AB} Header "' + headerName + '": \u0443\u0441\u043B\u043E\u0432\u0438\u0435 \u043D\u0435 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u043E (\u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435: "' + headerValue + '")').to.be.true;
+                pm.test(t(ctx2, "headers.cond", label2), function() {
+                  pm.expect(fnResult, t(ctx2, "headers.condExpect", headerName, headerValue)).to.be.true;
                 });
               } else if (typeof entry2.expect === "string") {
-                pm.test('\u{1F4E8} Header "' + label2 + '" \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u0442 "' + entry2.expect + '"', function() {
-                  pm.expect(headerValue, '\u{1F6AB} Header "' + headerName + '" \u043D\u0435 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u0442 "' + entry2.expect + '"').to.include(entry2.expect);
+                pm.test(t(ctx2, "headers.includes", label2, entry2.expect), function() {
+                  pm.expect(headerValue, t(ctx2, "headers.includesExpect", headerName, entry2.expect)).to.include(entry2.expect);
                 });
               }
               ctx2._meta.results.headers = ctx2._meta.results.headers || [];
@@ -942,7 +1685,7 @@
             const str = JSON.stringify(store);
             if (str.length > 9e5) {
               ctx2._meta.errors.push(
-                "snapshot: hephaestus.snapshots > 900KB. \u0418\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439 checkPaths \u0434\u043B\u044F \u0441\u043E\u043A\u0440\u0430\u0449\u0435\u043D\u0438\u044F \u0438\u043B\u0438 \u043E\u0447\u0438\u0441\u0442\u0438 \u0447\u0435\u0440\u0435\u0437 snapshot-clear \u043C\u0435\u0442\u043E\u0434."
+                "snapshot: hephaestus.snapshots > 900KB. " + t(ctx2, "snapshot.storeSizeWarn")
               );
             }
             pm.collectionVariables.set("hephaestus.snapshots", str);
@@ -1006,20 +1749,20 @@
           _findDiff(stored, current, path2) {
             const diffs = [];
             if (typeof stored !== typeof current) {
-              return [path2 + ': \u0442\u0438\u043F "' + typeof stored + '" \u2192 "' + typeof current + '"'];
+              return [t(ctx, "snapshot.typeDiff_helper_findDiff_noCtx", path2, typeof stored, typeof current)];
             }
             if (typeof stored !== "object" || stored === null) {
               if (stored !== current) diffs.push(path2 + ": " + this._sv(stored) + " \u2192 " + this._sv(current));
               return diffs;
             }
             if (Array.isArray(stored) !== Array.isArray(current)) {
-              return [path2 + ": array/object \u043D\u0435\u0441\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u0435"];
+              return [t(ctx, "snapshot.arrayObjectMismatch_helper_findDiff_noCtx", path2)];
             }
             const keys = /* @__PURE__ */ new Set([...Object.keys(stored), ...Object.keys(current || {})]);
             keys.forEach((k) => {
               const np = path2 ? path2 + "." + k : k;
-              if (!(k in (current || {}))) diffs.push(np + ": \u043A\u043B\u044E\u0447 \u0443\u0434\u0430\u043B\u0451\u043D (\u0431\u044B\u043B " + this._sv(stored[k]) + ")");
-              else if (!(k in stored)) diffs.push(np + ": \u043A\u043B\u044E\u0447 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D = " + this._sv((current || {})[k]));
+              if (!(k in (current || {}))) diffs.push(t(ctx, "snapshot.keyRemoved_helper_findDiff_noCtx", np, this._sv(stored[k])));
+              else if (!(k in stored)) diffs.push(t(ctx, "snapshot.keyAdded_helper_findDiff_noCtx", np, this._sv((current || {})[k])));
               else diffs.push(...this._findDiff(stored[k], (current || {})[k], np));
             });
             return diffs;
@@ -1042,7 +1785,7 @@
             }
             if (Array.isArray(stored)) {
               if (!Array.isArray(current)) {
-                diff.push(path2 + ": \u043E\u0436\u0438\u0434\u0430\u043B\u0441\u044F \u043C\u0430\u0441\u0441\u0438\u0432");
+                diff.push(t(ctx, "snapshot.expectedArray_helper_nonStrictMatch_noCtx", path2));
                 return false;
               }
               return stored.every((item, i) => this._nonStrictMatch(item, current[i], diff, path2 + "[" + i + "]"));
@@ -1050,7 +1793,7 @@
             return Object.keys(stored).every((k) => {
               const np = path2 ? path2 + "." + k : k;
               if (!current || !(k in current)) {
-                diff.push(np + ": \u043A\u043B\u044E\u0447 \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442");
+                diff.push(t(ctx, "snapshot.keyMissing_helper_nonStrictMatch_noCtx", np));
                 return false;
               }
               return this._nonStrictMatch(stored[k], current[k], diff, np);
@@ -1072,15 +1815,15 @@
                 data: this._buildData(ctx2)
               };
               this._saveStore(rstore, ctx2);
-              console.warn('\u{1F4F8} snapshotRecord: baseline \u043F\u0435\u0440\u0435\u0437\u0430\u043F\u0438\u0441\u0430\u043D \u0434\u043B\u044F "' + rkey + '" \u2014 \u043D\u0435 \u0437\u0430\u0431\u0443\u0434\u044C \u0443\u0431\u0440\u0430\u0442\u044C \u0444\u043B\u0430\u0433 record (\u0438\u043D\u0430\u0447\u0435 \u0440\u0435\u0433\u0440\u0435\u0441\u0441\u0438\u0438 \u043D\u0435 \u043B\u043E\u0432\u044F\u0442\u0441\u044F)');
-              pm.test("\u{1F4F8} Snapshot: \u{1F534} baseline \u043F\u0435\u0440\u0435\u0437\u0430\u043F\u0438\u0441\u0430\u043D (record)", () => pm.expect(true).to.be.true);
+              console.warn(t(ctx2, "snapshot.recordWarn", rkey));
+              pm.test(t(ctx2, "snapshot.recordTest"), () => pm.expect(true).to.be.true);
               ctx2._meta.results.snapshot = { status: "recorded", key: rkey };
               return;
             }
             const storage = cfg.storage || "collection-vars";
-            if (storage === "postman-api") {
-              ctx2._meta.errors.push('snapshot: storage "postman-api" \u0435\u0449\u0451 \u043D\u0435 \u0440\u0435\u0430\u043B\u0438\u0437\u043E\u0432\u0430\u043D');
-              return;
+            if (storage === "postman-api" && !pm.collectionVariables.get("hephaestus.snapshotApiWarned")) {
+              pm.collectionVariables.set("hephaestus.snapshotApiWarned", "1");
+              ctx2._meta.errors.push(t(ctx2, "snapshot.postmanApiFallback"));
             }
             const key = this._key(ctx2);
             const store = this._loadStore();
@@ -1091,8 +1834,8 @@
             const checkPaths = cfg.checkPaths || [];
             if (!existing) {
               if (!autoSave) {
-                pm.test("\u{1F4F8} Snapshot: \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D (autoSaveMissing \u043E\u0442\u043A\u043B\u044E\u0447\u0451\u043D)", () => {
-                  pm.expect(false, '\u{1F6AB} \u0421\u043D\u0430\u043F\u0448\u043E\u0442 "' + key + '" \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D').to.be.true;
+                pm.test(t(ctx2, "snapshot.missingTest"), () => {
+                  pm.expect(false, t(ctx2, "snapshot.missingMsg", key)).to.be.true;
                 });
                 ctx2._meta.results.snapshot = { status: "missing", key };
                 return;
@@ -1106,7 +1849,7 @@
                 data: currentData
               };
               this._saveStore(store, ctx2);
-              pm.test("\u{1F4F8} Snapshot: \u2705 baseline \u0441\u043E\u0445\u0440\u0430\u043D\u0451\u043D", () => pm.expect(true).to.be.true);
+              pm.test(t(ctx2, "snapshot.savedTest"), () => pm.expect(true).to.be.true);
               ctx2._meta.results.snapshot = { status: "saved", key };
               return;
             }
@@ -1121,16 +1864,16 @@
             }
             const pathsLabel = checkPaths.length > 0 ? "(" + checkPaths.length + " paths)" : "(full)";
             pm.test(
-              "\u{1F4F8} Snapshot " + mode + " " + pathsLabel + ": " + (isEqual ? "\u2705 \u0441\u043E\u0432\u043F\u0430\u0434\u0430\u0435\u0442" : "\u274C \u0440\u0430\u0441\u0445\u043E\u0436\u0434\u0435\u043D\u0438\u0435"),
+              t(ctx2, "snapshot.compareTest", mode, pathsLabel, isEqual),
               () => {
                 if (!isEqual) {
                   const diffStr = diff.slice(0, 5).map((d) => "  \u2022 " + d).join("\n");
-                  pm.expect(isEqual, "\u{1F6AB} Snapshot \u0440\u0430\u0441\u0445\u043E\u0436\u0434\u0435\u043D\u0438\u0435:\n" + diffStr + (diff.length > 5 ? "\n  ... \u0438 \u0435\u0449\u0451 " + (diff.length - 5) : "")).to.be.true;
+                  pm.expect(isEqual, t(ctx2, "snapshot.diffMsg", diffStr, diff.length)).to.be.true;
                 }
               }
             );
             if (!isEqual && diff.length > 0) {
-              console.warn("\u{1F4F8} Snapshot diff (" + diff.length + " \u0440\u0430\u0437\u043B\u0438\u0447\u0438\u0439):\n" + diff.slice(0, 10).map((d) => "  \u2022 " + d).join("\n"));
+              console.warn(t(ctx2, "snapshot.diffWarn", diff.length, diff.slice(0, 10).map((d) => "  \u2022 " + d).join("\n")));
             }
             ctx2._meta.results.snapshot = { status: isEqual ? "match" : "diff", key, mode, diff };
           }
@@ -1141,19 +1884,19 @@
             if (!cfg || !cfg.enabled || !cfg.definition) return;
             const source = ctx2.response.parsed;
             if (!source) {
-              ctx2._meta.errors.push("schema: \u043D\u0435\u0442 \u0434\u0430\u043D\u043D\u044B\u0445 \u0434\u043B\u044F \u0432\u0430\u043B\u0438\u0434\u0430\u0446\u0438\u0438 (\u043E\u0442\u0432\u0435\u0442 \u043D\u0435 \u0440\u0430\u0441\u043F\u0430\u0440\u0441\u0435\u043D)");
+              ctx2._meta.errors.push(t(ctx2, "schema.noData"));
               ctx2._meta.results.schema = { valid: false, errors: ["no parsed data"] };
               return;
             }
             if (typeof tv4 === "undefined") {
-              ctx2._meta.errors.push("schema: tv4 \u043D\u0435 \u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D \u0432 \u044D\u0442\u043E\u0439 \u0432\u0435\u0440\u0441\u0438\u0438 Postman");
+              ctx2._meta.errors.push(t(ctx2, "schema.tv4Missing"));
               return;
             }
             try {
               const result = tv4.validateMultiple(source, cfg.definition);
               const valid = result.errors.length === 0;
               const count = result.errors.length;
-              pm.test("\u{1F52C} Schema: " + (valid ? "\u2705 \u0432\u0430\u043B\u0438\u0434\u043D\u0430" : "\u274C \u043E\u0448\u0438\u0431\u043A\u0438 (" + count + ")"), () => {
+              pm.test(t(ctx2, "schema.testName", valid, count), () => {
                 if (!valid) {
                   const errStr = result.errors.slice(0, 3).map((e2) => "  \u2022 [" + (e2.dataPath || "/") + "] " + e2.message).join("\n");
                   pm.expect(valid, "\u{1F6AB} Schema validation failed:\n" + errStr).to.be.true;
@@ -1167,7 +1910,7 @@
                 errors: result.errors.map((e2) => ({ path: e2.dataPath, message: e2.message }))
               };
             } catch (e2) {
-              ctx2._meta.errors.push("schema: \u043E\u0448\u0438\u0431\u043A\u0430 \u0432\u0430\u043B\u0438\u0434\u0430\u0446\u0438\u0438 \u2014 " + e2.message);
+              ctx2._meta.errors.push(t(ctx2, "schema.validationError", e2.message));
             }
           }
         };
@@ -1185,7 +1928,7 @@
               list = JSON.parse(raw);
               if (!Array.isArray(list) || list.length === 0) return;
             } catch (e2) {
-              ctx._meta.errors.push("plugins: \u043E\u0448\u0438\u0431\u043A\u0430 \u0440\u0430\u0437\u0431\u043E\u0440\u0430 hephaestus.plugins \u2014 " + e2.message);
+              ctx._meta.errors.push(t(ctx, "plugins.parseError", e2.message));
               return;
             }
             list.forEach(function(p) {
@@ -1195,18 +1938,18 @@
               try {
                 code = pm.collectionVariables.get(p.post) || "";
               } catch (e2) {
-                ctx._meta.errors.push('plugin "' + p.name + '": \u043D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u0442\u044C "' + p.post + '" \u2014 ' + e2.message);
+                ctx._meta.errors.push(t(ctx, "plugins.readFailed", p.name, p.post, e2.message));
                 return;
               }
               if (!code.trim()) {
-                ctx._meta.errors.push('plugin "' + p.name + '": \u043F\u0435\u0440\u0435\u043C\u0435\u043D\u043D\u0430\u044F "' + p.post + '" \u043F\u0443\u0441\u0442\u0430');
+                ctx._meta.errors.push(t(ctx, "plugins.varEmpty", p.name, p.post));
                 return;
               }
               try {
                 eval(code);
               } catch (e2) {
-                ctx._meta.errors.push('plugin "' + p.name + '": \u043E\u0448\u0438\u0431\u043A\u0430 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u044F \u2014 ' + e2.message);
-                pm.test('\u{1F50C} Plugin "' + p.name + '": \u043E\u0448\u0438\u0431\u043A\u0430', function() {
+                ctx._meta.errors.push(t(ctx, "plugins.execError", p.name, e2.message));
+                pm.test(t(ctx, "plugins.testError", p.name), function() {
                   throw new Error(e2.message);
                 });
               }
@@ -1253,13 +1996,13 @@
               const v2 = self._headerVal(h);
               const present = typeof v2 === "string" && v2.length > 0;
               if (!present) findings.push({ type: "missing-header", name: h });
-              secTest("\u0417\u0430\u0433\u043E\u043B\u043E\u0432\u043E\u043A \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u0438: " + h, present, '\u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442 \u0437\u0430\u0449\u0438\u0442\u043D\u044B\u0439 \u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043E\u043A "' + h + '"');
+              secTest(t(ctx2, "securityAudit.requireHeaderName", h), present, t(ctx2, "securityAudit.requireHeaderDetail", h));
             });
             list2(cfg.forbidHeaders, self._defaults.forbidHeaders).forEach(function(h) {
               const v2 = self._headerVal(h);
               const disclosed = typeof v2 === "string" && v2.length > 0;
               if (disclosed) findings.push({ type: "disclosure-header", name: h, value: v2 });
-              secTest("\u041D\u0435\u0442 \u0440\u0430\u0441\u043A\u0440\u044B\u0442\u0438\u044F \u0441\u0435\u0440\u0432\u0435\u0440\u0430: " + h, !disclosed, '\u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043E\u043A "' + h + '" \u0440\u0430\u0441\u043A\u0440\u044B\u0432\u0430\u0435\u0442 "' + v2 + '"');
+              secTest(t(ctx2, "securityAudit.forbidHeaderName", h), !disclosed, t(ctx2, "securityAudit.forbidHeaderDetail", h, v2));
             });
             const patterns = list2(cfg.forbidBodyPatterns, self._defaults.forbidBodyPatterns);
             const raw2 = ctx2.response && ctx2.response.raw ? String(ctx2.response.raw) : "";
@@ -1268,14 +2011,14 @@
                 return raw2.indexOf(p2) !== -1;
               });
               if (hit.length) findings.push({ type: "body-leak", patterns: hit });
-              secTest("\u041D\u0435\u0442 \u0443\u0442\u0435\u0447\u0435\u043A \u043E\u0442\u043B\u0430\u0434\u043A\u0438 \u0432 \u0442\u0435\u043B\u0435 \u043E\u0442\u0432\u0435\u0442\u0430", hit.length === 0, "\u043D\u0430\u0439\u0434\u0435\u043D\u044B \u0443\u0442\u0435\u0447\u043A\u0438: " + hit.join(", "));
+              secTest(t(ctx2, "securityAudit.bodyLeakName"), hit.length === 0, t(ctx2, "securityAudit.bodyLeakDetail", hit.join(", ")));
             }
             if (cfg.checkCors !== false) {
               const acao = self._headerVal("access-control-allow-origin");
               const acac = self._headerVal("access-control-allow-credentials");
               if (acao === "*" && String(acac).toLowerCase() === "true") {
                 findings.push({ type: "insecure-cors" });
-                secTest("CORS: \u043D\u0435\u0442 wildcard-origin \u0441 credentials", false, "Access-Control-Allow-Origin: * \u0432\u043C\u0435\u0441\u0442\u0435 \u0441 Allow-Credentials: true");
+                secTest(t(ctx2, "securityAudit.corsName"), false, t(ctx2, "securityAudit.corsDetail"));
               }
             }
             ctx2._meta.results.security = { findings, ok: findings.length === 0 };
@@ -1286,6 +2029,10 @@
             if (!str || typeof str !== "string" || str.length < 6) return "***";
             const keep = Math.max(1, Math.floor(str.length * 0.2));
             return str.slice(0, keep) + "***MASKED***" + str.slice(-keep);
+          },
+          // Нужно ли маскировать значение по имени ключа — общий shared/mask.js.
+          _isSensitive(key, secrets) {
+            return isSensitive(key, secrets);
           },
           // Маскирует query-параметры URL, чьи ключи совпадают с secrets
           _maskUrl(url, secrets) {
@@ -1299,10 +2046,7 @@
                 if (ei === -1) return param;
                 const key = param.slice(0, ei);
                 const val = param.slice(ei + 1);
-                const kl = key.toLowerCase();
-                if (secrets.some(function(s) {
-                  return kl.includes(s.toLowerCase());
-                })) {
+                if (this._isSensitive(key, secrets)) {
                   return key + "=" + this._maskStr(val);
                 }
                 return param;
@@ -1321,7 +2065,7 @@
               const walk = (o) => {
                 if (typeof o !== "object" || o === null) return;
                 Object.keys(o).forEach((k) => {
-                  if (secrets.some((s) => k.toLowerCase().includes(s.toLowerCase()))) {
+                  if (this._isSensitive(k, secrets)) {
                     if (typeof o[k] === "string") o[k] = this._maskStr(o[k]);
                   } else {
                     walk(o[k]);
@@ -1351,7 +2095,7 @@
             if (results.snapshot) {
               const s = results.snapshot;
               const icon = s.status === "match" ? "\u2705" : s.status === "saved" ? "\u{1F195}" : s.status === "recorded" ? "\u{1F534}" : s.status === "diff" ? "\u274C" : "\u26A0\uFE0F";
-              const det = s.status === "diff" ? " (" + (s.diff || []).length + " \u0440\u0430\u0437\u043B\u0438\u0447\u0438\u0439)" : s.status === "saved" ? " baseline" : "";
+              const det = s.status === "diff" ? t(ctx, "logger.snapshotDiffCount", (s.diff || []).length) : s.status === "saved" ? " baseline" : "";
               lines.push("\u{1F4F8} SNAPSHOT " + icon + " " + (s.mode || "") + det);
               if (s.status === "diff" && s.diff && s.diff.length > 0) {
                 s.diff.slice(0, 5).forEach(function(d) {
@@ -1365,7 +2109,7 @@
             }
             if (results.schema) {
               const sv = results.schema;
-              lines.push("\u{1F52C} SCHEMA   " + (sv.valid ? "\u2705 \u0432\u0430\u043B\u0438\u0434\u043D\u0430" : "\u274C " + sv.errors.length + " \u043E\u0448\u0438\u0431\u043E\u043A"));
+              lines.push("\u{1F52C} SCHEMA   " + (sv.valid ? t(ctx, "logger.schemaValid") : t(ctx, "logger.schemaErrors", sv.errors.length)));
             }
             return lines;
           },
@@ -1426,7 +2170,7 @@
             } else if (res.raw && res.raw.length > 0) {
               previewStr = res.raw.length > 800 ? res.raw.slice(0, 800) + "\n... [+" + (res.raw.length - 800) + " chars]" : res.raw;
             } else {
-              previewStr = "\u2014 (\u043F\u0443\u0441\u0442\u043E\u0439 \u043E\u0442\u0432\u0435\u0442)";
+              previewStr = t(ctx2, "logger.emptyResponse");
             }
             const resultLines = this._resultLines(ctx2._meta.results);
             var lines = [
@@ -1489,7 +2233,7 @@
             logger.summary(ctx);
           }
         } catch (e2) {
-          pm.test("\u{1F6AB} Hephaestus post-request: \u043A\u0440\u0438\u0442\u0438\u0447\u0435\u0441\u043A\u0430\u044F \u043E\u0448\u0438\u0431\u043A\u0430", () => {
+          pm.test(t(ctx, "engine.postCritical"), () => {
             throw new Error("[v" + VERSION + "] " + e2.message);
           });
         }

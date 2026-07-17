@@ -52,15 +52,32 @@ function padL(str, n) { return String(str).padStart(n); }
 
 // ─── Parse executions ─────────────────────────────────────────────────────────
 
+// Stable composite key so same-named requests don't collide (and so the two
+// runs still pair up). Prefer the Postman item id — identical across runs on the
+// same collection; else the leaf name. iteration + per-(id,iteration) occurrence
+// index disambiguate `-n` iterations and duplicate names positionally (both runs
+// iterate items in the same order, so occurrence order still pairs before↔after).
+// U+241F (␟) is the delimiter — effectively never present in a request name.
+function execKey(exec, counts) {
+    const item = exec.item || {};
+    const iter = (exec.cursor && typeof exec.cursor.iteration === 'number') ? exec.cursor.iteration : 0;
+    const base = (item.id || item.name || 'Unknown') + '␟' + iter;
+    const occ  = counts[base] = (counts[base] || 0) + 1;
+    return base + '␟' + (occ - 1);
+}
+
 function parseRun(data) {
     const executions = (data.run && data.run.executions) || [];
     const map = {};
+    const counts = {};
     executions.forEach(function(exec) {
-        const name   = exec.item && exec.item.name || 'Unknown';
+        const name    = exec.item && exec.item.name || 'Unknown';
+        const key     = execKey(exec, counts);
         const asserts = exec.assertions || [];
         const failed  = asserts.filter(function(a) { return a.error; }).map(function(a) { return a.assertion; });
         const passed  = asserts.filter(function(a) { return !a.error && !a.skipped; }).length;
-        map[name] = {
+        map[key] = {
+            key:     key,
             name:    name,
             status:  exec.response && exec.response.code || 0,
             time:    exec.response && exec.response.responseTime || 0,
@@ -88,12 +105,14 @@ const statusChanges   = [];
 const onlyBefore      = [];
 const onlyAfter       = [];
 
-allKeys.forEach(function(name) {
-    const b = bMap[name];
-    const a = aMap[name];
+allKeys.forEach(function(key) {
+    const b = bMap[key];
+    const a = aMap[key];
 
     if (!b) { onlyAfter.push(a); return; }
     if (!a) { onlyBefore.push(b); return; }
+
+    const name = (a || b).name;   // human-readable name for the rows below
 
     // Status code change
     if (b.status !== a.status) {

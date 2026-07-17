@@ -2,6 +2,42 @@
 
 ---
 
+## [Unreleased]
+
+### Added
+- **Engine i18n** — every user-facing string (test names, log lines, errors) is
+  routed through a locale catalog (`engine/src/shared/i18n.js`). Set
+  `"locale": "en"` in config for English output; default `"ru"` reproduces the
+  historical strings byte-for-byte. Covers both the pre-request and post-request
+  planes across all modules.
+- **English test-engine fixtures** — the golden baseline now locks both `ru` and
+  `en` output (192 assertions / 16 requests).
+
+### Changed
+- **`iterationData` is now a shared module** (`engine/src/shared/iteration-data.js`),
+  single-sourced into both engine planes via esbuild instead of two hand-synced copies.
+- **Secret-redaction check single-sourced** into `engine/src/shared/mask.js` and
+  unit-tested. Matching stays **substring** on key names — the fail-safe default for a
+  redaction feature. (A boundary-precise variant was evaluated and rejected: adversarial
+  review showed it under-masked concatenated secret names like `passwd`/`apikey`/`privatekey`.)
+
+### Fixed
+- **`snapshot.storage: "postman-api"`** no longer silently no-ops (which left a run
+  with **zero** snapshot protection while looking configured). It now warns once and
+  falls back to `collection-vars`, so snapshots actually save/compare. (Real
+  `postman-api` storage is intentionally not implemented — it would need a network +
+  API-key dependency, against the offline-first design.)
+- **`compare` no longer collides same-named requests** — executions are keyed by a
+  composite `item.id␟iteration␟occurrence` (falling back to name), so duplicate leaf
+  names and `-n` iterations pair correctly instead of last-wins overwriting.
+
+### Docs
+- **Integrity honesty** — SECURITY.md / engine README now state that `checksums.json`
+  gives *tamper-evidence in transit*, **not** authenticity (the manifest ships beside
+  the code it hashes); the authenticity anchor is signed release tags (`git tag -s`).
+
+---
+
 ## [3.9.0] — 2026-07-16
 
 ### Added

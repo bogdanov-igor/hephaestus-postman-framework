@@ -405,6 +405,63 @@ test('compare exits 0 when no failures (same good run twice)', function() {
     run(NODE + ' "' + path.join(ROOT, 'scripts/compare.js') + '" "' + newman2File + '" "' + newman2File + '" --md', { shell: true });
 });
 
+// Regression: two requests sharing the same name must NOT collide. Here the
+// FIRST "GET Item" goes fail→pass (a resolved failure) while the second stays
+// green. A name-keyed map (last-wins) would keep only the 2nd occurrence in both
+// runs and miss the resolved failure entirely; the composite key catches it.
+const dupName = function(code, err) {
+    return { item: { name: 'GET Item', request: { method: 'GET' } },
+             response: { code: code, responseTime: 50, responseSize: 64 },
+             assertions: [ { assertion: 'Status is 200', skipped: false, error: err } ] };
+};
+const dupBeforeFile = path.join(TMP, 'dup-before.json');
+const dupAfterFile  = path.join(TMP, 'dup-after.json');
+const dupStats = { requests: { total: 2, pending: 0, failed: 0 }, assertions: { total: 2, pending: 0, failed: 0 } };
+fs.writeFileSync(dupBeforeFile, JSON.stringify({ collection:{info:{name:'C'}}, environment:{name:'e'},
+    run: { stats: dupStats, timings: { started: 0, completed: 1 },
+           executions: [ dupName(500, { message: 'expected 500 to equal 200' }), dupName(200, null) ], failures: [] } }));
+fs.writeFileSync(dupAfterFile, JSON.stringify({ collection:{info:{name:'C'}}, environment:{name:'e'},
+    run: { stats: dupStats, timings: { started: 0, completed: 1 },
+           executions: [ dupName(200, null), dupName(200, null) ], failures: [] } }));
+
+test('compare disambiguates same-named requests (composite key, not last-wins)', function() {
+    const dupOut = path.join(TMP, 'dup-compare.md');
+    try {
+        run(NODE + ' "' + path.join(ROOT, 'scripts/compare.js') + '" "' + dupBeforeFile + '" "' + dupAfterFile + '" --md > "' + dupOut + '"', { shell: true });
+    } catch(e) { /* resolved-only diff exits 0, but guard anyway */ }
+    const md = fs.readFileSync(dupOut, 'utf8');
+    assertContains(md, 'Resolved', 'resolved failure on the 1st "GET Item" was collapsed by name collision');
+});
+
+// ─── 9b. engine shared/mask.js (secret redaction) ─────────────────────────────
+// The golden harness runs logLevel:'silent', so masking is NEVER exercised there
+// (a green golden says nothing about redaction). This locks the security-critical
+// predicate directly: substring match is the fail-safe default — under-masking a
+// real secret (leak) is the dangerous direction, over-masking a log field is not.
+
+console.log('\n⑨ᵇ engine shared/mask.js');
+
+const maskProbe = path.join(TMP, 'mask-probe.mjs');
+fs.writeFileSync(maskProbe, [
+    "import { isSensitive } from " + JSON.stringify(path.join(ROOT, 'engine/src/shared/mask.js')) + ";",
+    "const S = ['token','password','pass','secret','key','authorization','session'];",
+    // MUST mask — real secret field names, incl. concatenated-lowercase (regression guard)
+    "const must = ['password','passwd','passphrase','passcode','passkey','apikey','apiKey','api_key','x-api-key','privatekey','publickey','sshkey','masterkey','dbpass','userpass','sessionToken','authorization','secretValue','user_pass'];",
+    // MUST NOT mask — no configured secret word appears as a substring
+    "const clean = ['email','username','userId','width','video','count','status'];",
+    "for (const k of must)  if (!isSensitive(k, S)) { console.error('LEAK: ' + k); process.exit(2); }",
+    "for (const k of clean) if (isSensitive(k, S))  { console.error('over-mask: ' + k); process.exit(3); }",
+    // empty / missing secrets => never sensitive
+    "if (isSensitive('password', [])) process.exit(4);",
+    "if (isSensitive('password', null)) process.exit(5);",
+    "console.log('ok');"
+].join('\n'));
+
+test('isSensitive masks all real secret fields incl. concatenated-lowercase (no leak)', function() {
+    const out = run(NODE + ' ' + JSON.stringify(maskProbe));
+    assertContains(out, 'ok', 'mask probe did not pass');
+});
+
 // ─── 10. generate-report.js ───────────────────────────────────────────────────
 
 console.log('\n⑩ generate-report.js');

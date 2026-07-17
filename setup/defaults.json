@@ -42,6 +42,8 @@
 
   "ci": false,
 
+  "locale": "ru",
+
   "logLevel": "normal",
 
   "softFail": false,
