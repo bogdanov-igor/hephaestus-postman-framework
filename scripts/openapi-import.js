@@ -21,32 +21,6 @@
 const fs   = require('fs');
 const path = require('path');
 
-// ─── CLI (value-aware arg parsing) ──────────────────────────────────────────────
-
-const argv = process.argv.slice(2);
-const VALUE_FLAGS = ['-o', '--name'];
-const consumed = {};
-let inputFile = null, outArg = null, nameArg = null;
-
-for (let i = 0; i < argv.length; i++) {
-    const a = argv[i];
-    if (a === '-o')      { outArg  = argv[i + 1]; consumed[i] = consumed[i + 1] = true; i++; continue; }
-    if (a === '--name')  { nameArg = argv[i + 1]; consumed[i] = consumed[i + 1] = true; i++; continue; }
-    if (a[0] === '-')    { consumed[i] = true; continue; }
-}
-for (let i = 0; i < argv.length; i++) {
-    if (!consumed[i]) { inputFile = argv[i]; break; }
-}
-
-if (!inputFile) {
-    console.error('Usage: node scripts/openapi-import.js <openapi.yaml|json> [-o collection.json] [--name "..."]');
-    process.exit(1);
-}
-if (VALUE_FLAGS.some(function(f) { return argv.indexOf(f) !== -1 && argv.indexOf(f) === argv.length - 1; })) {
-    console.error('❌ ' + VALUE_FLAGS.filter(function(f) { return argv.indexOf(f) === argv.length - 1; }).join(', ') + ' requires a value.');
-    process.exit(1);
-}
-
 // ─── Minimal YAML/JSON parser (zero-dep) ────────────────────────────────────────
 
 function unquote(s) {
@@ -357,45 +331,75 @@ function buildCollection(spec, name) {
     return { collection: collection, total: total };
 }
 
-// ─── Run ─────────────────────────────────────────────────────────────────────
+// ─── Exports (reused by scripts/coverage.js — zero-dep spec parsing) ────────────
 
-const raw = fs.readFileSync(path.resolve(inputFile), 'utf8');   // ENOENT here is a clear message
-let spec;
-try {
-    spec = parseSpec(raw);
-} catch (e) {
-    const looksJson = raw.replace(/^﻿/, '').trim()[0] === '{';
-    console.error('❌ Cannot parse spec: ' + e.message + (looksJson ? '' : '\n   (YAML support is a subset — try converting to JSON first.)'));
-    process.exit(1);
+module.exports = { parseSpec: parseSpec, resolveRefs: resolveRefs, buildCollection: buildCollection };
+
+// ─── Run (CLI) ─────────────────────────────────────────────────────────────────
+
+if (require.main === module) {
+    // value-aware arg parsing
+    const argv = process.argv.slice(2);
+    const VALUE_FLAGS = ['-o', '--name'];
+    const consumed = {};
+    let inputFile = null, outArg = null, nameArg = null;
+    for (let i = 0; i < argv.length; i++) {
+        const a = argv[i];
+        if (a === '-o')      { outArg  = argv[i + 1]; consumed[i] = consumed[i + 1] = true; i++; continue; }
+        if (a === '--name')  { nameArg = argv[i + 1]; consumed[i] = consumed[i + 1] = true; i++; continue; }
+        if (a[0] === '-')    { consumed[i] = true; continue; }
+    }
+    for (let i = 0; i < argv.length; i++) {
+        if (!consumed[i]) { inputFile = argv[i]; break; }
+    }
+
+    if (!inputFile) {
+        console.error('Usage: node scripts/openapi-import.js <openapi.yaml|json> [-o collection.json] [--name "..."]');
+        process.exit(1);
+    }
+    if (VALUE_FLAGS.some(function(f) { return argv.indexOf(f) !== -1 && argv.indexOf(f) === argv.length - 1; })) {
+        console.error('❌ ' + VALUE_FLAGS.filter(function(f) { return argv.indexOf(f) === argv.length - 1; }).join(', ') + ' requires a value.');
+        process.exit(1);
+    }
+
+    const raw = fs.readFileSync(path.resolve(inputFile), 'utf8');   // ENOENT here is a clear message
+    let spec;
+    try {
+        spec = parseSpec(raw);
+    } catch (e) {
+        const looksJson = raw.replace(/^﻿/, '').trim()[0] === '{';
+        console.error('❌ Cannot parse spec: ' + e.message + (looksJson ? '' : '\n   (YAML support is a subset — try converting to JSON first.)'));
+        process.exit(1);
+    }
+
+    if (!spec || typeof spec !== 'object' || !spec.paths || Object.keys(spec.paths).length === 0) {
+        console.error('❌ No paths found in spec (is this a valid OpenAPI/Swagger document?).');
+        process.exit(1);
+    }
+
+    let result;
+    try {
+        result = buildCollection(spec, nameArg);
+    } catch (e) {
+        console.error('❌ Failed to build collection: ' + e.message);
+        process.exit(1);
+    }
+
+    if (result.total === 0) {
+        console.error('❌ No operations found (paths exist but contain no HTTP methods).');
+        process.exit(1);
+    }
+
+    const outFile = outArg
+        ? path.resolve(outArg)
+        : path.resolve(inputFile.replace(/\.(ya?ml|json)$/i, '') + '.postman_collection.json');
+
+    fs.writeFileSync(outFile, JSON.stringify(result.collection, null, 2) + '\n');
+
+    console.log('🧬 Imported ' + result.total + ' request(s) in ' + result.collection.item.length + ' folder(s) from ' +
+        (spec.openapi ? 'OpenAPI ' + spec.openapi : spec.swagger ? 'Swagger ' + spec.swagger : 'spec') + '.' +
+        (refWarnings ? '  (' + refWarnings + ' $ref warning(s))' : ''));
+    console.log('→ ' + path.relative(process.cwd(), outFile));
+    console.log('   Next: import into Postman, set hephaestus.defaults, run 🔧 engine-update.');
+    process.exit(0);
 }
-
-if (!spec || typeof spec !== 'object' || !spec.paths || Object.keys(spec.paths).length === 0) {
-    console.error('❌ No paths found in spec (is this a valid OpenAPI/Swagger document?).');
-    process.exit(1);
-}
-
-let result;
-try {
-    result = buildCollection(spec, nameArg);
-} catch (e) {
-    console.error('❌ Failed to build collection: ' + e.message);
-    process.exit(1);
-}
-
-if (result.total === 0) {
-    console.error('❌ No operations found (paths exist but contain no HTTP methods).');
-    process.exit(1);
-}
-
-const outFile = outArg
-    ? path.resolve(outArg)
-    : path.resolve(inputFile.replace(/\.(ya?ml|json)$/i, '') + '.postman_collection.json');
-
-fs.writeFileSync(outFile, JSON.stringify(result.collection, null, 2) + '\n');
-
-console.log('🧬 Imported ' + result.total + ' request(s) in ' + result.collection.item.length + ' folder(s) from ' +
-    (spec.openapi ? 'OpenAPI ' + spec.openapi : spec.swagger ? 'Swagger ' + spec.swagger : 'spec') + '.' +
-    (refWarnings ? '  (' + refWarnings + ' $ref warning(s))' : ''));
-console.log('→ ' + path.relative(process.cwd(), outFile));
-console.log('   Next: import into Postman, set hephaestus.defaults, run 🔧 engine-update.');
-process.exit(0);
