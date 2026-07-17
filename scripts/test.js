@@ -782,6 +782,17 @@ test('malformed result file → clear error, exit 1', function() {
     assert(code === 1, 'malformed JSON should exit 1, got ' + code);
 });
 
+test('a valid-JSON file that is not a Newman result → clean error (no stack trace), exit 1', function() {
+    const notNewman = path.join(TMP, 'flaky-notnewman.json');
+    fs.writeFileSync(notNewman, JSON.stringify({ foo: 1 }));   // valid JSON, wrong shape
+    let code = 0, err = '';
+    try { run(NODE + ' "' + FLAKY + '" "' + flakyR1 + '" "' + notNewman + '"'); }
+    catch (e) { code = e.status || 1; err = (e.stderr || '').toString(); }
+    assert(code === 1, 'a non-Newman file should exit 1, got ' + code);
+    assertContains(err, 'not a Newman result', 'should give a clean message');
+    assert(err.indexOf('TypeError') === -1, 'must not dump a raw TypeError stack trace');
+});
+
 test('flaky subcommand delegates through the CLI (bin/hephaestus.js)', function() {
     let code = 0;
     try { run(NODE + ' "' + CLI + '" flaky ' + flakyArgs + ' --fail-on-flaky --no-color'); }

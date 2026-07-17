@@ -50,6 +50,10 @@ function printHelp() {
         '  --fail-on-flaky  Exit 1 if any flaky assertion is found (CI gate)',
         '  --no-color       Disable terminal colors',
         '  --help           Show this help and exit',
+        '',
+        'Notes: detects assertion pass/fail flakiness across runs (assumes a stable',
+        'item id per request); a request that sometimes does not run at all leaves no',
+        'failing assertion and is not flagged.',
         ''
     ].join('\n'));
 }
@@ -75,12 +79,21 @@ const runs = files.map(function(file) {
         console.error('Cannot read "' + file + '": ' + e.message);
         process.exit(1);
     }
+    let data;
     try {
-        return JSON.parse(raw);
+        data = JSON.parse(raw);
     } catch (e) {
         console.error('Invalid JSON in "' + file + '": ' + e.message);
         process.exit(1);
     }
+    // Validate the shape up front so a wrong-shaped file gives a clean message
+    // instead of a raw stack trace deep in the classify loop.
+    if (!data || typeof data !== 'object' || !Array.isArray(data.run && data.run.executions)) {
+        console.error('"' + file + '" is not a Newman result (missing run.executions array). ' +
+            'Export one with: newman run … --reporter-json-export ' + file);
+        process.exit(1);
+    }
+    return data;
 });
 
 // ─── Keying ────────────────────────────────────────────────────────────────────
@@ -160,6 +173,13 @@ Object.keys(agg).forEach(function(k) {
         stableFail++;
     }
 });
+
+// A run that contributed no assertions (a mis-wired pipeline pointing at a
+// collection, or a Newman run that errored out) would otherwise pass silently —
+// surface it so a --fail-on-flaky gate can't read green on nothing evaluated.
+if (Object.keys(agg).length === 0) {
+    console.error('⚠ 0 assertions evaluated across ' + runs.length + ' run(s) — are these Newman result files with assertions?');
+}
 
 // Most-flaky first; ties broken by more evidence, then name, for deterministic output.
 flaky.sort(function(a, b) {
