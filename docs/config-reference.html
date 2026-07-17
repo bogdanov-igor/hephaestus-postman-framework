@@ -118,6 +118,8 @@ footer{text-align:center;padding:20px;font-size:.75rem;color:var(--muted);border
   <a href="#snapshot">snapshot.mode</a>
   <a href="#snapshot">snapshot.checkPaths</a>
   <a href="#snapshot">snapshot.ignorePaths</a>
+  <a href="#snapshot">snapshot.storage</a>
+  <a href="#snapshot">snapshot.record</a>
   <h3>Schema</h3>
   <a href="#schema">schema</a>
   <h3>Plugins</h3>
@@ -132,6 +134,9 @@ footer{text-align:center;padding:20px;font-size:.75rem;color:var(--muted);border
   <a href="#new">logLevel</a>
   <a href="#new">assertUnique</a>
   <a href="#new">randomData</a>
+  <h3>v3.9</h3>
+  <a href="#v39">locale</a>
+  <a href="#v39">securityAudit</a>
 </nav>
 
 <main>
@@ -519,6 +524,47 @@ footer{text-align:center;padding:20px;font-size:.75rem;color:var(--muted);border
     <p style="font-size:.78rem;color:var(--muted);margin-top:6px">Stored in <code>hephaestus.snapshots</code> collection variable. View with <a href="snapshot-viewer.html">Snapshot Viewer</a> or <code>📋 snapshot-view</code> request.</p>
   </div>
 </div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">snapshot.storage</div>
+      <div class="opt-desc">Backend where snapshot baselines are persisted. <code>collection-vars</code> is the only backend that works offline; <code>postman-api</code> is unavailable in the local/Newman runtime — it warns once and falls back to <code>collection-vars</code>.</div>
+    </div>
+    <span class="opt-type">string</span><span class="opt-since">v3.9</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">"collection-vars"</span></div>
+    <div class="values-list"><span class="vbadge">collection-vars</span><span class="vbadge">postman-api</span></div>
+    <pre class="example"><span class="kw">const</span> override = {
+    <span class="key">snapshot</span>: { <span class="key">enabled</span>: <span class="kw">true</span>, <span class="key">storage</span>: <span class="str">"collection-vars"</span> }
+};
+<span class="cmt">// storage: "postman-api" → warns once, then uses collection-vars</span></pre>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">snapshot.record</div>
+      <div class="opt-desc">Force-rewrite a snapshot baseline in a single run. Ignores the existing snapshot, writes the current response as the new baseline, then should be removed. Also accepted as top-level <code>snapshotRecord: true</code>.</div>
+    </div>
+    <span class="opt-type">boolean</span><span class="opt-since">v3.9</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">false</span></div>
+    <pre class="example"><span class="cmt">// 1. Set record: true and run the request ONCE</span>
+<span class="kw">const</span> override = {
+    <span class="key">snapshot</span>: { <span class="key">enabled</span>: <span class="kw">true</span>, <span class="key">record</span>: <span class="kw">true</span> }
+};
+
+<span class="cmt">// equivalent top-level form:</span>
+<span class="kw">const</span> override = { <span class="key">snapshotRecord</span>: <span class="kw">true</span> };
+
+<span class="cmt">// 2. Remove record after the baseline is rewritten</span></pre>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:8px">Use after an intentional API change to re-baseline. Unlike <code>autoSaveMissing</code> (which only saves when no baseline exists), <code>record</code> overwrites an existing baseline.</p>
+  </div>
+</div>
 </div>
 
 <!-- ═══════════════════════════════════ SCHEMA ════════════════ -->
@@ -732,6 +778,60 @@ newman run col.json --env-var ci=true</pre>
 };
 <span class="cmt">// ctx.random also available directly in plugins:</span>
 <span class="cmt">// ctx.random.uuid(), .email(), .str(n), .int(min,max), .float(), .bool(), .pick(arr), .date()</span></pre>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════ v3.9 ═══════════════════ -->
+<div class="section" id="v39">
+<div class="section-title">🆕 v3.9 Features</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">locale</div>
+      <div class="opt-desc">Selects the language of the engine's own output — test names, console logs, error messages, and status labels. The default <code>"ru"</code> is byte-identical to prior releases; <code>"en"</code> is the exact same engine rendered in English.</div>
+    </div>
+    <span class="opt-type">string</span><span class="opt-since">v3.9</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">"ru"</span></div>
+    <div class="values-list"><span class="vbadge">ru</span><span class="vbadge">en</span></div>
+    <pre class="example"><span class="cmt">// In hephaestus.defaults — switch the whole run to English:</span>
+{ <span class="key">"locale"</span>: <span class="str">"en"</span> }
+
+<span class="cmt">// Per-request override:</span>
+<span class="kw">const</span> override = { <span class="key">locale</span>: <span class="str">"en"</span> };</pre>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:8px">Backed by the i18n catalog in <code>engine/src/shared/i18n.js</code>. Only the presentation layer changes — assertions, snapshots, and behaviour are unaffected.</p>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">securityAudit</div>
+      <div class="opt-desc">Passive HTTP security checks run against the response. When enabled, each check emits its own <code>pm.test</code>: required security headers present, server-disclosure headers absent, no error/stack-trace leakage in the body, and a CORS check for wildcard <code>Access-Control-Allow-Origin</code> combined with <code>Allow-Credentials</code>.</div>
+    </div>
+    <span class="opt-type">object</span><span class="opt-since">v3.9</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">{ enabled: false, checkCors: true }</span></div>
+    <pre class="example"><span class="cmt">// Enable with built-in defaults:</span>
+<span class="kw">const</span> override = {
+    <span class="key">securityAudit</span>: { <span class="key">enabled</span>: <span class="kw">true</span> }
+};
+
+<span class="cmt">// Full shape — every field is optional and falls back to the built-in list:</span>
+<span class="kw">const</span> override = {
+    <span class="key">securityAudit</span>: {
+        <span class="key">enabled</span>:            <span class="kw">true</span>,
+        <span class="key">checkCors</span>:          <span class="kw">true</span>,   <span class="cmt">// flag wildcard ACAO + Allow-Credentials</span>
+        <span class="key">requireHeaders</span>:     [<span class="str">"strict-transport-security"</span>, <span class="str">"content-security-policy"</span>, <span class="str">"x-frame-options"</span>, <span class="str">"x-content-type-options"</span>],
+        <span class="key">forbidHeaders</span>:      [<span class="str">"server"</span>, <span class="str">"x-powered-by"</span>, <span class="str">"x-aspnet-version"</span>],
+        <span class="key">forbidBodyPatterns</span>: [<span class="str">"SQLSTATE"</span>, <span class="str">"stack trace"</span>, <span class="str">"Traceback (most recent call last)"</span>, <span class="str">"ORA-0"</span>, <span class="str">"db error"</span>, <span class="str">"Warning: mysql"</span>],
+    }
+};</pre>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:8px"><strong>requireHeaders</strong> — each must be present. <strong>forbidHeaders</strong> — server-disclosure headers that must be absent. <strong>forbidBodyPatterns</strong> — substrings that must NOT appear in the body (leaked errors/stack traces). <strong>checkCors</strong> — fails when <code>Access-Control-Allow-Origin: *</code> is paired with credentials. Providing a list replaces the corresponding built-in default for that field.</p>
   </div>
 </div>
 </div>

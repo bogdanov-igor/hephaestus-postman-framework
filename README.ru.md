@@ -1,921 +1,276 @@
-<div align="center">
+<p align="center">
+  <img src="docs/assets/banner.svg" alt="Hephaestus — модульный фреймворк API-тестирования для Postman" width="100%">
+</p>
 
-<img src="docs/banner.png" alt="Hephaestus" width="100%"/>
+<p align="center">
+  <img src="https://img.shields.io/badge/version-3.9.0-e25822?style=flat-square" alt="version 3.9.0">
+  <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="MIT">
+  <img src="https://img.shields.io/badge/engine-172%20KB-success?style=flat-square" alt="172 KB engine">
+  <img src="https://img.shields.io/badge/runtime%20deps-0-success?style=flat-square" alt="zero runtime dependencies">
+  <img src="https://img.shields.io/badge/tests-46%20%C2%B7%20200%20golden-success?style=flat-square" alt="46 tests, 200 golden assertions">
+  <img src="https://img.shields.io/badge/locale-ru%20%C2%B7%20en-success?style=flat-square" alt="locale ru / en">
+</p>
 
-# ⚒️ Hephaestus
+<p align="center">
+  <a href="README.md">English</a> · <b>Русский</b>
+</p>
 
-**Модульный фреймворк автоматизации API-тестирования для Postman**
-
-[![Version](https://img.shields.io/badge/version-3.9.0-blue?style=flat-square)](CHANGELOG.md)
-[![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
-[![Postman](https://img.shields.io/badge/Postman-v10+-orange?style=flat-square&logo=postman&logoColor=white)](https://postman.com)
-[![Apidog](https://img.shields.io/badge/Apidog-compatible-9cf?style=flat-square)](https://apidog.com)
-[![JavaScript](https://img.shields.io/badge/JavaScript-sandbox-yellow?style=flat-square&logo=javascript&logoColor=black)](engine/)
-[![Author](https://img.shields.io/badge/author-Bogdanov_Igor-blueviolet?style=flat-square)](mailto:bogdanov.ig.alex@gmail.com)
-[![Docs](https://img.shields.io/badge/docs-live%20site-f77f00?style=flat-square&logo=github)](https://bogdanov-igor.github.io/hephaestus-postman-framework/)
-
-**[🇬🇧 English version](README.md)** · **[🌐 Live Docs](https://bogdanov-igor.github.io/hephaestus-postman-framework/)**
-
-[Быстрый старт](#-быстрый-старт) · [Конфигурация](#️-конфигурация) · [Модули](#-модули) · [Архитектура](#️-архитектура) · [APIDog](#-совместимость-с-apidog) · [Автор](#-автор)
-
-</div>
+<p align="center"><i>Разрозненные скрипты, выкованные в единый движок.</i></p>
 
 ---
 
-## Обзор
+Hephaestus — это модульный фреймворк API-тестирования для Postman и Newman.
+Вместо кучи скопированных pre/post-request скриптов каждый запрос несёт
+небольшой конфиг `override` и делегирует всю логику одному движку под контролем
+версий: слияние конфигов, авторизация, проверки, регрессия по снапшотам,
+валидация по схеме, аудит безопасности и структурированное логирование — всё
+в фиксированном конвейере.
 
-**Hephaestus** — open-source фреймворк для организации, автоматизации и стандартизации API-тестирования в Postman. Он заменяет разрозненные pre/post-request скрипты единым, версионируемым движком с поддержкой snapshot-регрессии, валидации схем, гибкой авторизации и маскирования секретов.
+Тот же автор и тот же фирменный стиль, что и у [Keel](https://github.com/bogdanov-igor/keel)
+и [Loft](https://github.com/bogdanov-igor/loft), моих ядер для Claude Code.
+Это другая предметная область — общая только дисциплина: измеряй то, что
+выпускаешь, будь честен в том, чего оно не делает, и не тащи за собой ни одного
+сервиса, который тебе не нужен.
 
-Каждый запрос в коллекции содержит только минимальный `override`-конфиг. Всю логику берёт на себя движок, загруженный из Git.
+## Новое — вывод на английском и русском
 
-**Для кого:**
-- QA-инженеры, автоматизирующие тестирование REST / XML API
-- Команды, использующие Postman как основной инструмент
-- Коллекции с большим количеством методов, которым нужен единый стандарт
-- Проекты с требованием snapshot-регрессии без CI-оверхеда
+Каждая обращённая к пользователю строка, которую выдаёт движок — имена тестов,
+строки логов, сообщения проверок, метки статусов, аудит безопасности — теперь
+проходит через каталог локализации
+([`engine/src/shared/i18n.js`](engine/src/shared/i18n.js)). Язык выбирается в
+конфиге:
 
----
-
-## ✨ Возможности
-
-| Возможность | Описание |
-|---|---|
-| 🔄 **Pipeline-архитектура** | Orchestrator управляет цепочкой модулей через единый объект `ctx` |
-| ⚙️ **Defaults + Override** | Конфиг на уровне коллекции + переопределение на уровне метода |
-| 📸 **Snapshot-регрессия** | Автоматический baseline, strict/non-strict режимы, diff-preview в логе |
-| 🔐 **Auth-плагин** | `none`, `basic`, `bearer`, `headers`, `variables`, `oauth2cc` — настраивается per-request |
-| 🔍 **Extract API** | `ctx.api.get()`, `.find()`, `.all()`, `.count()`, `.save()` — JSON и XML |
-| ✅ **Assertions** | `keysToFind` (soft-режим), `varsToSave`, `keysToCount`, `maxResponseTime` |
-| 📨 **Header assertions** | `assertHeaders` — проверка наличия, значения, точного совпадения и отсутствия заголовков |
-| 🔢 **expectedStatus** | Ожидаемые HTTP-статусы — поддержка негативного тестирования (`400`, `[404, 422]`) |
-| 🔌 **Plugin system** | Расширяй движок без форка — загружай кастомные модули из `collectionVariables` в рантайме |
-| 📅 **Гибкие даты** | `today±Nd/w/m/y`, `startOfMonth`, `endOfYear`, кастомные переменные через `dates` |
-| 📋 **Schema-валидация** | JSON Schema через встроенный `tv4` без зависимостей |
-| 🛡️ **Маскирование секретов** | Токены, пароли и query-параметры URL маскируются в логах автоматически |
-| 📊 **Красивые логи** | Эмодзи, ASCII-рамки, preview ответа, diff снапшота, CI-режим |
-| 🔄 **Auto-update** | Движок обновляется из Git одним запросом — `engine-update` |
-
----
-
-## 🏛️ Архитектура
-
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                         PRE-REQUEST                              │
-│                                                                  │
-│   configMerge → urlBuilder → auth → dateUtils → logger           │
-│                                                                  │
-│   • Объединяет hephaestus.defaults + override                    │
-│   • Выставляет pm.variables.baseUrl (автоподстановка протокола)  │
-│   • Подставляет auth (headers / pm.variables)                    │
-│   • Логирует конфиг с маскированием секретов                     │
-└──────────────────────────────────────────────────────────────────┘
-                        ⬇  HTTP-запрос  ⬇
-┌──────────────────────────────────────────────────────────────────┐
-│                         POST-REQUEST                             │
-│                                                                  │
-│   configMerge → normalizeResponse → metrics → extractor          │
-│   → assertions → assertHeaders → snapshot → schema               │
-│   → plugins → logger                                             │
-│                                                                  │
-│   • Парсит JSON / XML / text ответ в единый ctx.response         │
-│   • Проверяет ожидаемый HTTP-статус (expectedStatus)             │
-│   • Предоставляет ctx.api для работы с данными                   │
-│   • Проверяет assertions, сохраняет переменные                   │
-│   • Валидирует заголовки ответа (assertHeaders)                  │
-│   • Сравнивает со snapshot или сохраняет baseline                │
-│   • Валидирует JSON Schema                                       │
-│   • Запускает плагины из collectionVariables                     │
-│   • Выводит структурированный лог с маскированием               │
-└──────────────────────────────────────────────────────────────────┘
+```json
+{ "locale": "en" }
 ```
 
-### Как работает движок
+По умолчанию `"ru"`, и он **побайтово идентичен** каждому предыдущему релизу,
+так что существующие коллекции и их золотые эталоны не сдвигаются. `"en"` даёт
+тот же движок на английском. Golden-харнесс фиксирует оба.
 
-```
-Git (engine/pre-request.js + engine/post-request.js)
-         ↓  engine-update (pm.sendRequest)
-collectionVariables["hephaestus.v3.pre"]
-collectionVariables["hephaestus.v3.post"]
-         ↓  каждый метод
-eval(pm.collectionVariables.get("hephaestus.v3.pre"))
-eval(pm.collectionVariables.get("hephaestus.v3.post"))
-```
+## Быстрый старт
 
-### Объект `ctx`
+В одном репозитории поставляются две среды выполнения: **движок**, работающий
+внутри Postman, и **Node CLI без зависимостей** для Newman и CI. Начните с
+движка.
 
-```javascript
-ctx = {
-    config:   { /* merged: defaults + override */ },
-    request:  { name, method, url },
-    response: { parsed, raw, code, time, size, format },
-    api:      { get(path), find(path, fn), count(path), save(path, target) }
-}
-```
+**1.** Импортируйте поставляемую коллекцию — движок встроен на этапе сборки,
+поэтому свежий импорт работает офлайн, без шага загрузки:
 
----
-
-## 🚀 Быстрый старт
-
-### Шаг 1 — Импортировать коллекцию
-
-```
+```text
 Postman → Import → collection/hephaestus-template.postman_collection.json
 ```
 
-### Шаг 2 — Привязать environment
-
-Создать или подключить environment с переменными:
-
-```
-login.*      — логины пользователей
-password.*   — пароли
-channel.*    — дополнительные поля (если нужно)
-```
-
-### Шаг 3 — Настроить defaults
-
-Открыть **⚙️ defaults** в `🛠️ Hephaestus System`, отредактировать JSON в Body и нажать **Send**:
+**2.** Откройте **⚙️ defaults** в папке `Hephaestus System`, отредактируйте
+JSON-тело и нажмите Send:
 
 ```json
 {
   "baseUrl": "https://your-api.example.com",
-  "defaultProtocol": "https",
+  "locale": "en",
   "auth": { "enabled": false, "type": "none" },
   "contentType": "json",
   "snapshot": { "enabled": false, "autoSaveMissing": true, "mode": "non-strict" },
-  "secrets": ["token", "password", "pass", "key"],
+  "secrets": ["token", "password", "pass", "secret", "key", "authorization", "session"],
   "ci": false
 }
 ```
 
-### Шаг 4 — Загрузить движок
+**3.** Задайте любому запросу `override` и передайте управление движку.
+Pre-request:
 
-```
-🛠️ Hephaestus System → 🔧 engine-update → Send
-```
-
-Движок загрузится из Git в `hephaestus.v3.pre` и `hephaestus.v3.post`.  
-Повторять при обновлении фреймворка.
-
-### Шаг 5 — Написать метод
-
-Каждый метод содержит только `override` + вызов движка:
-
-**Pre-request script:**
 ```javascript
 const override = {
-    auth: {
-        enabled: true,
-        type: "bearer",
-        token: "{{prod.token}}"
-    }
+  auth: { enabled: true, type: "bearer", token: "{{prod.token}}" }
 };
-
 eval(pm.collectionVariables.get("hephaestus.v3.pre"));
 ```
 
-**Tests (Post-request):**
+Тесты (post-request):
+
 ```javascript
 const override = {
-    contentType: "json",
-    keysToFind: [
-        { path: "data.id",     name: "ID" },
-        { path: "data.status", name: "Статус", expect: "active" }
-    ],
-    varsToSave: {
-        token: { path: "data.token", name: "prod.token", scope: "collection" }
-    },
-    snapshot: { enabled: true, autoSaveMissing: true }
+  contentType: "json",
+  keysToFind: [
+    { path: "data.id",     name: "ID" },
+    { path: "data.status", name: "Status", expect: "active" }
+  ],
+  varsToSave: { token: { path: "data.token", name: "prod.token", scope: "collection" } },
+  snapshot: { enabled: true, autoSaveMissing: true }
 };
-
 eval(pm.collectionVariables.get("hephaestus.v3.post"));
 ```
 
----
+**4.** Для CI запустите Newman и прогоните результаты через CLI (из клона этого
+репозитория):
 
-## ⚙️ Конфигурация
-
-### Полный список полей
-
-| Поле | Тип | По умолчанию | Описание |
-|---|---|---|---|
-| `baseUrl` | string | `""` | Базовый URL API — протокол можно не указывать, подставится автоматически |
-| `defaultProtocol` | string | `"https"` | Протокол по умолчанию, если в `baseUrl` не указан. `"http"` — выдаст предупреждение |
-| `auth.enabled` | boolean | `false` | Включить авторизацию |
-| `auth.type` | string | `"none"` | Тип: `none`, `basic`, `bearer`, `headers`, `variables`, `oauth2cc` (см. [OAuth2](#-oauth2-client_credentials-v34)) |
-| `contentType` | string | `"json"` | Ожидаемый формат ответа: `json`, `xml`, `text` |
-| `expectEmpty` | boolean | `false` | Ожидать пустой ответ |
-| `expectedStatus` | number \| number[] | `[200,201,202]` | Ожидаемые HTTP-статусы. Для негативного тестирования: `400`, `[404, 422]` |
-| `maxResponseTime` | number | `1000` | Макс. время ответа в мс. Тест падает при превышении |
-| `dateFormat` | string | `"yyyy-MM-dd"` | Формат дат для всех date-переменных |
-| `dates` | object | — | Кастомные date-переменные — см. [dateUtils](#-dateutils) |
-| `assertHeaders` | object[] | `[]` | Проверки заголовков ответа — см. [assertHeaders](#-assertheaders) |
-| `snapshot.enabled` | boolean | `false` | Включить snapshot-сравнение |
-| `snapshot.mode` | string | `"non-strict"` | `strict` (полный diff) или `non-strict` (только checkPaths) |
-| `snapshot.autoSaveMissing` | boolean | `true` | Автосохранение baseline при отсутствии |
-| `snapshot.checkPaths` | string[] | `[]` | Сравнивать только эти пути (пусто = всё) |
-| `snapshot.ignorePaths` | string[] | `[]` | Игнорировать эти пути |
-| `schema.enabled` | boolean | `false` | Включить JSON Schema валидацию |
-| `schema.definition` | object | `null` | JSON Schema объект |
-| `secrets` | string[] | `[...]` | Ключи, значения которых маскируются в логах |
-| `ci` | boolean | `false` | CI-режим: структурированный JSON-лог |
-
-### Auth-типы
-
-| Тип | Что делает |
-|---|---|
-| `none` | Без авторизации |
-| `basic` | `Authorization: Basic base64(user:pass)` |
-| `bearer` | `Authorization: Bearer {token}` |
-| `headers` | Подставляет произвольные заголовки в запрос |
-| `variables` | Устанавливает `pm.variables` для подстановок в URL / Body |
-
-**Пример — `variables` (логин + канал + пароль):**
-```javascript
-auth: {
-    enabled: true,
-    type: "variables",
-    fields: {
-        "login":    "{{login.main}}",
-        "channel":  "{{channel.main}}",
-        "password": "{{password.main}}"
-    }
-}
-```
-
-### Маскирование секретов
-
-Маскирование применяется **только к логам** — сохранённые значения не изменяются.
-
-- Ключи, совпадающие со словами из списка `secrets`, маскируются: `AAAI3A***MASKED***KMR3ms`
-- Query-параметры URL с совпадающими именами маскируются в POST-REQUEST логе
-- Список настраивается через `secrets` в defaults или override
-
----
-
-## 🧩 Модули
-
-### Pre-request pipeline
-
-| Модуль | Описание |
-|---|---|
-| `configMerge` | Deep merge: `hephaestus.defaults` + `override` → `ctx.config` |
-| `envRequired` | Проверяет наличие обязательных переменных окружения |
-| `iterationData` | Загружает данные итерации из `pm.iterationData` в `ctx.iteration` |
-| `random` | Генерирует случайные тестовые данные (`randomData` конфиг) в `pm.variables` |
-| `urlBuilder` | Устанавливает `pm.variables.baseUrl`; автоподставляет `defaultProtocol` |
-| `auth` | Auth-плагин — применяет выбранный тип к запросу |
-| `dateUtils` | Вычисляет даты (today, tomorrow и др.) в `pm.variables` |
-| `logger` | Логирует конфиг запроса с маскированием секретов |
-
-### Post-request pipeline
-
-| Модуль | Описание |
-|---|---|
-| `configMerge` | Повторный merge для доступа к конфигу в тестах |
-| `iterationData` | Загружает данные итерации из `pm.iterationData` в `ctx.iteration` |
-| `normalizeResponse` | Парсит JSON / XML (xml2js) / text → `ctx.response` |
-| `retryOnStatus` | Повторяет запрос при совпадении HTTP-статуса (напр. 503, 429) |
-| `metrics` | Фиксирует время ответа и размер тела |
-| `extractor` | Инициализирует `ctx.api` — Extract API с `get/find/all/count/save` |
-| `assertions` | `keysToFind` (soft), `varsToSave`, `keysToCount`, `maxResponseTime` |
-| `assertEach` | Проверяет условие для каждого элемента массива по пути |
-| `assertShape` | Валидирует соответствие каждого элемента массива заданной форме |
-| `assertOrder` | Проверяет порядок элементов массива по указанному полю |
-| `assertUnique` | Проверяет уникальность значений по пути в массиве |
-| `assertHeaders` | Проверяет заголовки ответа: наличие, значение, точное совпадение, отсутствие |
-| `snapshot` | Сравнивает с baseline или сохраняет при `autoSaveMissing`; diff в логе |
-| `schema` | Валидирует тело ответа по JSON Schema через `tv4` |
-| `plugins` | Запускает кастомные модули из `collectionVariables` (`hephaestus.plugins`) |
-| `logger` | Структурированный лог: статус, метрики, assertions, diff снапшота, preview |
-
-### Extract API
-
-```javascript
-ctx.api.get("data.user.id")                 // → значение по dot-path (любая глубина)
-ctx.api.find("data.items", i => i.active)   // → массив, отфильтрованный по предикату
-ctx.api.all("data.items", i => i.active)    // → то же самое (явный синоним find)
-ctx.api.count("data.items")                 // → количество элементов
-ctx.api.save("data.token", {                // → сохранить в pm scope
-    name: "prod.token",
-    scope: "collection"                     // "collection" | "environment" | "local"
-})
-```
-
-Поддерживается wildcard-обход:
-
-```javascript
-ctx.api.get("data.items[*].id")  // → массив всех значений id в списке
-ctx.api.all("data.items[*]")     // → все элементы списка
-```
-
----
-
-## ✅ Assertions
-
-### keysToFind — поиск и валидация полей
-
-```javascript
-keysToFind: [
-    { path: "data.id",     name: "ID" },                        // поле существует
-    { path: "data.status", name: "Статус", expect: "active" },  // точное совпадение
-    { path: "data.count",  name: "Кол-во", expect: v => v > 0 }, // предикат
-    { path: "data.extra",  name: "Extra",  soft: true },        // ⚪ soft: не падает если нет
-]
-```
-
-`soft: true` — тест проходит, даже если поле отсутствует. Используется для опциональных полей.
-
-### varsToSave — сохранение значений в переменные
-
-```javascript
-varsToSave: {
-    token: { path: "data.token", name: "prod.token", scope: "collection" }
-    // scope: "collection" | "environment" | "local"
-}
-```
-
-### maxResponseTime — проверка времени ответа
-
-Значение по умолчанию — `1000` мс (задаётся глобально в `hephaestus.defaults`). Переопределяется на уровне конкретного метода:
-
-```javascript
-// В hephaestus.defaults (глобально для всей коллекции):
-{
-    "maxResponseTime": 1000   // ⏱ порог для всех методов
-}
-
-// В конкретном методе (override):
-const override = {
-    maxResponseTime: 500   // ⏱ более жёсткий порог для данного метода
-};
-```
-
-### keysToCount — подсчёт элементов массива
-
-```javascript
-keysToCount: {
-    items: { path: "data.items", expected: 10 }
-}
-```
-
-### expectedStatus — ожидаемый HTTP-статус
-
-По умолчанию: `[200, 201, 202]`. Переопределяется для любого сценария:
-
-```javascript
-// Один статус (напр. 204 No Content):
-const override = { expectedStatus: 204 };
-
-// Несколько статусов:
-const override = { expectedStatus: [200, 201] };
-
-// Негативное тестирование — ожидаем 400 Bad Request:
-const override = { expectedStatus: 400 };
-
-// Несколько ошибочных кодов:
-const override = { expectedStatus: [400, 422] };
-```
-
----
-
-## 📨 assertHeaders
-
-Проверка заголовков ответа прямо в `override`:
-
-```javascript
-assertHeaders: [
-    // Заголовок существует:
-    { name: "X-Request-Id" },
-
-    // Заголовок содержит строку:
-    { name: "Content-Type", expect: "application/json" },
-
-    // Точное совпадение:
-    { name: "X-Api-Version", equals: "v2" },
-
-    // Условие через функцию:
-    { name: "X-Rate-Limit-Remaining", label: "Rate limit > 0", expect: v => Number(v) > 0 },
-
-    // Заголовок должен отсутствовать:
-    { name: "X-Deprecated", absent: true },
-]
-```
-
-| Поле | Тип | Описание |
-|---|---|---|
-| `name` | string | Имя заголовка |
-| `label` | string | Отображаемое имя в Test Results (необязательно) |
-| `expect` | string \| function | Проверка contains (строка) или произвольное условие (функция) |
-| `equals` | string | Точное совпадение значения |
-| `absent` | boolean | Заголовок должен **отсутствовать** в ответе |
-
----
-
-## 📅 dateUtils
-
-Всегда доступны как `pm.variables`:
-
-| Переменная | Значение |
-|---|---|
-| `{{currentDate}}` | Сегодня |
-| `{{monthsAgo1}}` | 1 месяц назад |
-| `{{monthsAgo3}}` | 3 месяца назад |
-| `{{monthsAgo6}}` | 6 месяцев назад |
-| `{{monthsAgo12}}` | 12 месяцев назад |
-
-**Кастомные переменные** через `dates` в override или defaults:
-
-```javascript
-const override = {
-    dates: {
-        "startDate":  "today-7d",          // 7 дней назад
-        "endDate":    "today",             // сегодня
-        "nextMonth":  "today+1m",          // +1 месяц
-        "weekLater":  "today+1w",          // +7 дней
-        "firstDay":   "startOfMonth",      // первый день текущего месяца
-        "lastDay":    "endOfMonth",        // последний день текущего месяца
-        "yearStart":  "startOfYear",       // 1 января
-        "yearEnd":    "endOfYear",         // 31 декабря
-        "prevStart":  "startOfPrevMonth",
-        "nextStart":  "startOfNextMonth",
-    }
-};
-```
-
-Используй как `{{startDate}}`, `{{endDate}}` и т.д. в URL, body, заголовках.  
-Формат задаётся через `dateFormat` (по умолчанию: `yyyy-MM-dd`).
-
-**Поддерживаемые выражения:**
-
-| Выражение | Описание |
-|---|---|
-| `today` | Текущая дата |
-| `yesterday` / `tomorrow` | ±1 день |
-| `today+Nd` / `today-Nd` | ±N дней |
-| `today+Nw` / `today-Nw` | ±N недель |
-| `today+Nm` / `today-Nm` | ±N месяцев |
-| `today+Ny` / `today-Ny` | ±N лет |
-| `startOfMonth` / `endOfMonth` | Первый/последний день текущего месяца |
-| `startOfNextMonth` / `endOfNextMonth` | Первый/последний день следующего месяца |
-| `startOfPrevMonth` / `endOfPrevMonth` | Первый/последний день предыдущего месяца |
-| `startOfYear` / `endOfYear` | 1 января / 31 декабря |
-
----
-
-## 🛡️ Аудит безопасности
-
-Пассивные проверки безопасности ответа (opt-in) — ловит отсутствие защитных
-заголовков, раскрытие версии сервера, утечки стектрейсов/отладки в теле и
-небезопасный CORS. Включается per-request или глобально в `hephaestus.defaults`:
-
-```javascript
-const override = {
-    securityAudit: {
-        enabled: true,
-        // у всех списков есть разумные дефолты — переопределяй по необходимости:
-        requireHeaders: ["strict-transport-security", "content-security-policy",
-                         "x-frame-options", "x-content-type-options"],
-        forbidHeaders:  ["server", "x-powered-by"],          // раскрытие версии
-        forbidBodyPatterns: ["SQLSTATE", "stack trace", "Traceback"],
-        checkCors: true,   // wildcard Access-Control-Allow-Origin + credentials
-        soft: false        // findings как предупреждения вместо провалов
-    }
-};
-```
-
-Каждая проверка — отдельный `🛡️` тест, поэтому нарушение политики заголовков валит прогон в CI.
-
----
-
-## 📸 Snapshot-регрессия
-
-Snapshot хранится в `hephaestus.snapshots` (collectionVariables) как JSON-объект.
-
-**Ключ snapshot:** `{collectionName}::{requestName}::{statusCode}::{format}`
-
-| Режим | Поведение |
-|---|---|
-| `non-strict` | Проверяет только `checkPaths`, игнорирует `ignorePaths` |
-| `strict` | Полное сравнение структуры (с учётом `ignorePaths`) |
-
-**Управление снапшотами:**
-
-| Действие | Расположение |
-|---|---|
-| Просмотр | `🛠️ Hephaestus System → 📋 snapshot-view` |
-| Очистка | `🛠️ Hephaestus System → 🗑️ snapshot-clear` |
-| Фильтр | Переменная `hephaestus.snapshot.clearFilter` |
-
-**Перезапись baseline** — когда API изменился легитимно, обнови устаревший снапшот за один прогон вместо очистки:
-
-```javascript
-const override = {
-    snapshot: { enabled: true, record: true }   // игнорирует старый baseline, сохраняет текущий ответ
-    // top-level `snapshotRecord: true` тоже работает. После — убери флаг.
-};
-```
-
----
-
-## 🖼️ Snapshot → Postman Examples
-
-Превращает сохранённые снапшоты в нативные **Example Responses** Postman — видны в UI и работают с Postman Mock Server:
-
-```bash
-hephaestus sync-examples my.postman_collection.json -o with-examples.json
-# читает hephaestus.snapshots и добавляет пример "📸 Snapshot <код> <формат>" к каждому запросу
-```
-
-Идемпотентно — повторный sync заменяет прежние 📸-примеры, ручные сохраняет. `--in-place` перезаписывает коллекцию (сначала пишет `.bak`), `--filter <substr>` — синхронизирует подмножество.
-
----
-
-## 🔄 Обновление движка
-
-Версия движка задаётся в `hephaestus.version` (collectionVariables):
-
-| Значение | Результат |
-|---|---|
-| `main` | Загружает последний коммит из ветки `main` |
-| `3.1.0` | Загружает тег `v3.1.0` |
-
-После изменения версии → запустить `🔧 engine-update`.
-
-**Приватные репозитории:** задайте `hephaestus.githubToken` (GitHub PAT).  
-Движок переключится на GitHub Contents API вместо raw-ссылок.
-
----
-
-## 🔌 Совместимость с Apidog
-
-Hephaestus v3 **полностью совместим** с [Apidog](https://apidog.com).
-
-| Функция | Postman | Apidog |
-|---|---|---|
-| `pm.collectionVariables.get/set` | ✅ | ✅ (Module Variables) |
-| `pm.sendRequest` | ✅ | ✅ |
-| `eval()` | ✅ | ✅ |
-| `pm.test` | ✅ | ✅ |
-| `pm.response.json/text` | ✅ | ✅ |
-| `pm.variables.set/get` | ✅ | ✅ |
-
-> В Apidog `collectionVariables` называются **Module Variables** в UI, но в коде работают идентично через `pm.collectionVariables.*`.
-
-**Для импорта в Apidog:** `Import → Postman Collection → выбрать JSON файл`.  
-Скрипты переносятся без изменений.
-
----
-
-## 📁 Структура репозитория
-
-```
-/
-├── README.md                     — документация (English)
-├── README.ru.md                  — документация (Русский)
-├── CHANGELOG.md                  — история изменений
-├── LICENSE                       — лицензия MIT
-├── docs/
-│   └── banner.png                — баннер проекта
-├── .github/
-│   ├── ISSUE_TEMPLATE/           — шаблоны issues (баг / фича)
-│   └── workflows/lint.yml        — синтаксическая проверка движка при пуше
-├── engine/
-│   ├── pre-request.js            — движок pre-request  → hephaestus.v3.pre
-│   └── post-request.js           — движок post-request → hephaestus.v3.post
-├── templates/
-│   ├── method.pre-request.js     — шаблон метода (pre)
-│   └── method.post-request.js    — шаблон метода (post)
-├── setup/
-│   ├── defaults.json             — шаблон hephaestus.defaults
-│   ├── engine-update.js          — загрузка движка из Git
-│   ├── snapshot-clear.js         — очистка снапшотов
-│   └── snapshot-view.js          — просмотр снапшотов
-└── collection/
-    ├── README.md                 — инструкция по импорту
-    └── hephaestus-template.postman_collection.json
-```
-
----
-
-## 🎲 ctx.random — Генераторы данных (v3.8)
-
-```javascript
-// В override или defaults:
-randomData: {
-    email:  "random.email",       // → {{email}}
-    userId: "random.int:1:9999",  // → {{userId}}
-    token:  "random.uuid",        // → {{token}}
-}
-// Также: ctx.random.uuid/email/str(n)/int/float/bool/pick/date
-```
-
-## 🔑 assertUnique (v3.8)
-
-```javascript
-assertUnique: { path: "data.items", by: "id" }
-```
-
-## 🔇 softFail + logLevel (v3.8)
-
-```javascript
-{ "softFail": true }          // все assertions non-blocking
-{ "logLevel": "minimal" }    // одна строка на запрос
-{ "logLevel": "silent"  }    // нет вывода (CI JSON всё равно пишется)
-{ "logLevel": "verbose" }    // box + заголовки ответа
-```
-
-## 👁️ Watch Mode (v3.8)
-
-```bash
-npm run watch -- -c collection.json -e env.json
-# Перезапускает Newman при изменении файлов. R — ручной прогон.
-```
-
-## 🔍 Сравнение прогонов (v3.8)
-
-```bash
-npm run compare -- before.json after.json [--md]
-# Новые падения, fixed, регрессии по времени, смена статусов.
-```
-
----
-
-## ⚡ retryOnStatus (v3.7)
-
-Автоматически повторяет запрос при совпадении статуса. Assertions и snapshot пропускаются на промежуточных попытках:
-
-```javascript
-const override = {
-    retryOnStatus: { statuses: [503, 429], maxRetries: 3 }
-};
-```
-
-## 📝 Генерация API-документации (v3.7)
-
-```bash
-npm run docs -- collection.json -o API.md
-npm run docs -- collection.json --json  # структурированный JSON
-```
-
-Извлекает метод, URL, ожидаемый статус, `assertShape`, правила assertions прямо из test-скриптов коллекции.
-
-## 📊 Резюме Newman-прогона (v3.7)
-
-```bash
-npm run summary -- results.json           # консоль
-npm run summary -- results.json --md      # Markdown
-```
-
-Показывает: общий pass rate, per-folder таблицу, самые медленные, часто-падающие assertions и **перцентили времени ответа** (p50 / p90 / p95 / p99).
-
-**SLA-гейт** — валит прогон, если p95 превышает порог (удобно в CI):
-
-```bash
-npm run summary -- results.json --sla=500        # или: hephaestus summary results.json --sla=500
-# exit 1, если p95 > 500 мс, со списком запросов сверх SLA
-```
-
-## 🧙 Init Wizard (v3.7)
-
-```bash
-npm run init  # интерактивный wizard настройки проекта
-```
-
----
-
-## 🧩 assertShape + assertOrder (v3.6)
-
-```javascript
-const override = {
-    assertShape: {
-        "data":       "object",
-        "data.id":    "number",
-        "data.items": "array",
-        "error":      "absent",
-    },
-    assertOrder: {
-        path: "data.items", by: "createdAt", direction: "desc", type: "date"
-    }
-};
-```
-
-## 🐳 Docker (v3.6)
-
-```bash
-bash scripts/docker-run.sh -c collection.json -e env.json -o reports/
-```
-
-Запускает Newman в Docker, генерирует HTML и JUnit отчёты. Node.js на хосте не нужен.
-
-## 📖 Config Reference (v3.6)
-
-**[Полный справочник конфигурации →](https://bogdanov-igor.github.io/hephaestus-postman-framework/config-reference.html)**
-
-Все опции с типами, дефолтами, примерами и поиском.
-
-## 🔬 npm test (v3.6)
-
-```bash
-npm test  # 18 тестов: синтаксис, версии, migrate, JUnit, HTML-отчёт
-```
-
----
-
-## 🔢 assertEach — Валидация каждого элемента массива (v3.5)
-
-```javascript
-const override = {
-    assertEach: {
-        path:     "data.items",
-        minCount: 1,
-        maxCount: 200,
-        rules: {
-            "id":     { type: "number", gt: 0 },
-            "status": { eq: "active" },
-            "email":  { matches: "@", soft: true },
-        }
-    }
-};
-```
-
-Все нарушения агрегируются в один `pm.test` с указанием индекса и поля, например `[3].status: eq "active", got "inactive"`. Поддерживает все операторы `assertions` map.
-
-## ✅ envRequired — Валидация env до запроса (v3.5)
-
-```javascript
-// В hephaestus.defaults (для всех запросов):
-{ "envRequired": ["BASE_URL", "OAUTH_CLIENT_ID"] }
-
-// Или per-request:
-const override = { envRequired: ["PAYMENT_API_KEY"] };
-```
-
-Если переменная пустая или отсутствует — запрос блокируется с понятным сообщением об ошибке.
-
----
-
-## 🧪 Shorthand assertions (v3.4)
-
-Краткий синтаксис проверок — дополнение к `keysToFind`:
-
-```javascript
-const override = {
-    assertions: {
-        "data.id":     { exists: true },
-        "data.status": { eq: "active" },
-        "data.count":  { gte: 1, lte: 100 },
-        "data.items":  { type: "array", minLen: 1 },
-        "data.email":  { matches: "@" },
-        "meta.error":  { absent: true },
-        "data.extra":  { exists: true, soft: true },                        // мягкая проверка
-        "data.token":  { exists: true, when: "ctx.api.status === 200" },   // условная
-    }
-};
-```
-
-Операторы: `exists`, `absent`, `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, `type`, `minLen`, `maxLen`, `includes`, `matches`, `soft`, `when`.
-
-## 🔐 OAuth2 client_credentials (v3.4)
-
-Автообновляемые OAuth2-токены:
-
-```javascript
-const override = {
-    auth: {
-        enabled: true,
-        type: "oauth2cc",
-        oauth2cc: {
-            tokenUrl:     "https://auth.example.com/oauth/token",
-            clientId:     "{{oauth_client_id}}",
-            clientSecret: "{{oauth_client_secret}}",
-            scope:        "api:read api:write"
-        }
-    }
-};
-```
-
-Токен кешируется в `hephaestus.oauth2.{clientId}.*` и обновляется автоматически за 60 секунд до истечения.
-
-## 📊 HTML Report (v3.4)
-
-```bash
-# Newman с экспортом JSON
+```sh
 newman run collection.json -e env.json --reporter-json-export results.json -r json
-
-# Генерация HTML-отчёта
-node scripts/generate-report.js results.json report.html
+node bin/hephaestus.js summary results.json --sla=500   # p95-гейт, exit 1 при превышении
 ```
 
-Отчёт содержит: SVG-датчик pass rate, временные бары по запросам, раскрываемые assertions, фильтр и поиск. Полностью автономный HTML-файл.
+### Обновление движка
 
----
+Встроенный движок уже работает. Чтобы подтянуть более свежую сборку из Git на
+месте, отправьте запрос `engine-update` в папке `Hephaestus System`. Он
+загружает `engine/pre-request.js` и `engine/post-request.js`, сверяет оба с
+[`engine/checksums.json`](engine/checksums.json) (SHA-256, внутри песочницы)
+перед установкой и сохраняет их в `hephaestus.v3.pre` / `hephaestus.v3.post`.
 
-## ⚒️ CLI — команда `hephaestus`
+## Что внутри
 
-Все Node-инструменты доступны одной командой — без клонирования репозитория:
+- **Движок.** ES-модули в `engine/src/**`, собранные esbuild в два файла
+  (~172 КБ суммарно) и выполняемые через eval внутри песочницы Postman —
+  движок-как-данные, без установки плагинов, без внешней среды выполнения. Один
+  pre-request конвейер и один post-request конвейер прогоняют цепочку модулей
+  через общий `ctx`.
+- **Коллекция без загрузок.** Поставляемая коллекция встраивает текущий движок
+  на этапе сборки. Свежий импорт работает офлайн; `engine-update` нужен только
+  чтобы позже подтянуть более новый код.
+- **Регрессия по снапшотам.** Эталоны живут в `hephaestus.snapshots` с ключом
+  `collection::request::status::format`. `strict` сравнивает всё тело,
+  `non-strict` проверяет только `checkPaths`. `snapshotRecord` принудительно
+  перезаписывает устаревший эталон за один прогон, когда API изменился по делу.
+- **Валидация по схеме.** JSON Schema через встроенный `tv4` — без зависимостей.
+- **Аудит безопасности.** Опциональные пассивные проверки ответа: отсутствие
+  защитных заголовков, раскрытие версии сервера, утечки stack-trace / debug в
+  теле, небезопасный CORS. Каждая выдаёт собственный тест, так что нарушение
+  политики валит прогон.
+- **Перцентили SLA.** Сводка CLI сообщает времена ответа p50/p90/p95/p99 и
+  контролирует прогон по `--sla=<ms>`.
+- **Импорт OpenAPI / Swagger.** Превращает спецификацию OpenAPI 3.x или
+  Swagger 2.0 (JSON или распространённое подмножество YAML) в готовую коллекцию
+  — с заранее заполненными `expectedStatus` и `schema` на каждую операцию —
+  без зависимостей.
+- **Снапшоты → Postman Examples.** Синхронизирует сохранённые снапшоты в
+  нативные Example Responses, пригодные для Mock Server.
+- **Маскирование секретов.** Ключи, названные в `secrets`, и совпадающие
+  query-параметры URL маскируются только в выводе логов — сохранённые значения
+  никогда не меняются.
 
-```bash
-# через npx (без установки)
-npx hephaestus-postman-framework report results.json
+## Что остаётся за рамками
 
-# или после установки пакета
-npm i -D hephaestus-postman-framework
-npx hephaestus report results.json
+- **Собственного тест-раннера нет.** Hephaestus — это логика; выполняют её
+  Postman и Newman. Нет ни демона, ни хостящегося сервиса, ни дашборда, ни базы
+  данных.
+- **Состояние живёт в коллекции.** Снапшоты, токены OAuth2 и плагины — это
+  переменные коллекции. Это делает всё портируемым и diff-абельным, но это не
+  хранилище данных — большие наборы снапшотов место в настоящем регрессионном
+  конвейере.
+- **Проверка целостности — это защита от подмены, а не подтверждение
+  авторства.** `engine-update` доказывает, что загруженный код соответствует
+  `checksums.json` при передаче. Он не доказывает, кто написал эту контрольную
+  сумму — подписи нет. Доверяйте источнику, из которого тянете. То же самое
+  сказано в [SECURITY.md](SECURITY.md).
+- **Схема — это JSON Schema draft 4** (встроенный `tv4`), а не новейшие
+  черновики — цена нулевых runtime-зависимостей.
+- **Импорт OpenAPI разбирает JSON и распространённое подмножество YAML**, а не
+  полную спецификацию YAML. Экзотические спецификации могут потребовать сначала
+  конвертации в JSON.
+
+## Конфигурация
+
+Всё — это один слитый конфиг: `hephaestus.defaults` (на всю коллекцию),
+глубоко слитый с `override` на каждый запрос. Основные поля:
+
+| Поле | По умолчанию | Назначение |
+|---|---|---|
+| `baseUrl` | `""` | База API; протокол подставляется из `defaultProtocol`, если опущен |
+| `locale` | `"ru"` | Язык вывода движка — `"ru"` или `"en"` |
+| `auth` | `none` | `none` · `basic` · `bearer` · `headers` · `variables` · `oauth2cc` |
+| `contentType` | `"json"` | Разбор ответа: `json` · `xml` · `text` |
+| `expectedStatus` | `[200,201,202]` | Ожидаемый HTTP-статус — число или список; управляет негативным тестированием |
+| `maxResponseTime` | `1000` | Провал, если ответ медленнее (мс) |
+| `snapshot` | выключено | `mode`, `checkPaths`, `ignorePaths`, `autoSaveMissing`, `record` |
+| `schema` | выключено | Определение JSON Schema, валидируемое через `tv4` |
+| `securityAudit` | выключено | Пассивные проверки заголовков / раскрытия / CORS |
+| `secrets` | `[…]` | Имена ключей, маскируемые в логах |
+| `ci` | `false` | Выдавать структурированную JSON-строку `[HEPHAESTUS_CI]` на запрос |
+
+Полный справочник по каждому полю — в
+[`docs/config-reference.html`](docs/config-reference.html).
+
+## Модули
+
+Движок — это фиксированный набор модулей, прогоняемых через общий `ctx`; это
+перечень, а не точный порядок вызова:
+
+**Pre-request** — `configMerge` · `envRequired` · `iterationData` · `random` ·
+`urlBuilder` · `auth` · `dateUtils` · `logger`.
+
+**Post-request** — `configMerge` · `normalizeResponse` · `metrics` ·
+`extractor` · `assertions` · `assertEach` · `assertShape` · `assertOrder` ·
+`assertUnique` · `assertHeaders` · `retryOnStatus` · `snapshot` · `schema` ·
+`securityAudit` · `plugins` · `logger`.
+
+`assertions` покрывает `keysToFind` / `varsToSave` / `keysToCount` / `assertMap` /
+`maxResponseTime`; `extractor` открывает `ctx.api` с `get / find / all /
+count / save` над JSON и XML, dot-пути и wildcard-ы `[*]`. Кастомные `plugins`
+расширяют движок из переменных коллекции без форка. Детали по каждому модулю и
+примеры — в [`docs/features.html`](docs/features.html).
+
+## CLI
+
+Node-инструментарий без зависимостей, один бинарник, пробрасывает коды выхода,
+так что каждая команда работает как CI-гейт. Из клона этого репозитория:
+
+```sh
+node bin/hephaestus.js <command> [args]
+# те же инструменты подключены как npm-скрипты:
+npm run <command> -- [args]
 ```
+
+> Пока не опубликован в npm. Когда опубликуется — те же команды будут
+> запускаться как `npx hephaestus <command>` без клонирования.
 
 | Команда | Что делает |
 |---|---|
-| `hephaestus summary <results.json>` | Сводка прогона Newman (консоль/Markdown) |
-| `hephaestus compare <before> <after>` | Дифф двух прогонов — CI-гейт регрессий (exit 1) |
-| `hephaestus report <results.json> [out.html]` | Самодостаточный HTML-отчёт |
-| `hephaestus junit <results.json> [out.xml]` | Newman JSON → JUnit XML (`-` читает stdin) |
-| `hephaestus migrate <collection.json>` | Классификация состояния миграции коллекции |
-| `hephaestus docs <collection.json>` | Генерация API-документации из коллекции |
-| `hephaestus init` | Интерактивный мастер конфигурации |
-| `hephaestus watch -c <collection.json>` | Перезапуск Newman при изменении файлов |
+| `summary <results.json> [--md] [--sla=<ms>]` | Сводка прогона + p50/p90/p95/p99, SLA-гейт |
+| `compare <before> <after> [--md]` | Diff двух прогонов — регресс-гейт, exit 1 при регрессии |
+| `report <results.json> [out.html]` | Автономный HTML-отчёт |
+| `junit <results.json\|-> [out.xml]` | Newman JSON → JUnit XML |
+| `migrate <collection.json>` | Классифицирует состояние миграции коллекции |
+| `docs <collection.json>` | API-документация из тест-скриптов коллекции |
+| `sync-examples <collection.json>` | Снапшоты → Postman Example Responses |
+| `openapi <spec>` | OpenAPI / Swagger → коллекция Hephaestus |
+| `init` | Интерактивный мастер конфига / окружения |
+| `watch -c <collection.json>` | Перезапуск Newman при изменении файла |
 
-Exit-коды пробрасываются, поэтому `compare`/`summary` работают как CI-гейты. Полный список — `hephaestus --help`. Те же инструменты работают и как `npm run <name>` внутри репозитория.
+`node bin/hephaestus.js --help` перечисляет всё.
 
----
+## Тесты и целостность
 
-## 🧬 Импорт OpenAPI / Swagger
+- **Golden-харнесс движка** — настоящий движок запускается под Newman против
+  mock-сервера, и его вывод сравнивается побайтово с золотым эталоном:
+  **200 проверок в 17 запросах**, обе локали зафиксированы. Он ловит любой
+  дрейф в поведении движка, а не только в инструментарии.
+- **`npm test`** — **46 тестов** по CLI-скриптам (docs, summary, compare,
+  JUnit, migrate, импорт OpenAPI, sync-examples) и проверка маскирования секретов.
+- **`npm run build`** — **10 проверок**: бандл движка синхронен с `engine/src`,
+  версия из единого источника, `checksums.json` и встроенная коллекция
+  актуальны, defaults и коллекция — валидный JSON.
+- **eslint** чист по `engine/`, `setup/`, `templates/`.
 
-Генерирует готовую Hephaestus-коллекцию из OpenAPI 3.x или Swagger 2.0 (JSON или распространённое подмножество YAML — без зависимостей):
+Нулевые runtime-зависимости. Только для разработки: `esbuild` (запинён),
+`newman`, `eslint`.
 
-```bash
-hephaestus openapi openapi.yaml -o api.postman_collection.json
-```
+## Документация
 
-По одному запросу на операцию, сгруппированы по тегам, с преднастроенным `override` в Test-скрипте: **`expectedStatus`** (из задокументированных 2xx-ответов) и **`schema`** (JSON-схема ответа с заинлайненными `$ref`). Path-параметры `{id}` → Postman `:id`. Дальше импортируй, задай `hephaestus.defaults`, запусти `🔧 engine-update`.
-
----
-
-## 🛠 Инструменты экосистемы (v3.3)
-
-| Инструмент | Описание |
+| Документ | Что внутри |
 |---|---|
-| [**Snapshot Viewer**](https://bogdanov-igor.github.io/hephaestus-postman-framework/snapshot-viewer.html) | Визуальный просмотрщик `hephaestus.snapshots` — фильтрация, инспекция, датчик размера |
-| [**migrate.js**](scripts/migrate.js) | Сканирует Postman-коллекцию и выводит статус миграции для каждого запроса |
-| [**ci-to-junit.js**](scripts/ci-to-junit.js) | Конвертирует Newman JSON-репорт в JUnit XML (Jenkins, GitHub, GitLab) |
-| [**docs/plugins/**](docs/plugins/) | Готовые плагины: Slack, Teams, custom-assertions |
-| [**Руководство Newman + CI**](docs/newman-ci.md) | GitHub Actions, GitLab CI, Jenkins — полное руководство |
+| [быстрый старт](docs/quickstart.html) | Import → defaults → первый запрос, от и до |
+| [справочник конфига](docs/config-reference.html) | Каждое поле конфига, типизировано, с дефолтами |
+| [возможности](docs/features.html) | Модуль за модулем с примерами |
+| [newman и CI](docs/newman-ci.md) | Настройки GitHub Actions, GitLab CI, Jenkins |
+| [просмотр снапшотов](docs/snapshot-viewer.html) | Визуальный браузер для `hephaestus.snapshots` |
+| [главная документации](docs/index.html) | Локальный индекс сайта документации |
 
-### Ассистент миграции
+Полное руководство двуязычно: этот файл (Русский) и
+[README.md](README.md) (English).
 
-```bash
-# Проверить, сколько запросов нуждается в миграции
-node scripts/migrate.js my-collection.json
+## Лицензия
 
-# Показать скрипты + предложить стартовые override-шаблоны
-node scripts/migrate.js my-collection.json --verbose --template
+[MIT](LICENSE) © 2026 **Igor Bogdanov** · <bogdanov.ig.alex@gmail.com>
 
-# JSON-вывод для CI/инструментов
-node scripts/migrate.js my-collection.json --json > migration.json
-```
-
-### Newman → JUnit XML
-
-```bash
-# Запустить Newman с экспортом JSON
-newman run collection.json -e env.json --reporter-json-export results.json -r json
-
-# Конвертировать в JUnit XML
-node scripts/ci-to-junit.js results.json junit-report.xml
-```
-
-### Data-driven тестирование (v3.3)
-
-`ctx.iteration` доступен во всех плагинах и post-request скриптах:
-
-```javascript
-const userId = ctx.iteration.get('userId');   // из строки CSV/JSON
-const email  = ctx.iteration.data.email;      // аналог
-const rowNum = ctx.iteration.index + 1;       // номер итерации (с 1)
-
-// В URL/Body/Headers Newman: используй {{iter.userId}}
-// newman run col.json --iteration-data data.csv
-```
-
----
-
-## 📝 Changelog
-
-История изменений — [CHANGELOG.md](CHANGELOG.md)
-
----
-
-## 👤 Автор
-
-**Bogdanov Igor** · ✉️ [bogdanov.ig.alex@gmail.com](mailto:bogdanov.ig.alex@gmail.com) · 💼 [LinkedIn](https://www.linkedin.com/in/i-a-bogdanov/)
-
----
-
-## 📄 Лицензия
-
-Проект распространяется под лицензией **MIT** — см. [LICENSE](LICENSE).
-
-```
-Copyright (c) 2026 Bogdanov Igor
-```
+Свободно использовать, форкать и строить поверх, в том числе коммерчески.
+Сохраняйте атрибуцию.
