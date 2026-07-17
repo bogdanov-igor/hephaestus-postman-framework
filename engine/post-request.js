@@ -271,6 +271,22 @@
         }, en: function(name2, path2) {
           return "\u{1F6AB} '" + name2 + "': not found at path '" + path2 + "'";
         } },
+        "assertions.maxBytesName": {
+          ru: function(max, size) {
+            return "\u{1F4E6} \u0420\u0430\u0437\u043C\u0435\u0440 \u043E\u0442\u0432\u0435\u0442\u0430 \u2264 " + max + " \u0411: " + size + " \u0411 " + (size <= max ? "\u2705" : "\u274C");
+          },
+          en: function(max, size) {
+            return "\u{1F4E6} Response size \u2264 " + max + " B: " + size + " B " + (size <= max ? "\u2705" : "\u274C");
+          }
+        },
+        "assertions.maxBytesExceed": {
+          ru: function(size, max) {
+            return "\u{1F6AB} \u0420\u0430\u0437\u043C\u0435\u0440 \u043E\u0442\u0432\u0435\u0442\u0430 \u043F\u0440\u0435\u0432\u044B\u0448\u0435\u043D: " + size + " \u0411 > " + max + " \u0411";
+          },
+          en: function(size, max) {
+            return "\u{1F6AB} Response size exceeded: " + size + " B > " + max + " B";
+          }
+        },
         "assertions.unknownScope": { ru: function(scope, name2) {
           return 'varsToSave: \u043D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u044B\u0439 scope "' + scope + '" \u0434\u043B\u044F "' + name2 + '", \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D collection';
         }, en: function(scope, name2) {
@@ -803,6 +819,7 @@
         "dateFormat",
         "dates",
         "maxResponseTime",
+        "maxBytes",
         "expectedStatus",
         "expectEmpty",
         "contentType",
@@ -1472,7 +1489,18 @@
               pm.expect(time, "\u{1F6AB} Response time exceeded: " + time + "ms > " + max + "ms").to.be.at.most(max);
             });
           },
+          // maxBytes: ctx.config.maxBytes (число) — бюджет размера ответа в байтах.
+          runMaxBytes(ctx2) {
+            const max = ctx2.config.maxBytes;
+            if (typeof max !== "number" || max <= 0) return;
+            const size = ctx2.response.size;
+            if (typeof size !== "number") return;
+            pm.test(t(ctx2, "assertions.maxBytesName", max, size), () => {
+              pm.expect(size, t(ctx2, "assertions.maxBytesExceed", size, max)).to.be.at.most(max);
+            });
+          },
           run(ctx2) {
+            this.runMaxBytes(ctx2);
             if (!ctx2.response.parsed && ctx2.response.format !== "text") {
               ctx2._meta.errors.push(t(ctx2, "assertions.notParsed"));
               return;
