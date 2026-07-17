@@ -11,6 +11,7 @@ const sandboxGlobals = {
     xml2Json:  'readonly',
     CryptoJS:  'readonly',
     btoa:      'readonly',
+    atob:      'readonly',
     require:   'readonly',
     console:   'readonly',
     eval:      'readonly',

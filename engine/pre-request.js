@@ -551,6 +551,36 @@
     }, en: function() {
       return "Access-Control-Allow-Origin: * together with Allow-Credentials: true";
     } },
+    "securityAudit.cookieName": { ru: function(name) {
+      return 'Cookie "' + name + '": \u0437\u0430\u0449\u0438\u0442\u043D\u044B\u0435 \u0444\u043B\u0430\u0433\u0438';
+    }, en: function(name) {
+      return 'Cookie "' + name + '": protective flags';
+    } },
+    "securityAudit.cookieDetail": { ru: function(name, missing) {
+      return '\u0443 cookie "' + name + '" \u043D\u0435\u0442 \u0444\u043B\u0430\u0433\u043E\u0432: ' + missing;
+    }, en: function(name, missing) {
+      return 'cookie "' + name + '" is missing flags: ' + missing;
+    } },
+    "securityAudit.jwtName": { ru: function(alg) {
+      return "JWT (alg: " + (alg || "?") + "): \u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u043E\u0441\u0442\u044C";
+    }, en: function(alg) {
+      return "JWT (alg: " + (alg || "?") + "): sanity";
+    } },
+    "securityAudit.jwtDetail": { ru: function(why) {
+      return "\u043D\u0435\u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u044B\u0439 JWT: " + why;
+    }, en: function(why) {
+      return "insecure JWT: " + why;
+    } },
+    "securityAudit.noStoreName": { ru: function() {
+      return "\u041E\u0442\u0432\u0435\u0442 \u043D\u0435 \u043A\u0435\u0448\u0438\u0440\u0443\u0435\u0442\u0441\u044F (Cache-Control: no-store)";
+    }, en: function() {
+      return "Response is not cacheable (Cache-Control: no-store)";
+    } },
+    "securityAudit.noStoreDetail": { ru: function(cc) {
+      return "Cache-Control \u043D\u0435 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u0442 no-store: " + cc;
+    }, en: function(cc) {
+      return "Cache-Control has no no-store: " + cc;
+    } },
     // ─── logger ───
     "logger.snapshotDiffCount": { ru: function(count) {
       return " (" + count + " \u0440\u0430\u0437\u043B\u0438\u0447\u0438\u0439)";
