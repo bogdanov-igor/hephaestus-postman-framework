@@ -658,6 +658,93 @@ test('openapi handles flush-style YAML (same-indent lists, server vars, response
     assert(override.schema && override.schema.definition && override.schema.definition.properties && override.schema.definition.properties.id, 'response-level $ref schema should be inlined');
 });
 
+// ─── 14. doctor.js ────────────────────────────────────────────────────────────
+// Pre-flight diagnostic. These tests DO NOT touch the real engine files; the
+// checksum-mismatch FAIL path is proven out-of-band (see the framework docs /
+// PR notes) against a throwaway mirror. Here we exercise the honest exit-code
+// contract instead: clean checkout → exit 0, a real FAIL → exit 1.
+
+console.log('\n⑭ doctor.js');
+
+const DOCTOR = path.join(ROOT, 'scripts/doctor.js');
+
+test('doctor exits 0 and prints a healthy summary on clean checkout', function() {
+    // run() throws on any non-zero exit, so reaching the asserts already proves exit 0.
+    const out = run(NODE + ' "' + DOCTOR + '" --no-color');
+    assertContains(out, 'Pre-flight Doctor', 'missing doctor header');
+    assertContains(out, 'passed', 'missing pass summary line');
+});
+
+test('doctor --json reports ok:true with all 6 checks on clean checkout', function() {
+    const doc = JSON.parse(run(NODE + ' "' + DOCTOR + '" --json'));
+    assert(doc.ok === true, 'expected ok:true on clean checkout');
+    assert(Array.isArray(doc.checks) && doc.checks.length === 6, 'expected 6 checks, got ' + (doc.checks && doc.checks.length));
+    const integrity = doc.checks.find(function(ch) { return ch.name === 'Engine integrity'; });
+    assert(integrity && integrity.status === 'PASS', 'engine integrity should PASS on clean checkout');
+    const version = doc.checks.find(function(ch) { return ch.name === 'Version consistency'; });
+    assert(version && version.status === 'PASS', 'version consistency should PASS on clean checkout');
+    const drift = doc.checks.find(function(ch) { return ch.name === 'Defaults drift'; });
+    assert(drift && drift.status === 'PASS', 'defaults drift should PASS on clean checkout');
+});
+
+test('doctor without -e never FAILs the environment check (honest INFO, no false requirement)', function() {
+    const doc = JSON.parse(run(NODE + ' "' + DOCTOR + '" --json'));
+    const env = doc.checks.find(function(ch) { return ch.name === 'Environment'; });
+    assert(env && env.status === 'INFO', 'without -e the env check must be INFO, not FAIL/PASS');
+});
+
+test('doctor gates CI: a real FAIL (invalid -e env) exits 1 and sets ok:false', function() {
+    const badEnv = path.join(TMP, 'doctor-bad-env.json');
+    fs.writeFileSync(badEnv, '{ this is not valid json');
+    let code = 0, out = '';
+    try {
+        run(NODE + ' "' + DOCTOR + '" -e "' + badEnv + '" --json');
+    } catch (e) {
+        code = e.status || 1;
+        out  = (e.stdout || '').toString();
+    }
+    assert(code === 1, 'invalid env should exit 1 (CI gate), got ' + code);
+    const doc = JSON.parse(out);
+    assert(doc.ok === false, 'JSON ok should be false when a check FAILs');
+    const env = doc.checks.find(function(ch) { return ch.name === 'Environment'; });
+    assert(env && env.status === 'FAIL', 'Environment check should FAIL on invalid env JSON');
+});
+
+test('doctor -e with a valid Postman environment PASSes and stays exit 0', function() {
+    const goodEnv = path.join(TMP, 'doctor-good-env.json');
+    fs.writeFileSync(goodEnv, JSON.stringify({
+        name: 'dev',
+        values: [
+            { key: 'baseUrl', value: 'https://api.example.com', enabled: true },
+            { key: 'token',   value: '',                        enabled: true }
+        ]
+    }));
+    const doc = JSON.parse(run(NODE + ' "' + DOCTOR + '" -e "' + goodEnv + '" --json'));
+    assert(doc.ok === true, 'valid env + clean checkout should be ok:true');
+    const env = doc.checks.find(function(ch) { return ch.name === 'Environment'; });
+    assert(env && env.status === 'PASS', 'env check should PASS for a valid environment');
+    assertContains(env.detail, '2 variable(s)', 'env detail should report variable count');
+});
+
+test('doctor -e with no path FAILs (an unset/empty env var must not silently pass)', function() {
+    let code = 0, out = '';
+    try {
+        run(NODE + ' "' + DOCTOR + '" -e --json');
+    } catch (e) {
+        code = e.status || 1;
+        out  = (e.stdout || '').toString();
+    }
+    assert(code === 1, '-e without a path should exit 1 (no false all-clear), got ' + code);
+    const env = JSON.parse(out).checks.find(function(ch) { return ch.name === 'Environment'; });
+    assert(env && env.status === 'FAIL', '-e without a path should FAIL the env check, got ' + (env && env.status));
+});
+
+test('CLI exposes doctor: --help lists it and the subcommand delegates (exit 0)', function() {
+    assertContains(run(NODE + ' "' + CLI + '" --help'), 'doctor', 'help should list doctor');
+    const doc = JSON.parse(run(NODE + ' "' + CLI + '" doctor --json'));
+    assert(doc.ok === true, 'CLI doctor --json should report ok:true on clean checkout');
+});
+
 // ─── Cleanup ─────────────────────────────────────────────────────────────────
 
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch(e) { /* ignore */ }
