@@ -285,6 +285,23 @@ function buildCollection(preSrc, postSrc, baseUrl) {
             event: methodScripts({}, {
                 snapshot: { enabled: true, storage: 'postman-api', mode: 'non-strict', autoSaveMissing: true }
             })
+        },
+        {
+            // typo-guard: strictMode makes an unknown override key ('snapshsot') fail
+            // the run. A NEGATIVE fixture — its failing assertion is EXPECTED (the
+            // "neg-" prefix keeps it out of the harness's unexpected-failure count).
+            name: 'neg-strict-unknown-key',
+            request: { method: 'GET', url: baseUrl + '/obj' },
+            event: methodScripts({}, { strictMode: true, snapshsot: { enabled: true } })
+        },
+        {
+            // typo-guard MUST NOT fire for a known plugin config key (slackUrl) or for
+            // a custom key allowlisted via extraKeys — even under strictMode. POSITIVE
+            // fixture: every assertion passes, locking that valid plugin/custom configs
+            // are never false-failed.
+            name: 'strict-allowed-keys-ok',
+            request: { method: 'GET', url: baseUrl + '/obj' },
+            event: methodScripts({}, { strictMode: true, slackUrl: 'https://hooks.example', extraKeys: ['myCustom'], myCustom: 1 })
         }
     ];
 
@@ -378,13 +395,18 @@ runEngine(preSrc, postSrc).then(function (fingerprint) {
 
     const total  = fingerprint.tests.length;
     const failed = fingerprint.tests.filter(function (t) { return !t.ok; });
+    // Fixtures named "neg-…" are negative tests: their failing assertions are
+    // EXPECTED (locked in the golden), so they don't count as unexpected failures.
+    const unexpected = failed.filter(function (t) { return !/^neg-/.test(t.item); });
+    const expected   = failed.filter(function (t) { return /^neg-/.test(t.item); });
 
     if (PRINT) { process.stdout.write(json); }
 
     console.error('\n🔬 Engine harness: ' + total + ' assertions across ' +
-                Object.keys(fingerprint.ci).length + ' requests; ' + failed.length + ' failed');
-    if (failed.length) {
-        failed.forEach(function (t) { console.error('   ❌ [' + t.item + '] ' + t.name); });
+                Object.keys(fingerprint.ci).length + ' requests; ' + unexpected.length + ' unexpected failure(s)' +
+                (expected.length ? ' (' + expected.length + ' expected)' : ''));
+    if (unexpected.length) {
+        unexpected.forEach(function (t) { console.error('   ❌ [' + t.item + '] ' + t.name); });
     }
 
     if (UPDATE) {
