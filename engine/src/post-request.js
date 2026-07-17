@@ -1359,6 +1359,26 @@ import { t, statusLabel } from './shared/i18n.js';
         _headerVal(name) {
             try { return pm.response.headers.get(name); } catch(e) { return undefined; }
         },
+        // All Set-Cookie header values (headers.get collapses duplicates to one).
+        _setCookies() {
+            try {
+                const all = (pm.response.headers && pm.response.headers.all) ? pm.response.headers.all() : [];
+                return all.filter(function(h) { return h && h.key && String(h.key).toLowerCase() === 'set-cookie'; })
+                          .map(function(h) { return String(h.value); });
+            } catch (e) { return []; }
+        },
+        // JWT-shaped tokens (header.payload.signature, base64url) in a haystack.
+        _findJwts(hay) {
+            return String(hay).match(/eyJ[A-Za-z0-9_-]{2,}\.[A-Za-z0-9_-]{2,}\.[A-Za-z0-9_-]*/g) || [];
+        },
+        // base64url segment → JSON object (or null). atob exists in the sandbox.
+        _decodeJwtPart(seg) {
+            try {
+                let s = String(seg).replace(/-/g, '+').replace(/_/g, '/');
+                while (s.length % 4) s += '=';
+                return JSON.parse(decodeURIComponent(escape(atob(s))));
+            } catch (e) { return null; }
+        },
         run(ctx) {
             const cfg = ctx.config.securityAudit;
             if (!cfg || !cfg.enabled) return;
@@ -1419,6 +1439,44 @@ import { t, statusLabel } from './shared/i18n.js';
                     findings.push({ type: 'insecure-cors' });
                     secTest(t(ctx, 'securityAudit.corsName'), false, t(ctx, 'securityAudit.corsDetail'));
                 }
+            }
+
+            // 5. Cookie hardening: Set-Cookie flags (opt-in via cookieFlags:true|[flags]).
+            if (cfg.cookieFlags) {
+                const required = Array.isArray(cfg.cookieFlags) ? cfg.cookieFlags : ['Secure', 'HttpOnly', 'SameSite'];
+                self._setCookies().forEach(function(c) {
+                    const cookieName = c.split('=')[0].trim();
+                    const missing = required.filter(function(f) {
+                        const esc = String(f).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        return !(new RegExp('(^|;)\\s*' + esc + '\\b', 'i')).test(c);
+                    });
+                    const ok = missing.length === 0;
+                    if (!ok) findings.push({ type: 'weak-cookie', name: cookieName, missing: missing });
+                    secTest(t(ctx, 'securityAudit.cookieName', cookieName), ok, t(ctx, 'securityAudit.cookieDetail', cookieName, missing.join(', ')));
+                });
+            }
+
+            // 6. JWT sanity: reject alg:none and expired tokens (opt-in via checkJwt:true).
+            if (cfg.checkJwt) {
+                self._findJwts(raw + ' ' + self._setCookies().join(' ')).forEach(function(jwt) {
+                    const parts = jwt.split('.');
+                    const hdr = self._decodeJwtPart(parts[0]);
+                    const pl  = self._decodeJwtPart(parts[1]);
+                    const algNone = hdr && typeof hdr.alg === 'string' && hdr.alg.toLowerCase() === 'none';
+                    const expired = pl && typeof pl.exp === 'number' && (pl.exp * 1000) < Date.now();
+                    const ok = !algNone && !expired;
+                    if (!ok) findings.push({ type: 'weak-jwt', alg: hdr && hdr.alg, expired: !!expired });
+                    secTest(t(ctx, 'securityAudit.jwtName', hdr && hdr.alg), ok,
+                        t(ctx, 'securityAudit.jwtDetail', algNone ? 'alg: none' : (expired ? 'exp in the past' : '')));
+                });
+            }
+
+            // 7. Auth responses must not be cacheable: Cache-Control: no-store (opt-in).
+            if (cfg.requireNoStore) {
+                const cc = String(self._headerVal('cache-control') || '').toLowerCase();
+                const ok = cc.indexOf('no-store') !== -1;
+                if (!ok) findings.push({ type: 'cacheable-auth' });
+                secTest(t(ctx, 'securityAudit.noStoreName'), ok, t(ctx, 'securityAudit.noStoreDetail', cc || '(missing)'));
             }
 
             ctx._meta.results.security = { findings: findings, ok: findings.length === 0 };

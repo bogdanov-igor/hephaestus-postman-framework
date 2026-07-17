@@ -184,7 +184,7 @@ node bin/hephaestus.js summary results.json --sla=500   # p95-гейт, exit 1 �
 | `maxBytes` | выкл | Провал, если тело ответа больше N байт |
 | `snapshot` | выключено | `mode`, `checkPaths`, `ignorePaths`, `autoSaveMissing`, `record` |
 | `schema` | выключено | Определение JSON Schema, валидируемое через `tv4` |
-| `securityAudit` | выключено | Пассивные проверки заголовков / раскрытия / CORS |
+| `securityAudit` | выключено | Пассивные проверки: заголовки · раскрытие · CORS · cookie-флаги · JWT · no-store |
 | `secrets` | `[…]` | Имена ключей, маскируемые в логах |
 | `ci` | `false` | Выдавать структурированную JSON-строку `[HEPHAESTUS_CI]` на запрос |
 

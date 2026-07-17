@@ -166,6 +166,12 @@ const M = {
     'securityAudit.bodyLeakDetail': { ru: function(leaks) { return 'найдены утечки: ' + leaks; }, en: function(leaks) { return 'leaks found: ' + leaks; } },
     'securityAudit.corsName': { ru: function() { return 'CORS: нет wildcard-origin с credentials'; }, en: function() { return 'CORS: no wildcard-origin with credentials'; } },
     'securityAudit.corsDetail': { ru: function() { return 'Access-Control-Allow-Origin: * вместе с Allow-Credentials: true'; }, en: function() { return 'Access-Control-Allow-Origin: * together with Allow-Credentials: true'; } },
+    'securityAudit.cookieName': { ru: function(name) { return 'Cookie "' + name + '": защитные флаги'; }, en: function(name) { return 'Cookie "' + name + '": protective flags'; } },
+    'securityAudit.cookieDetail': { ru: function(name, missing) { return 'у cookie "' + name + '" нет флагов: ' + missing; }, en: function(name, missing) { return 'cookie "' + name + '" is missing flags: ' + missing; } },
+    'securityAudit.jwtName': { ru: function(alg) { return 'JWT (alg: ' + (alg || '?') + '): корректность'; }, en: function(alg) { return 'JWT (alg: ' + (alg || '?') + '): sanity'; } },
+    'securityAudit.jwtDetail': { ru: function(why) { return 'небезопасный JWT: ' + why; }, en: function(why) { return 'insecure JWT: ' + why; } },
+    'securityAudit.noStoreName': { ru: function() { return 'Ответ не кешируется (Cache-Control: no-store)'; }, en: function() { return 'Response is not cacheable (Cache-Control: no-store)'; } },
+    'securityAudit.noStoreDetail': { ru: function(cc) { return 'Cache-Control не содержит no-store: ' + cc; }, en: function(cc) { return 'Cache-Control has no no-store: ' + cc; } },
     // ─── logger ───
     'logger.snapshotDiffCount': { ru: function(count) { return ' (' + count + ' различий)'; }, en: function(count) { return ' (' + count + ' differences)'; } },
     'logger.schemaValid': { ru: function() { return '✅ валидна'; }, en: function() { return '✅ valid'; } },

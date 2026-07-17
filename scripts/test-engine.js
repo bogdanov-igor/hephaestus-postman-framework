@@ -71,6 +71,22 @@ function startMockServer() {
                 'X-Content-Type-Options':    'nosniff'
             });
         }
+        if (url === '/setcookie-weak') {
+            return json({ ok: true }, 200, { 'Set-Cookie': 'sid=abc123' });
+        }
+        if (url === '/setcookie-strong') {
+            return json({ ok: true }, 200, { 'Set-Cookie': 'sid=abc123; Secure; HttpOnly; SameSite=Strict' });
+        }
+        if (url === '/jwt-none' || url === '/jwt-ok' || url === '/jwt-expired') {
+            const b64 = function (o) { return Buffer.from(JSON.stringify(o)).toString('base64url'); };
+            const alg = url === '/jwt-none' ? 'none' : 'HS256';
+            const exp = url === '/jwt-expired' ? 1 : 9999999999;
+            const token = b64({ alg: alg, typ: 'JWT' }) + '.' + b64({ sub: 'x', exp: exp }) + '.' + (alg === 'none' ? '' : 'sig');
+            return json({ token: token });
+        }
+        if (url === '/nostore') {
+            return json({ ok: true }, 200, { 'Cache-Control': 'no-store' });
+        }
         return json({ error: 'not found' }, 404);
     });
     return new Promise(function (resolve) {
@@ -326,6 +342,43 @@ function buildCollection(preSrc, postSrc, baseUrl) {
             name: 'neg-maxbytes-binary',
             request: { method: 'GET', url: baseUrl + '/binary' },
             event: methodScripts({}, { maxBytes: 1 })
+        },
+        // ── securityAudit v2 (each isolates one v2 check: empty require/forbid lists,
+        //    CORS + body-leak off, so only the new check emits assertions) ──
+        {
+            name: 'secaudit-cookies-ok',
+            request: { method: 'GET', url: baseUrl + '/setcookie-strong' },
+            event: methodScripts({}, { securityAudit: { enabled: true, requireHeaders: [], forbidHeaders: [], forbidBodyPatterns: [], checkCors: false, cookieFlags: true } })
+        },
+        {
+            name: 'neg-secaudit-cookie-weak',
+            request: { method: 'GET', url: baseUrl + '/setcookie-weak' },
+            event: methodScripts({}, { securityAudit: { enabled: true, requireHeaders: [], forbidHeaders: [], forbidBodyPatterns: [], checkCors: false, cookieFlags: true } })
+        },
+        {
+            name: 'secaudit-jwt-ok',
+            request: { method: 'GET', url: baseUrl + '/jwt-ok' },
+            event: methodScripts({}, { securityAudit: { enabled: true, requireHeaders: [], forbidHeaders: [], forbidBodyPatterns: [], checkCors: false, checkJwt: true } })
+        },
+        {
+            name: 'neg-secaudit-jwt-none',
+            request: { method: 'GET', url: baseUrl + '/jwt-none' },
+            event: methodScripts({}, { securityAudit: { enabled: true, requireHeaders: [], forbidHeaders: [], forbidBodyPatterns: [], checkCors: false, checkJwt: true } })
+        },
+        {
+            name: 'neg-secaudit-jwt-expired',
+            request: { method: 'GET', url: baseUrl + '/jwt-expired' },
+            event: methodScripts({}, { securityAudit: { enabled: true, requireHeaders: [], forbidHeaders: [], forbidBodyPatterns: [], checkCors: false, checkJwt: true } })
+        },
+        {
+            name: 'secaudit-nostore-ok',
+            request: { method: 'GET', url: baseUrl + '/nostore' },
+            event: methodScripts({}, { securityAudit: { enabled: true, requireHeaders: [], forbidHeaders: [], forbidBodyPatterns: [], checkCors: false, requireNoStore: true } })
+        },
+        {
+            name: 'neg-secaudit-cacheable',
+            request: { method: 'GET', url: baseUrl + '/obj' },
+            event: methodScripts({}, { securityAudit: { enabled: true, requireHeaders: [], forbidHeaders: [], forbidBodyPatterns: [], checkCors: false, requireNoStore: true } })
         }
     ];
 

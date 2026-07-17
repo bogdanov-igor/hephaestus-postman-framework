@@ -451,6 +451,166 @@
       "ok": true
     },
     {
+      "item": "neg-secaudit-cacheable",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-cacheable",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-cacheable",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-cacheable",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-cacheable",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-cacheable",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-cacheable",
+      "name": "🛡️ Ответ не кешируется (Cache-Control: no-store)",
+      "ok": false
+    },
+    {
+      "item": "neg-secaudit-cacheable",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-cookie-weak",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-cookie-weak",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-cookie-weak",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-cookie-weak",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-cookie-weak",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-cookie-weak",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-cookie-weak",
+      "name": "🛡️ Cookie \"sid\": защитные флаги",
+      "ok": false
+    },
+    {
+      "item": "neg-secaudit-cookie-weak",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-jwt-expired",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-jwt-expired",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-jwt-expired",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-jwt-expired",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-jwt-expired",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-jwt-expired",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-jwt-expired",
+      "name": "🛡️ JWT (alg: HS256): корректность",
+      "ok": false
+    },
+    {
+      "item": "neg-secaudit-jwt-expired",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-jwt-none",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-jwt-none",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-jwt-none",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-jwt-none",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-jwt-none",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-jwt-none",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-jwt-none",
+      "name": "🛡️ JWT (alg: none): корректность",
+      "ok": false
+    },
+    {
+      "item": "neg-secaudit-jwt-none",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
       "item": "neg-strict-unknown-key",
       "name": "⚠️ URL: небезопасный протокол http",
       "ok": true
@@ -767,6 +927,126 @@
     },
     {
       "item": "schema-validate",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
+      "item": "secaudit-cookies-ok",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "secaudit-cookies-ok",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "secaudit-cookies-ok",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "secaudit-cookies-ok",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "secaudit-cookies-ok",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "secaudit-cookies-ok",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "secaudit-cookies-ok",
+      "name": "🛡️ Cookie \"sid\": защитные флаги",
+      "ok": true
+    },
+    {
+      "item": "secaudit-cookies-ok",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
+      "item": "secaudit-jwt-ok",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "secaudit-jwt-ok",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "secaudit-jwt-ok",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "secaudit-jwt-ok",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "secaudit-jwt-ok",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "secaudit-jwt-ok",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "secaudit-jwt-ok",
+      "name": "🛡️ JWT (alg: HS256): корректность",
+      "ok": true
+    },
+    {
+      "item": "secaudit-jwt-ok",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
+      "item": "secaudit-nostore-ok",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "secaudit-nostore-ok",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "secaudit-nostore-ok",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "secaudit-nostore-ok",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "secaudit-nostore-ok",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "secaudit-nostore-ok",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "secaudit-nostore-ok",
+      "name": "🛡️ Ответ не кешируется (Cache-Control: no-store)",
+      "ok": true
+    },
+    {
+      "item": "secaudit-nostore-ok",
       "name": "🟢 Статус: 200 — Успешно",
       "ok": true
     },
@@ -1357,6 +1637,74 @@
       "security": null,
       "errors": []
     },
+    "neg-secaudit-cacheable": {
+      "request": "neg-secaudit-cacheable",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": {
+        "findings": 1,
+        "ok": false
+      },
+      "errors": []
+    },
+    "neg-secaudit-cookie-weak": {
+      "request": "neg-secaudit-cookie-weak",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": {
+        "findings": 1,
+        "ok": false
+      },
+      "errors": []
+    },
+    "neg-secaudit-jwt-expired": {
+      "request": "neg-secaudit-jwt-expired",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": {
+        "findings": 1,
+        "ok": false
+      },
+      "errors": []
+    },
+    "neg-secaudit-jwt-none": {
+      "request": "neg-secaudit-jwt-none",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": {
+        "findings": 1,
+        "ok": false
+      },
+      "errors": []
+    },
     "neg-strict-unknown-key": {
       "request": "neg-strict-unknown-key",
       "method": "GET",
@@ -1461,6 +1809,57 @@
         "valid": true
       },
       "security": null,
+      "errors": []
+    },
+    "secaudit-cookies-ok": {
+      "request": "secaudit-cookies-ok",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": {
+        "findings": 0,
+        "ok": true
+      },
+      "errors": []
+    },
+    "secaudit-jwt-ok": {
+      "request": "secaudit-jwt-ok",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": {
+        "findings": 0,
+        "ok": true
+      },
+      "errors": []
+    },
+    "secaudit-nostore-ok": {
+      "request": "secaudit-nostore-ok",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": {
+        "findings": 0,
+        "ok": true
+      },
       "errors": []
     },
     "security-audit": {

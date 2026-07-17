@@ -172,7 +172,7 @@ deep-merged with a per-request `override`. Common fields:
 | `maxBytes` | off | Fail if the response body is larger than N bytes |
 | `snapshot` | disabled | `mode`, `checkPaths`, `ignorePaths`, `autoSaveMissing`, `record` |
 | `schema` | disabled | JSON Schema definition validated via `tv4` |
-| `securityAudit` | disabled | Passive header / disclosure / CORS checks |
+| `securityAudit` | disabled | Passive checks: headers · disclosure · CORS · cookie flags · JWT · no-store |
 | `secrets` | `[…]` | Key names masked in logs |
 | `ci` | `false` | Emit a structured `[HEPHAESTUS_CI]` JSON line per request |
 

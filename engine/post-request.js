@@ -630,6 +630,36 @@
         }, en: function() {
           return "Access-Control-Allow-Origin: * together with Allow-Credentials: true";
         } },
+        "securityAudit.cookieName": { ru: function(name2) {
+          return 'Cookie "' + name2 + '": \u0437\u0430\u0449\u0438\u0442\u043D\u044B\u0435 \u0444\u043B\u0430\u0433\u0438';
+        }, en: function(name2) {
+          return 'Cookie "' + name2 + '": protective flags';
+        } },
+        "securityAudit.cookieDetail": { ru: function(name2, missing) {
+          return '\u0443 cookie "' + name2 + '" \u043D\u0435\u0442 \u0444\u043B\u0430\u0433\u043E\u0432: ' + missing;
+        }, en: function(name2, missing) {
+          return 'cookie "' + name2 + '" is missing flags: ' + missing;
+        } },
+        "securityAudit.jwtName": { ru: function(alg) {
+          return "JWT (alg: " + (alg || "?") + "): \u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u043E\u0441\u0442\u044C";
+        }, en: function(alg) {
+          return "JWT (alg: " + (alg || "?") + "): sanity";
+        } },
+        "securityAudit.jwtDetail": { ru: function(why) {
+          return "\u043D\u0435\u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u044B\u0439 JWT: " + why;
+        }, en: function(why) {
+          return "insecure JWT: " + why;
+        } },
+        "securityAudit.noStoreName": { ru: function() {
+          return "\u041E\u0442\u0432\u0435\u0442 \u043D\u0435 \u043A\u0435\u0448\u0438\u0440\u0443\u0435\u0442\u0441\u044F (Cache-Control: no-store)";
+        }, en: function() {
+          return "Response is not cacheable (Cache-Control: no-store)";
+        } },
+        "securityAudit.noStoreDetail": { ru: function(cc) {
+          return "Cache-Control \u043D\u0435 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u0442 no-store: " + cc;
+        }, en: function(cc) {
+          return "Cache-Control has no no-store: " + cc;
+        } },
         // ─── logger ───
         "logger.snapshotDiffCount": { ru: function(count) {
           return " (" + count + " \u0440\u0430\u0437\u043B\u0438\u0447\u0438\u0439)";
@@ -2126,6 +2156,33 @@
               return void 0;
             }
           },
+          // All Set-Cookie header values (headers.get collapses duplicates to one).
+          _setCookies() {
+            try {
+              const all = pm.response.headers && pm.response.headers.all ? pm.response.headers.all() : [];
+              return all.filter(function(h) {
+                return h && h.key && String(h.key).toLowerCase() === "set-cookie";
+              }).map(function(h) {
+                return String(h.value);
+              });
+            } catch (e2) {
+              return [];
+            }
+          },
+          // JWT-shaped tokens (header.payload.signature, base64url) in a haystack.
+          _findJwts(hay) {
+            return String(hay).match(/eyJ[A-Za-z0-9_-]{2,}\.[A-Za-z0-9_-]{2,}\.[A-Za-z0-9_-]*/g) || [];
+          },
+          // base64url segment → JSON object (or null). atob exists in the sandbox.
+          _decodeJwtPart(seg) {
+            try {
+              let s = String(seg).replace(/-/g, "+").replace(/_/g, "/");
+              while (s.length % 4) s += "=";
+              return JSON.parse(decodeURIComponent(escape(atob(s))));
+            } catch (e2) {
+              return null;
+            }
+          },
           run(ctx2) {
             const cfg = ctx2.config.securityAudit;
             if (!cfg || !cfg.enabled) return;
@@ -2176,6 +2233,41 @@
                 findings.push({ type: "insecure-cors" });
                 secTest(t(ctx2, "securityAudit.corsName"), false, t(ctx2, "securityAudit.corsDetail"));
               }
+            }
+            if (cfg.cookieFlags) {
+              const required = Array.isArray(cfg.cookieFlags) ? cfg.cookieFlags : ["Secure", "HttpOnly", "SameSite"];
+              self._setCookies().forEach(function(c) {
+                const cookieName = c.split("=")[0].trim();
+                const missing = required.filter(function(f) {
+                  const esc = String(f).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                  return !new RegExp("(^|;)\\s*" + esc + "\\b", "i").test(c);
+                });
+                const ok = missing.length === 0;
+                if (!ok) findings.push({ type: "weak-cookie", name: cookieName, missing });
+                secTest(t(ctx2, "securityAudit.cookieName", cookieName), ok, t(ctx2, "securityAudit.cookieDetail", cookieName, missing.join(", ")));
+              });
+            }
+            if (cfg.checkJwt) {
+              self._findJwts(raw2 + " " + self._setCookies().join(" ")).forEach(function(jwt) {
+                const parts = jwt.split(".");
+                const hdr = self._decodeJwtPart(parts[0]);
+                const pl = self._decodeJwtPart(parts[1]);
+                const algNone = hdr && typeof hdr.alg === "string" && hdr.alg.toLowerCase() === "none";
+                const expired = pl && typeof pl.exp === "number" && pl.exp * 1e3 < Date.now();
+                const ok = !algNone && !expired;
+                if (!ok) findings.push({ type: "weak-jwt", alg: hdr && hdr.alg, expired: !!expired });
+                secTest(
+                  t(ctx2, "securityAudit.jwtName", hdr && hdr.alg),
+                  ok,
+                  t(ctx2, "securityAudit.jwtDetail", algNone ? "alg: none" : expired ? "exp in the past" : "")
+                );
+              });
+            }
+            if (cfg.requireNoStore) {
+              const cc = String(self._headerVal("cache-control") || "").toLowerCase();
+              const ok = cc.indexOf("no-store") !== -1;
+              if (!ok) findings.push({ type: "cacheable-auth" });
+              secTest(t(ctx2, "securityAudit.noStoreName"), ok, t(ctx2, "securityAudit.noStoreDetail", cc || "(missing)"));
             }
             ctx2._meta.results.security = { findings, ok: findings.length === 0 };
           }
