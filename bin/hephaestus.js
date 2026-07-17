@@ -32,7 +32,8 @@ const COMMANDS = {
     'sync-examples': { script: 'sync-examples.js', usage: 'sync-examples <collection.json> [-o out.json]', about: 'Snapshots → Postman Example Responses' },
     openapi: { script: 'openapi-import.js',  usage: 'openapi <spec.yaml|json> [-o collection.json]',      about: 'OpenAPI/Swagger → Hephaestus collection' },
     init:    { script: 'init.js',            usage: 'init [--defaults]',                                 about: 'Interactive config/environment wizard' },
-    watch:   { script: 'watch.js',           usage: 'watch -c <collection.json> [-e env.json]',          about: 'Re-run Newman on file changes' }
+    watch:   { script: 'watch.js',           usage: 'watch -c <collection.json> [-e env.json]',          about: 'Re-run Newman on file changes' },
+    mock:    { script: 'mock.js',            usage: 'mock <collection.json> [-p <port>] [--filter <s>]', about: 'Replay saved snapshots as a local mock API' }
 };
 
 const pkgVersion = require(path.join(ROOT, 'package.json')).version;
