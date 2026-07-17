@@ -658,6 +658,87 @@ test('openapi handles flush-style YAML (same-indent lists, server vars, response
     assert(override.schema && override.schema.definition && override.schema.definition.properties && override.schema.definition.properties.id, 'response-level $ref schema should be inlined');
 });
 
+// ─── 14. coverage.js ──────────────────────────────────────────────────────────
+
+console.log('\n⑭ coverage.js');
+
+const coverage = require(path.join(ROOT, 'scripts/coverage.js'));
+const COVERAGE = path.join(ROOT, 'scripts/coverage.js');
+
+const COV_SPEC = {
+    openapi: '3.0.0', info: { title: 'T' },
+    paths: {
+        '/users':      { get: { tags: ['u'] }, post: { tags: ['u'] } },
+        '/users/{id}': { get: { tags: ['u'] }, delete: { tags: ['u'] } },
+        '/health':     { get: { tags: ['sys'] } }
+    }
+};
+const COV_COLLECTION = {
+    info: { name: 'C' },
+    item: [
+        { name: 'list', request: { method: 'GET', url: { raw: '{{baseUrl}}/users', path: ['users'] } } },
+        { name: 'one',  request: { method: 'GET', url: { raw: '{{baseUrl}}/users/:id', path: ['users', ':id'] } } },
+        { name: 'hc',   request: { method: 'GET', url: '{{baseUrl}}/health' } }
+    ]
+};
+const covSpecFile = path.join(TMP, 'cov-spec.json');
+const covColFile  = path.join(TMP, 'cov-col.json');
+fs.writeFileSync(covSpecFile, JSON.stringify(COV_SPEC));
+fs.writeFileSync(covColFile, JSON.stringify(COV_COLLECTION));
+
+test('coverage computeCoverage counts covered/uncovered and normalizes :id ↔ {id}', function() {
+    const c = coverage.computeCoverage(COV_SPEC, COV_COLLECTION);
+    assert(c.total === 5, 'spec has 5 operations, got ' + c.total);
+    assert(c.covered === 3, 'GET /users, GET /users/:id (↔{id}), GET /health → 3 covered, got ' + c.covered);
+    assert(c.pct === 60, 'coverage 3/5 = 60%, got ' + c.pct);
+    const missKeys = c.uncovered.map(function(o) { return o.method + ' ' + o.path; }).sort();
+    assert(missKeys.join('|') === 'DELETE /users/{id}|POST /users', 'uncovered = POST /users + DELETE /users/{id}, got ' + missKeys.join('|'));
+});
+
+test('coverage normPath / urlPath collapse {{var}} / {id} / :id and tidy slashes', function() {
+    assert(coverage.normPath('/users/{id}') === '/users/{}', '{id} → {}');
+    assert(coverage.normPath('/users/:id') === '/users/{}', ':id → {}');
+    assert(coverage.normPath('/users/{{userId}}') === '/users/{}', '{{var}} → {}');
+    assert(coverage.normPath('/a//b/') === '/a/b', 'collapse + trim slashes');
+    assert(coverage.urlPath({ path: ['users', ':id'] }) === '/users/:id', 'path array');
+    assert(coverage.urlPath('{{baseUrl}}/health') === '/health', 'strip {{var}} host');
+});
+
+test('coverage CLI reports % (--json) and gates on --min (exit 1 below, 0 at/above)', function() {
+    const doc = JSON.parse(run(NODE + ' "' + COVERAGE + '" --spec "' + covSpecFile + '" "' + covColFile + '" --json'));
+    assert(doc.total === 5 && doc.covered === 3 && doc.pct === 60, 'CLI --json should report 3/5 = 60%');
+    let code = 0;
+    try { run(NODE + ' "' + COVERAGE + '" --spec "' + covSpecFile + '" "' + covColFile + '" --json --min 80'); }
+    catch (e) { code = e.status || 1; }
+    assert(code === 1, 'coverage below --min should exit 1 (CI gate), got ' + code);
+    run(NODE + ' "' + COVERAGE + '" --spec "' + covSpecFile + '" "' + covColFile + '" --json --min 50');   // meets → exit 0 (run throws on non-zero)
+});
+
+test('CLI exposes coverage: --help lists it and `coverage --help` exits 0', function() {
+    assertContains(run(NODE + ' "' + CLI + '" --help'), 'coverage', 'CLI help should list coverage');
+    assertContains(run(NODE + ' "' + CLI + '" coverage --help'), 'Hephaestus Coverage', '`coverage --help` should print its help');
+});
+
+test('coverage normPath is symmetric for literal-suffix / multi-param paths (:id.pdf ↔ {id}.pdf)', function() {
+    assert(coverage.normPath('/reports/:id.pdf') === coverage.normPath('/reports/{id}.pdf'), ':id.pdf must normalise like {id}.pdf');
+    assert(coverage.normPath('/reports/:id.pdf') === '/reports/{}.pdf', 'a literal suffix stays literal');
+    assert(coverage.normPath('/tiles/:z/:x/:y.png') === coverage.normPath('/tiles/{z}/{x}/{y}.png'), 'map-tile multi-param must match');
+    assert(coverage.normPath('/geo/:lat,:lng') === coverage.normPath('/geo/{lat},{lng}'), 'matrix-style params must match');
+    // round-trip: a /reports/{id}.pdf operation is counted as covered by a :id.pdf request
+    const spec = { openapi: '3.0.0', paths: { '/reports/{id}.pdf': { get: {} } } };
+    const col  = { item: [{ name: 'r', request: { method: 'GET', url: { path: ['reports', ':id.pdf'] } } }] };
+    assert(coverage.computeCoverage(spec, col).pct === 100, ':id.pdf should cover /reports/{id}.pdf (expected 100%)');
+});
+
+test('coverage --min errors (exit 1) on missing/empty/non-numeric value — no silent false-green', function() {
+    ['--min', '--min ""', '--min abc'].forEach(function(variant) {
+        let code = 0;
+        try { run(NODE + ' "' + COVERAGE + '" --spec "' + covSpecFile + '" "' + covColFile + '" ' + variant); }
+        catch (e) { code = e.status || 1; }
+        assert(code === 1, '`' + variant + '` must exit 1 (not silently disable the gate), got ' + code);
+    });
+});
+
 // ─── Cleanup ─────────────────────────────────────────────────────────────────
 
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch(e) { /* ignore */ }
