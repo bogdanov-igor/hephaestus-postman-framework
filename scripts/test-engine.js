@@ -77,6 +77,10 @@ function startMockServer() {
         if (url === '/setcookie-strong') {
             return json({ ok: true }, 200, { 'Set-Cookie': 'sid=abc123; Secure; HttpOnly; SameSite=Strict' });
         }
+        if (url === '/setcookie-named-flag') {
+            // Cookie whose NAME is a flag but the Secure ATTRIBUTE is genuinely absent.
+            return json({ ok: true }, 200, { 'Set-Cookie': 'Secure=1; HttpOnly' });
+        }
         if (url === '/jwt-none' || url === '/jwt-ok' || url === '/jwt-expired') {
             const b64 = function (o) { return Buffer.from(JSON.stringify(o)).toString('base64url'); };
             const alg = url === '/jwt-none' ? 'none' : 'HS256';
@@ -354,6 +358,13 @@ function buildCollection(preSrc, postSrc, baseUrl) {
             name: 'neg-secaudit-cookie-weak',
             request: { method: 'GET', url: baseUrl + '/setcookie-weak' },
             event: methodScripts({}, { securityAudit: { enabled: true, requireHeaders: [], forbidHeaders: [], forbidBodyPatterns: [], checkCors: false, cookieFlags: true } })
+        },
+        {
+            // Regression guard: cookie NAMED "Secure" without the Secure attribute must
+            // still be flagged — flags are scanned only in the attribute segment.
+            name: 'neg-secaudit-cookie-named-flag',
+            request: { method: 'GET', url: baseUrl + '/setcookie-named-flag' },
+            event: methodScripts({}, { securityAudit: { enabled: true, requireHeaders: [], forbidHeaders: [], forbidBodyPatterns: [], checkCors: false, cookieFlags: ['Secure'] } })
         },
         {
             name: 'secaudit-jwt-ok',

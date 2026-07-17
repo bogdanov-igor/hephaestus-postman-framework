@@ -2238,9 +2238,11 @@
               const required = Array.isArray(cfg.cookieFlags) ? cfg.cookieFlags : ["Secure", "HttpOnly", "SameSite"];
               self._setCookies().forEach(function(c) {
                 const cookieName = c.split("=")[0].trim();
+                const firstSemi = c.indexOf(";");
+                const attrs = firstSemi === -1 ? "" : c.slice(firstSemi + 1);
                 const missing = required.filter(function(f) {
                   const esc = String(f).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-                  return !new RegExp("(^|;)\\s*" + esc + "\\b", "i").test(c);
+                  return !new RegExp("(^|;)\\s*" + esc + "\\b", "i").test(attrs);
                 });
                 const ok = missing.length === 0;
                 if (!ok) findings.push({ type: "weak-cookie", name: cookieName, missing });

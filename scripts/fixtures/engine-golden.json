@@ -491,6 +491,46 @@
       "ok": true
     },
     {
+      "item": "neg-secaudit-cookie-named-flag",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-cookie-named-flag",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-cookie-named-flag",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-cookie-named-flag",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-cookie-named-flag",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-cookie-named-flag",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "neg-secaudit-cookie-named-flag",
+      "name": "🛡️ Cookie \"Secure\": защитные флаги",
+      "ok": false
+    },
+    {
+      "item": "neg-secaudit-cookie-named-flag",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
       "item": "neg-secaudit-cookie-weak",
       "name": "⚠️ URL: небезопасный протокол http",
       "ok": true
@@ -1639,6 +1679,23 @@
     },
     "neg-secaudit-cacheable": {
       "request": "neg-secaudit-cacheable",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": {
+        "findings": 1,
+        "ok": false
+      },
+      "errors": []
+    },
+    "neg-secaudit-cookie-named-flag": {
+      "request": "neg-secaudit-cookie-named-flag",
       "method": "GET",
       "status": 200,
       "format": "json",
