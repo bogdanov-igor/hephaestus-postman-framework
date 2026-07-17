@@ -12,6 +12,12 @@
   planes across all modules.
 - **English test-engine fixtures** — the golden baseline now locks both `ru` and
   `en` output (192 assertions / 16 requests).
+- **Override typo-guard** — an unrecognised top-level `override` key now warns with
+  a "did you mean" suggestion (suppressed at `logLevel: "silent"`); set
+  `"strictMode": true` to fail the run so CI blocks on a typo (e.g. `snapshsot` was
+  silently ignored before). First-party + shipped-plugin keys are recognised; custom
+  keys are allowlisted via `"extraKeys": [...]`. The golden harness gained a `neg-*`
+  "expected-fail" convention so negative fixtures don't muddy the pass count.
 
 ### Changed
 - **`iterationData` is now a shared module** (`engine/src/shared/iteration-data.js`),

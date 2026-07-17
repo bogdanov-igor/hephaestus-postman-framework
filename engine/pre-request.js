@@ -661,6 +661,38 @@
     }, en: function(message) {
       return "configMerge: failed to parse hephaestus.defaults \u2014 " + message;
     } },
+    "configMerge.unknownKey": {
+      ru: function(k) {
+        return '\u26A0\uFE0F \u041D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u044B\u0439 \u043A\u043B\u044E\u0447 override: "' + k + '"';
+      },
+      en: function(k) {
+        return '\u26A0\uFE0F Unknown override key: "' + k + '"';
+      }
+    },
+    "configMerge.unknownKeySuggest": {
+      ru: function(k, near) {
+        return '\u26A0\uFE0F \u041D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u044B\u0439 \u043A\u043B\u044E\u0447 override: "' + k + '" \u2014 \u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E, "' + near + '"?';
+      },
+      en: function(k, near) {
+        return '\u26A0\uFE0F Unknown override key: "' + k + '" \u2014 did you mean "' + near + '"?';
+      }
+    },
+    "configMerge.strictFailTest": {
+      ru: function() {
+        return "\u{1F6AB} strictMode: \u043D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u044B\u0435 \u043A\u043B\u044E\u0447\u0438 override";
+      },
+      en: function() {
+        return "\u{1F6AB} strictMode: unknown override key(s)";
+      }
+    },
+    "configMerge.strictFailError": {
+      ru: function(keys) {
+        return "\u041D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u044B\u0435 \u043A\u043B\u044E\u0447\u0438 override (strictMode): " + keys;
+      },
+      en: function(keys) {
+        return "Unknown override key(s) (strictMode): " + keys;
+      }
+    },
     // ─── engine ───
     "engine.postCritical": { ru: function() {
       return "\u{1F6AB} Hephaestus post-request: \u043A\u0440\u0438\u0442\u0438\u0447\u0435\u0441\u043A\u0430\u044F \u043E\u0448\u0438\u0431\u043A\u0430";
@@ -682,6 +714,50 @@
   }
 
   // engine/src/shared/config-merge.js
+  var KNOWN_KEYS = [
+    "$schema",
+    "_comment",
+    "strictMode",
+    "extraKeys",
+    "baseUrl",
+    "defaultProtocol",
+    "auth",
+    "dateFormat",
+    "dates",
+    "maxResponseTime",
+    "expectedStatus",
+    "expectEmpty",
+    "contentType",
+    "snapshot",
+    "snapshotRecord",
+    "schema",
+    "securityAudit",
+    "secrets",
+    "envRequired",
+    "ci",
+    "locale",
+    "logLevel",
+    "softFail",
+    "randomData",
+    "keysToFind",
+    "varsToSave",
+    "keysToCount",
+    "assertions",
+    "assertEach",
+    "assertShape",
+    "assertOrder",
+    "assertUnique",
+    "assertHeaders",
+    "retryOnStatus",
+    // config for the shipped plugins (read off ctx.config by docs/plugins/*)
+    "slackUrl",
+    "slackOnlyFailures",
+    "teamsUrl",
+    "teamsOnlyFailures",
+    "slaMsLimit",
+    "checkCors",
+    "assertJsonApi"
+  ];
   var configMerge = {
     _merge(target, source) {
       const out = Object.assign({}, target);
@@ -695,6 +771,57 @@
       });
       return out;
     },
+    // Levenshtein distance over short strings — powers the "did you mean" hint.
+    _editDistance(a, b) {
+      const m = a.length, n = b.length;
+      if (!m) return n;
+      if (!n) return m;
+      let prev = [];
+      for (let j = 0; j <= n; j++) prev[j] = j;
+      for (let i = 1; i <= m; i++) {
+        const cur = [i];
+        for (let j = 1; j <= n; j++) {
+          const cost = a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1;
+          cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+        }
+        prev = cur;
+      }
+      return prev[n];
+    },
+    // Nearest known key, but only when it's close enough to be a real typo.
+    _closest(key) {
+      let best = null, bestD = Infinity;
+      const lk = key.toLowerCase();
+      for (let i = 0; i < KNOWN_KEYS.length; i++) {
+        const d = this._editDistance(lk, KNOWN_KEYS[i].toLowerCase());
+        if (d < bestD) {
+          bestD = d;
+          best = KNOWN_KEYS[i];
+        }
+      }
+      return bestD <= Math.max(2, Math.ceil(key.length / 3)) ? best : null;
+    },
+    // Flag override keys the engine does not recognise (e.g. a typo'd `snapshsot`,
+    // which used to be silently ignored). Default: a console warning, suppressed at
+    // logLevel 'silent'. With strictMode:true it fails a test so CI blocks the run.
+    _validateKeys(ctx, override2) {
+      if (!override2 || typeof override2 !== "object") return;
+      const extra = Array.isArray(ctx.config.extraKeys) ? ctx.config.extraKeys : [];
+      const unknown = Object.keys(override2).filter((k) => KNOWN_KEYS.indexOf(k) === -1 && extra.indexOf(k) === -1);
+      if (!unknown.length) return;
+      if (ctx.config.strictMode === true) {
+        pm.test(t(ctx, "configMerge.strictFailTest"), function() {
+          throw new Error(t(ctx, "configMerge.strictFailError", unknown.join(", ")));
+        });
+        return;
+      }
+      if (ctx.config.logLevel === "silent") return;
+      const self = this;
+      unknown.forEach(function(k) {
+        const near = self._closest(k);
+        console.warn(near ? t(ctx, "configMerge.unknownKeySuggest", k, near) : t(ctx, "configMerge.unknownKey", k));
+      });
+    },
     run(ctx, override2) {
       let defaults = {};
       try {
@@ -704,6 +831,7 @@
         ctx._meta.errors.push(t(ctx, "configMerge.parseDefaultsFailed", e.message));
       }
       ctx.config = this._merge(defaults, override2 || {});
+      this._validateKeys(ctx, override2);
     }
   };
 

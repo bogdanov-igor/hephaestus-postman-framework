@@ -192,6 +192,14 @@ const M = {
     'logger.initErrors': { ru: function() { return '⚠️  [Hephaestus] Ошибки инициализации:\n'; }, en: function() { return '⚠️  [Hephaestus] Initialization errors:\n'; } },
     // ─── configMerge ───
     'configMerge.parseDefaultsFailed': { ru: function(message) { return 'configMerge: не удалось разобрать hephaestus.defaults — ' + message; }, en: function(message) { return 'configMerge: failed to parse hephaestus.defaults — ' + message; } },
+    'configMerge.unknownKey':        { ru: function(k) { return '⚠️ Неизвестный ключ override: "' + k + '"'; },
+                                       en: function(k) { return '⚠️ Unknown override key: "' + k + '"'; } },
+    'configMerge.unknownKeySuggest': { ru: function(k, near) { return '⚠️ Неизвестный ключ override: "' + k + '" — возможно, "' + near + '"?'; },
+                                       en: function(k, near) { return '⚠️ Unknown override key: "' + k + '" — did you mean "' + near + '"?'; } },
+    'configMerge.strictFailTest':    { ru: function() { return '🚫 strictMode: неизвестные ключи override'; },
+                                       en: function() { return '🚫 strictMode: unknown override key(s)'; } },
+    'configMerge.strictFailError':   { ru: function(keys) { return 'Неизвестные ключи override (strictMode): ' + keys; },
+                                       en: function(keys) { return 'Unknown override key(s) (strictMode): ' + keys; } },
     // ─── engine ───
     'engine.postCritical': { ru: function() { return '🚫 Hephaestus post-request: критическая ошибка'; }, en: function() { return '🚫 Hephaestus post-request: critical error'; } },
     'engine.preCritical': { ru: function() { return '🚫 Hephaestus pre-request: критическая ошибка'; }, en: function() { return '🚫 Hephaestus pre-request: critical error'; } },

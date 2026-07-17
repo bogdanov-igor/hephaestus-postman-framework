@@ -331,6 +331,46 @@
       "ok": true
     },
     {
+      "item": "neg-strict-unknown-key",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "neg-strict-unknown-key",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "neg-strict-unknown-key",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "neg-strict-unknown-key",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-strict-unknown-key",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-strict-unknown-key",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "neg-strict-unknown-key",
+      "name": "🚫 strictMode: неизвестные ключи override",
+      "ok": false
+    },
+    {
+      "item": "neg-strict-unknown-key",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
       "item": "obj-assertions-en",
       "name": "⚠️ URL: insecure http protocol",
       "ok": true
@@ -956,6 +996,41 @@
       "ok": true
     },
     {
+      "item": "strict-allowed-keys-ok",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "strict-allowed-keys-ok",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "strict-allowed-keys-ok",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "strict-allowed-keys-ok",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "strict-allowed-keys-ok",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "strict-allowed-keys-ok",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "strict-allowed-keys-ok",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
       "item": "xml-extract",
       "name": "⚠️ URL: небезопасный протокол http",
       "ok": true
@@ -1106,6 +1181,20 @@
     },
     "locale-en": {
       "request": "locale-en",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "neg-strict-unknown-key": {
+      "request": "neg-strict-unknown-key",
       "method": "GET",
       "status": 200,
       "format": "json",
@@ -1310,6 +1399,20 @@
         "status": "saved",
         "key": "EngineTest::snapshot-save::200::json"
       },
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "strict-allowed-keys-ok": {
+      "request": "strict-allowed-keys-ok",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
       "schema": null,
       "security": null,
       "errors": []
