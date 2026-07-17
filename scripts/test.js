@@ -726,6 +726,21 @@ test('trends --json has the right shape', function() {
     assert(obj.p95.delta === -30, 'p95.delta should be -30');
 });
 
+test('trends sparkline glyphs map low→high (pins exact bars — catches an inverted mapping)', function() {
+    const obj = JSON.parse(run(NODE + ' "' + path.join(ROOT, 'scripts/trends.js') + '" "' + trendsFixture + '" --json'));
+    assert(obj.passRate.spark === '▁▅█', 'passRate 80/90/100 → "▁▅█", got "' + obj.passRate.spark + '"');
+    assert(obj.p95.spark === '█▅▁', 'p95 150/120/90 → "█▅▁" (highest value = tallest bar), got "' + obj.p95.spark + '"');
+});
+
+test('summary --history=<file> (equals form) also appends, mirroring --sla=', function() {
+    const eqHist = path.join(TMP, 'history-eq.jsonl');
+    try {
+        run(NODE + ' "' + path.join(ROOT, 'scripts/summary.js') + '" "' + newmanFixtureFile + '" --history=' + eqHist + ' --no-color');
+    } catch (e) { /* exit 1 expected — the fixture has a failing assertion */ }
+    assert(fs.existsSync(eqHist), '--history=<file> should create the history file');
+    assert(fs.readFileSync(eqHist, 'utf8').trim().split('\n').filter(Boolean).length === 1, 'exactly one line appended');
+});
+
 test('trends --last N limits to the most recent N runs', function() {
     const out = run(NODE + ' "' + path.join(ROOT, 'scripts/trends.js') + '" "' + trendsFixture + '" --last 2 --json');
     const obj = JSON.parse(out);

@@ -27,11 +27,16 @@ const args      = process.argv.slice(2);
 // --history [file] — opt-in run-history append (Phase E). Parsed BEFORE inputFile
 // so a path given right after the flag is never mistaken for <results.json>.
 const DEFAULT_HISTORY = '.hephaestus/history.jsonl';
+const historyEqArg    = args.find(function(a) { return a.indexOf('--history=') === 0; });
 const historyIdx      = args.indexOf('--history');
-const historyOn       = historyIdx !== -1;
+const historyOn       = historyIdx !== -1 || historyEqArg !== undefined;
 let historyValueIdx   = -1;
 let historyFile       = DEFAULT_HISTORY;
-if (historyOn) {
+if (historyEqArg !== undefined) {
+    // --history=<file> (equals form, mirroring --sla=<ms>); empty value → default path.
+    const v = historyEqArg.slice('--history='.length);
+    if (v) historyFile = v;
+} else if (historyIdx !== -1) {
     const next = args[historyIdx + 1];
     if (next && next.indexOf('-') !== 0) {
         historyValueIdx = historyIdx + 1;

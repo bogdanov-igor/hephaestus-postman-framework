@@ -117,8 +117,13 @@ function num(v) {
 // instead of dividing by a zero range.
 function sparkline(values) {
     if (!values.length) return '';
-    const min   = Math.min.apply(null, values);
-    const max   = Math.max.apply(null, values);
+    // Fold min/max (not Math.min.apply(...values)) so a very long history can't
+    // blow the argument/stack limit with a RangeError.
+    let min = values[0], max = values[0];
+    for (let i = 1; i < values.length; i++) {
+        if (values[i] < min) min = values[i];
+        if (values[i] > max) max = values[i];
+    }
     const range = max - min;
     return values.map(function(v) {
         if (range === 0) return MID;
