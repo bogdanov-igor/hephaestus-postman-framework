@@ -658,6 +658,101 @@ test('openapi handles flush-style YAML (same-indent lists, server vars, response
     assert(override.schema && override.schema.definition && override.schema.definition.properties && override.schema.definition.properties.id, 'response-level $ref schema should be inlined');
 });
 
+// ─── 14. trends.js + summary --history ────────────────────────────────────────
+
+console.log('\n⑭ trends.js + summary --history');
+
+const histFile = path.join(TMP, 'history.jsonl');
+
+test('summary --history appends one JSONL line with numeric fields', function() {
+    // NEWMAN_FIXTURE has a failing assertion → summary exits 1; the history line
+    // is still appended (append runs before process.exit). Tolerate the exit.
+    try {
+        run(NODE + ' "' + path.join(ROOT, 'scripts/summary.js') + '" "' + newmanFixtureFile + '" --history "' + histFile + '" --no-color');
+    } catch (e) { /* expected: exit 1 due to fixture failures */ }
+    assert(fs.existsSync(histFile), 'history file not created');
+    const lines = fs.readFileSync(histFile, 'utf8').trim().split('\n').filter(Boolean);
+    assert(lines.length === 1, 'expected exactly 1 history line, got ' + lines.length);
+    const rec = JSON.parse(lines[0]);
+    ['passRate', 'p95', 'total', 'failed', 'requests', 'durationMs'].forEach(function(k) {
+        assert(typeof rec[k] === 'number', 'field "' + k + '" should be numeric, got ' + typeof rec[k]);
+    });
+    assert(typeof rec.ts === 'string', 'ts should be an ISO string');
+    assert(rec.passRate === 75, 'passRate should be 75 (3/4 assertions), got ' + rec.passRate);
+    assert(rec.p95 === 100, 'p95 should be 100 ms, got ' + rec.p95);
+    assert(rec.failed === 1, 'failed should be 1, got ' + rec.failed);
+});
+
+test('summary --history appends (not overwrites) on a second run', function() {
+    try {
+        run(NODE + ' "' + path.join(ROOT, 'scripts/summary.js') + '" "' + newmanFixtureFile + '" --history "' + histFile + '" --no-color');
+    } catch (e) { /* exit 1 expected */ }
+    const lines = fs.readFileSync(histFile, 'utf8').trim().split('\n').filter(Boolean);
+    assert(lines.length === 2, 'expected 2 history lines after running twice, got ' + lines.length);
+});
+
+const trendsFixture = path.join(TMP, 'trends-history.jsonl');
+fs.writeFileSync(trendsFixture, [
+    JSON.stringify({ ts: '2026-07-01T00:00:00.000Z', passRate: 80,  p95: 150, total: 10, failed: 2, requests: 5, durationMs: 1000 }),
+    JSON.stringify({ ts: '2026-07-02T00:00:00.000Z', passRate: 90,  p95: 120, total: 10, failed: 1, requests: 5, durationMs: 1100 }),
+    JSON.stringify({ ts: '2026-07-03T00:00:00.000Z', passRate: 100, p95: 90,  total: 10, failed: 0, requests: 5, durationMs: 900 }),
+    '',                                     // blank line — must be tolerated
+    '# comment line — must be skipped'
+].join('\n'));
+
+test('trends renders sparklines + latest values', function() {
+    const out = run(NODE + ' "' + path.join(ROOT, 'scripts/trends.js') + '" "' + trendsFixture + '" --no-color');
+    assert(/[▁▂▃▄▅▆▇█]/.test(out), 'expected unicode sparkline block chars in output');
+    assertContains(out, '100%', 'latest pass rate');
+    assertContains(out, '90ms', 'latest p95');
+    assertContains(out, '3 runs', 'run count');
+});
+
+test('trends shows deltas vs the previous run', function() {
+    const out = run(NODE + ' "' + path.join(ROOT, 'scripts/trends.js') + '" "' + trendsFixture + '" --no-color');
+    assertContains(out, '+10%',  'pass-rate delta +10%');
+    assertContains(out, '-30ms', 'p95 delta -30ms');
+});
+
+test('trends --json has the right shape', function() {
+    const out = run(NODE + ' "' + path.join(ROOT, 'scripts/trends.js') + '" "' + trendsFixture + '" --json');
+    const obj = JSON.parse(out);
+    assert(obj.count === 3, 'count should be 3, got ' + obj.count);
+    assert(JSON.stringify(obj.passRate.values) === JSON.stringify([80, 90, 100]), 'passRate.values mismatch');
+    assert(obj.passRate.latest === 100, 'passRate.latest should be 100');
+    assert(obj.passRate.delta === 10, 'passRate.delta should be 10');
+    assert(typeof obj.passRate.spark === 'string' && obj.passRate.spark.length === 3, 'passRate.spark should be a 3-char string');
+    assert(obj.p95.latest === 90, 'p95.latest should be 90');
+    assert(obj.p95.delta === -30, 'p95.delta should be -30');
+});
+
+test('trends --last N limits to the most recent N runs', function() {
+    const out = run(NODE + ' "' + path.join(ROOT, 'scripts/trends.js') + '" "' + trendsFixture + '" --last 2 --json');
+    const obj = JSON.parse(out);
+    assert(obj.count === 2, 'count should be 2 with --last 2, got ' + obj.count);
+    assert(JSON.stringify(obj.passRate.values) === JSON.stringify([90, 100]), 'should keep the last 2 runs');
+});
+
+test('trends exits 1 on missing history', function() {
+    let code = 0;
+    try { run(NODE + ' "' + path.join(ROOT, 'scripts/trends.js') + '" "' + path.join(TMP, 'does-not-exist.jsonl') + '"'); }
+    catch (e) { code = e.status || 1; }
+    assert(code === 1, 'missing history should exit 1, got ' + code);
+});
+
+test('CLI --help lists trends', function() {
+    assertContains(run(NODE + ' "' + CLI + '" --help'), 'trends', 'trends command in help');
+});
+
+test('CLI trends --help exits 0', function() {
+    // execSync throws on a non-zero exit, so reaching the end == exit 0.
+    run(NODE + ' "' + CLI + '" trends --help');
+});
+
+test('CLI trends delegates → renders from history', function() {
+    assertContains(run(NODE + ' "' + CLI + '" trends "' + trendsFixture + '" --no-color'), '100%', 'CLI trends render');
+});
+
 // ─── Cleanup ─────────────────────────────────────────────────────────────────
 
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch(e) { /* ignore */ }
