@@ -33,6 +33,7 @@ const COMMANDS = {
     openapi: { script: 'openapi-import.js',  usage: 'openapi <spec.yaml|json> [-o collection.json]',      about: 'OpenAPI/Swagger → Hephaestus collection' },
     init:    { script: 'init.js',            usage: 'init [--defaults]',                                 about: 'Interactive config/environment wizard' },
     watch:   { script: 'watch.js',           usage: 'watch -c <collection.json> [-e env.json]',          about: 'Re-run Newman on file changes' },
+    mock:    { script: 'mock.js',            usage: 'mock <collection.json> [-p <port>] [--filter <s>]', about: 'Replay saved snapshots as a local mock API' },
     doctor:  { script: 'doctor.js',          usage: 'doctor [-e <env.json>] [--json]',                   about: 'Pre-flight health check: engine integrity, versions, drift' }
 };
 

@@ -658,7 +658,115 @@ test('openapi handles flush-style YAML (same-indent lists, server vars, response
     assert(override.schema && override.schema.definition && override.schema.definition.properties && override.schema.definition.properties.id, 'response-level $ref schema should be inlined');
 });
 
-// ─── 14. doctor.js ────────────────────────────────────────────────────────────
+// ─── 14. mock.js ──────────────────────────────────────────────────────────────
+
+console.log('\n⑭ mock.js');
+
+const mock = require(path.join(ROOT, 'scripts/mock.js'));
+const MOCK = path.join(ROOT, 'scripts/mock.js');
+
+const MOCK_COLLECTION = {
+    info: { name: 'MockCol' },
+    variable: [{ key: 'hephaestus.snapshots', value: JSON.stringify({
+        'MockCol::GetThing::404::json': { statusCode: 404, format: 'json', data: { error: 'nope' } },
+        'MockCol::GetThing::200::json': { statusCode: 200, format: 'json', data: { id: 1, name: 'Widget' } },
+        'MockCol::GetText::200::text':  { statusCode: 200, format: 'text', data: 'plain hello' }
+    }) }],
+    item: [
+        { name: 'GetThing', request: { method: 'GET', url: { raw: '{{baseUrl}}/thing', path: ['thing'] } } },
+        { name: 'GetText',  request: { method: 'GET', url: '{{baseUrl}}/text' } },
+        { name: 'Orphan',   request: { method: 'GET', url: { raw: '{{baseUrl}}/orphan', path: ['orphan'] } } }
+    ]
+};
+const mockCollectionFile = path.join(TMP, 'mock-collection.json');
+fs.writeFileSync(mockCollectionFile, JSON.stringify(MOCK_COLLECTION));
+
+test('mock buildRoutes maps requests to routes and prefers a 2xx/json snapshot', function() {
+    const b = mock.buildRoutes(MOCK_COLLECTION);
+    assert(b.routes['GET /thing'], 'expected a GET /thing route');
+    assert(b.routes['GET /thing'].statusCode === 200, 'should prefer 200 over 404, got ' + b.routes['GET /thing'].statusCode);
+    assert(b.routes['GET /text'], 'expected a GET /text route (string url)');
+    assert(b.routes['GET /text'].contentType.indexOf('text/plain') === 0, 'text snapshot → text/plain');
+    assert(b.routes['GET /orphan'] === undefined, 'a request with no snapshot must not be mounted');
+});
+
+test('mock matchRoute normalizes the path and is method-sensitive', function() {
+    const b = mock.buildRoutes(MOCK_COLLECTION);
+    assert(mock.matchRoute(b.routes, 'GET', '/thing'),  'exact match');
+    assert(mock.matchRoute(b.routes, 'GET', '/thing/'), 'trailing slash should still match');
+    assert(mock.matchRoute(b.routes, 'get', '/thing'),  'method is case-insensitive');
+    assert(!mock.matchRoute(b.routes, 'POST', '/thing'), 'wrong method must not match');
+    assert(!mock.matchRoute(b.routes, 'GET', '/missing'), 'unknown path must not match');
+});
+
+test('mock urlPath / normalizePath handle string, path[] and {{var}} URLs', function() {
+    assert(mock.urlPath('https://api.example.com/a/b?q=1') === '/a/b', 'strip proto/host/query');
+    assert(mock.urlPath({ path: ['a', 'b'] }) === '/a/b', 'path array');
+    assert(mock.urlPath('{{baseUrl}}/y') === '/y', 'strip {{var}} host');
+    assert(mock.normalizePath('/a//b/') === '/a/b', 'collapse + trim slashes');
+    assert(mock.normalizePath('') === '/', 'empty → root');
+});
+
+test('mock serialize round-trips value types and clamps invalid status codes', function() {
+    assert(mock.serialize({ format: 'json', data: 'tok' }).body === '"tok"', 'top-level string → quoted JSON, got ' + mock.serialize({ format: 'json', data: 'tok' }).body);
+    assert(mock.serialize({ format: 'json', data: null }).body === 'null', 'null → "null"');
+    assert(mock.serialize({ format: 'json', data: 42 }).body === '42', 'number → 42');
+    const txt = mock.serialize({ format: 'text', data: 'hello' });
+    assert(txt.body === 'hello' && txt.contentType.indexOf('text/plain') === 0, 'text → raw body + text/plain');
+    assert(mock.serialize({ statusCode: 1000, format: 'json', data: {} }).statusCode === 200, 'out-of-range status → 200');
+    assert(mock.serialize({ statusCode: 'OK', format: 'json', data: {} }).statusCode === 200, 'non-numeric status → 200');
+    assert(mock.serialize({ statusCode: 404, format: 'json', data: {} }).statusCode === 404, 'valid status kept');
+});
+
+test('mock buildRoutes reports route collisions and tolerates a non-object snapshots value', function() {
+    const collided = {
+        variable: [{ key: 'hephaestus.snapshots', value: JSON.stringify({
+            'C::A::200::json': { statusCode: 200, format: 'json', data: { a: 1 } },
+            'C::B::200::json': { statusCode: 200, format: 'json', data: { b: 2 } }
+        }) }],
+        item: [
+            { name: 'A', request: { method: 'GET', url: { path: ['dup'] } } },
+            { name: 'B', request: { method: 'GET', url: { path: ['dup'] } } }
+        ]
+    };
+    const b = mock.buildRoutes(collided);
+    assert(Object.keys(b.routes).length === 1, 'two requests at one path → a single route');
+    assert(b.collisions.length === 1, 'the collision should be reported, got ' + b.collisions.length);
+    const nullSnaps = mock.buildRoutes({ variable: [{ key: 'hephaestus.snapshots', value: 'null' }], item: [] });
+    assert(Object.keys(nullSnaps.routes).length === 0, 'a "null" snapshots value must not throw and yields zero routes');
+});
+
+test('CLI exposes mock: --help lists it and `mock --help` exits 0', function() {
+    assertContains(run(NODE + ' "' + CLI + '" --help'), 'mock', 'CLI help should list mock');
+    assertContains(run(NODE + ' "' + CLI + '" mock --help'), 'Hephaestus Mock', '`mock --help` should print mock help (and exit 0)');
+});
+
+test('mock serves a matching request over HTTP and 404s an unknown path', function() {
+    const { spawn } = require('child_process');
+    const PORT = 49517;
+    // Standalone client so the script isn't fragile through the shell; retries
+    // until the spawned server has bound the port.
+    const clientFile = path.join(TMP, 'mock-client.js');
+    fs.writeFileSync(clientFile, [
+        'const http=require("http");const PORT=+process.argv[2];',
+        'function go(p,n,cb){const r=http.get({host:"127.0.0.1",port:PORT,path:p},res=>{let b="";res.on("data",d=>b+=d);res.on("end",()=>cb(res.statusCode+"|"+(res.headers["x-hephaestus-mock"]||"")+"|"+b));});',
+        'r.on("error",()=>{if(n>0)setTimeout(()=>go(p,n-1,cb),100);else{process.stdout.write("ERR|"+p);process.exit(0);}});}',
+        'go("/thing",40,hit=>go("/missing",5,miss=>process.stdout.write(hit+"~~"+miss)));'
+    ].join('\n'));
+
+    const srv = spawn(NODE, [MOCK, mockCollectionFile, '-p', String(PORT), '--quiet', '--no-color'], { stdio: 'ignore' });
+    try {
+        const out = run(NODE + ' "' + clientFile + '" ' + PORT);
+        const parts = out.split('~~');
+        assert(/^200\|hit\|/.test(parts[0]), 'GET /thing → "200|hit|…", got: ' + parts[0]);
+        assertContains(parts[0], 'Widget', 'replayed body should contain the recorded data');
+        assert(/^404\|miss\|/.test(parts[1] || ''), 'GET /missing → "404|miss|…", got: ' + parts[1]);
+    } finally {
+        srv.kill('SIGKILL');
+    }
+});
+
+// ─── 15. doctor.js ────────────────────────────────────────────────────────────
 // Pre-flight diagnostic. These tests DO NOT touch the real engine files; the
 // checksum-mismatch FAIL path is proven out-of-band (see the framework docs /
 // PR notes) against a throwaway mirror. Here we exercise the honest exit-code
