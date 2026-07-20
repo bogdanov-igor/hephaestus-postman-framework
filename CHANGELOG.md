@@ -24,6 +24,10 @@
   carry Secure / HttpOnly / SameSite), `checkJwt` (reject `alg:none` and expired
   `exp` on JWTs in the body/cookies), and `requireNoStore` (auth responses must send
   `Cache-Control: no-store`). All off by default — existing configs are unchanged.
+- **GraphQL asserts** — a new opt-in `graphql` override for the trap where GraphQL
+  answers HTTP 200 even with an `errors[]` array: `noErrors` (errors empty/absent),
+  `errorCount` / `errorContains` (negative testing), and `dataShape` (type checks
+  under `data.*`). `graphql: true` is shorthand for `{ noErrors: true }`.
 
 ### Changed
 - **`iterationData` is now a shared module** (`engine/src/shared/iteration-data.js`),
