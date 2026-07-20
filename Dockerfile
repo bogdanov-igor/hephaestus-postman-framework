@@ -1,4 +1,4 @@
-# Hephaestus — Newman Runner  v3.9.0
+# Hephaestus — Newman Runner  v4.0.0
 #
 # Запускает Newman тесты в контейнере.
 # Не требует локальной установки Node.js / Newman.
@@ -17,7 +17,7 @@ FROM node:20-alpine
 
 LABEL org.opencontainers.image.title="Hephaestus Newman Runner"
 LABEL org.opencontainers.image.description="Hephaestus API testing framework with Newman"
-LABEL org.opencontainers.image.version="3.9.0"
+LABEL org.opencontainers.image.version="4.0.0"
 LABEL org.opencontainers.image.source="https://github.com/bogdanov-igor/hephaestus-postman-framework"
 
 # Install Newman + HTML reporter

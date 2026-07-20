@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Hephaestus Build Utilities  v3.9.0
+ * Hephaestus Build Utilities  v4.0.0
  *
  * Two modes:
  *   node scripts/build.js            → CHECK mode (no writes). Verifies every
@@ -156,6 +156,13 @@ const BANNER_FILES = [
     // NB: test.js / test-engine.js are excluded — they carry fixture data with
     // unrelated version strings (OpenAPI/Swagger/schema versions), not tool banners.
     'scripts/watch.js', 'scripts/sync-examples.js', 'scripts/openapi-import.js',
+    // Everything shipped since v3.9 — without these a release bump left their
+    // banners stale and this very check never noticed.
+    'scripts/doctor.js', 'scripts/mock.js', 'scripts/coverage.js', 'scripts/trends.js',
+    'scripts/flaky.js', 'scripts/bench.js', 'scripts/panel.js', 'scripts/generate-test.js',
+    'scripts/check-locales.js',
+    // The CLI entry point and the shipped example plugins carry banners too.
+    'bin/hephaestus.js', 'docs/plugins/slack-notifier.js',
     'setup/snapshot-view.js', 'setup/snapshot-clear.js',
     'Dockerfile', 'docker-compose.yml'
 ];
@@ -165,11 +172,13 @@ BANNER_FILES.forEach(function(rel) {
     let src;
     try { src = read(rel); } catch (e) { return; }
     // Match both `vX.Y.Z` banners and bare `X.Y.Z` (Docker). First drop URLs
-    // (Postman collection-schema URLs, GitHub links) and node base-image tags
-    // so unrelated versions aren't flagged as Hephaestus banner drift.
+    // (Postman collection-schema URLs, GitHub links), node base-image tags, and
+    // IPv4 literals (a loopback address otherwise matches as a bogus semver from
+    // its first three octets) — so unrelated versions aren't flagged as drift.
     const found = (src
         .replace(/https?:\/\/[^\s"'`)]+/g, '')
         .replace(/node:\d+\.\d+\.\d+/g, '')
+        .replace(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g, '')
         .match(/v?\d+\.\d+\.\d+/g) || [])
         .map(function(v) { return v.replace(/^v/, ''); });
     const bad   = found.filter(function(v) { return v !== pkgVersion; });

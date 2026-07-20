@@ -3,11 +3,11 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.9.0-e25822?style=flat-square" alt="version 3.9.0">
+  <img src="https://img.shields.io/badge/version-4.0.0-e25822?style=flat-square" alt="version 4.0.0">
   <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="MIT">
-  <img src="https://img.shields.io/badge/engine-191%20KB-success?style=flat-square" alt="191 KB engine">
+  <img src="https://img.shields.io/badge/engine-207%20KB-success?style=flat-square" alt="207 KB engine">
   <img src="https://img.shields.io/badge/runtime%20deps-0-success?style=flat-square" alt="zero runtime dependencies">
-  <img src="https://img.shields.io/badge/tests-46%20%C2%B7%20200%20golden-success?style=flat-square" alt="46 tests, 200 golden assertions">
+  <img src="https://img.shields.io/badge/tests-113%20%C2%B7%20354%20golden-success?style=flat-square" alt="113 tests, 354 golden assertions">
   <img src="https://img.shields.io/badge/locale-ru%20%C2%B7%20en-success?style=flat-square" alt="locale ru / en">
 </p>
 
@@ -120,7 +120,7 @@ node bin/hephaestus.js summary results.json --sla=500   # p95-гейт, exit 1 �
 ## Что внутри
 
 - **Движок.** ES-модули в `engine/src/**`, собранные esbuild в два файла
-  (~191 КБ суммарно) и выполняемые через eval внутри песочницы Postman —
+  (~207 КБ суммарно) и выполняемые через eval внутри песочницы Postman —
   движок-как-данные, без установки плагинов, без внешней среды выполнения. Один
   pre-request конвейер и один post-request конвейер прогоняют цепочку модулей
   через общий `ctx`.
