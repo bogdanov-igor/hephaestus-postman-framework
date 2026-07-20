@@ -18,7 +18,13 @@
     "engine/",
     "setup/",
     "templates/",
-    "collection/"
+    "collection/",
+    "!scripts/test.js",
+    "!scripts/test-engine.js",
+    "!scripts/build.js",
+    "!scripts/check-locales.js",
+    "!scripts/fixtures/",
+    "!engine/src/"
   ],
   "scripts": {
     "lint": "eslint engine/ setup/ templates/",
