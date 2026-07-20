@@ -91,6 +91,13 @@ function startMockServer() {
         if (url === '/nostore') {
             return json({ ok: true }, 200, { 'Cache-Control': 'no-store' });
         }
+        if (url === '/graphql-ok') {
+            return json({ data: { user: { id: 1, name: 'Alice' } } });
+        }
+        if (url === '/graphql-errors') {
+            // GraphQL returns HTTP 200 even with an errors[] array — the classic trap.
+            return json({ data: null, errors: [{ message: 'User not found', path: ['user'] }] });
+        }
         return json({ error: 'not found' }, 404);
     });
     return new Promise(function (resolve) {
@@ -390,6 +397,24 @@ function buildCollection(preSrc, postSrc, baseUrl) {
             name: 'neg-secaudit-cacheable',
             request: { method: 'GET', url: baseUrl + '/obj' },
             event: methodScripts({}, { securityAudit: { enabled: true, requireHeaders: [], forbidHeaders: [], forbidBodyPatterns: [], checkCors: false, requireNoStore: true } })
+        },
+        {
+            // GraphQL happy path: no errors + data shape checks all pass.
+            name: 'graphql-ok',
+            request: { method: 'GET', url: baseUrl + '/graphql-ok' },
+            event: methodScripts({}, { graphql: { noErrors: true, dataShape: { 'user.id': 'number', 'user.name': 'string' } } })
+        },
+        {
+            // 200 with an errors[] array → noErrors must FAIL (the trap this catches).
+            name: 'neg-graphql-errors',
+            request: { method: 'GET', url: baseUrl + '/graphql-errors' },
+            event: methodScripts({}, { graphql: true })
+        },
+        {
+            // Negative testing: we EXPECT one error containing "not found" → both pass.
+            name: 'graphql-expect-errors',
+            request: { method: 'GET', url: baseUrl + '/graphql-errors' },
+            event: methodScripts({}, { graphql: { errorCount: 1, errorContains: 'not found' } })
         }
     ];
 

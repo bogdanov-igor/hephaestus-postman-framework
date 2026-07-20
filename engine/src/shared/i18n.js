@@ -123,6 +123,13 @@ const M = {
     'assertShape.mustBeAbsent': { ru: function(fieldPath, valJson) { return '🚫 "' + fieldPath + '" должен отсутствовать, но = ' + valJson; }, en: function(fieldPath, valJson) { return '🚫 "' + fieldPath + '" must be absent, but = ' + valJson; } },
     'assertShape.notFound': { ru: function(fieldPath) { return '🚫 "' + fieldPath + '" не найдено'; }, en: function(fieldPath) { return '🚫 "' + fieldPath + '" not found'; } },
     'assertShape.typeMismatch': { ru: function(fieldPath, expected, actual) { return '🚫 "' + fieldPath + '": ожидался ' + expected + ', получен ' + actual; }, en: function(fieldPath, expected, actual) { return '🚫 "' + fieldPath + '": expected ' + expected + ', got ' + actual; } },
+    // ─── graphql ───
+    'graphql.noErrorsName': { ru: function() { return '🔗 GraphQL: ответ без ошибок'; }, en: function() { return '🔗 GraphQL: no errors'; } },
+    'graphql.hasErrors': { ru: function(count, first) { return '🚫 В ответе ошибок GraphQL: ' + count + '. Первая: "' + first + '"'; }, en: function(count, first) { return '🚫 GraphQL errors in response: ' + count + '. First: "' + first + '"'; } },
+    'graphql.errorCountName': { ru: function(n) { return '🔗 GraphQL: ровно ' + n + ' ошибок'; }, en: function(n) { return '🔗 GraphQL: exactly ' + n + ' error(s)'; } },
+    'graphql.errorCountFail': { ru: function(expected, actual) { return '🚫 Ожидалось ошибок: ' + expected + ', получено: ' + actual; }, en: function(expected, actual) { return '🚫 Expected ' + expected + ' error(s), got ' + actual; } },
+    'graphql.errorContainsName': { ru: function(needle) { return '🔗 GraphQL: ошибка содержит "' + needle + '"'; }, en: function(needle) { return '🔗 GraphQL: an error contains "' + needle + '"'; } },
+    'graphql.errorContainsFail': { ru: function(needle) { return '🚫 Ни одна ошибка не содержит "' + needle + '"'; }, en: function(needle) { return '🚫 No error message contains "' + needle + '"'; } },
     // ─── assertOrder ───
     'assertOrder.violationsCount': { ru: function(count) { return '❌ ' + count + ' нарушений'; }, en: function(count) { return '❌ ' + count + ' violations'; } },
     'assertOrder.violationsMsg': { ru: function(dir, by, violations) { return 'Нарушения порядка сортировки (' + dir + ' by "' + by + '"):\n' + violations; }, en: function(dir, by, violations) { return 'Sort order violations (' + dir + ' by "' + by + '"):\n' + violations; } },

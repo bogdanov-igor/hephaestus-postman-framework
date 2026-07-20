@@ -439,6 +439,37 @@
         }, en: function(fieldPath2, expected, actual) {
           return '\u{1F6AB} "' + fieldPath2 + '": expected ' + expected + ", got " + actual;
         } },
+        // ─── graphql ───
+        "graphql.noErrorsName": { ru: function() {
+          return "\u{1F517} GraphQL: \u043E\u0442\u0432\u0435\u0442 \u0431\u0435\u0437 \u043E\u0448\u0438\u0431\u043E\u043A";
+        }, en: function() {
+          return "\u{1F517} GraphQL: no errors";
+        } },
+        "graphql.hasErrors": { ru: function(count, first) {
+          return "\u{1F6AB} \u0412 \u043E\u0442\u0432\u0435\u0442\u0435 \u043E\u0448\u0438\u0431\u043E\u043A GraphQL: " + count + '. \u041F\u0435\u0440\u0432\u0430\u044F: "' + first + '"';
+        }, en: function(count, first) {
+          return "\u{1F6AB} GraphQL errors in response: " + count + '. First: "' + first + '"';
+        } },
+        "graphql.errorCountName": { ru: function(n) {
+          return "\u{1F517} GraphQL: \u0440\u043E\u0432\u043D\u043E " + n + " \u043E\u0448\u0438\u0431\u043E\u043A";
+        }, en: function(n) {
+          return "\u{1F517} GraphQL: exactly " + n + " error(s)";
+        } },
+        "graphql.errorCountFail": { ru: function(expected, actual) {
+          return "\u{1F6AB} \u041E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C \u043E\u0448\u0438\u0431\u043E\u043A: " + expected + ", \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043E: " + actual;
+        }, en: function(expected, actual) {
+          return "\u{1F6AB} Expected " + expected + " error(s), got " + actual;
+        } },
+        "graphql.errorContainsName": { ru: function(needle) {
+          return '\u{1F517} GraphQL: \u043E\u0448\u0438\u0431\u043A\u0430 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u0442 "' + needle + '"';
+        }, en: function(needle) {
+          return '\u{1F517} GraphQL: an error contains "' + needle + '"';
+        } },
+        "graphql.errorContainsFail": { ru: function(needle) {
+          return '\u{1F6AB} \u041D\u0438 \u043E\u0434\u043D\u0430 \u043E\u0448\u0438\u0431\u043A\u0430 \u043D\u0435 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u0442 "' + needle + '"';
+        }, en: function(needle) {
+          return '\u{1F6AB} No error message contains "' + needle + '"';
+        } },
         // ─── assertOrder ───
         "assertOrder.violationsCount": { ru: function(count) {
           return "\u274C " + count + " \u043D\u0430\u0440\u0443\u0448\u0435\u043D\u0438\u0439";
@@ -874,6 +905,7 @@
         "assertUnique",
         "assertHeaders",
         "retryOnStatus",
+        "graphql",
         // config for the shipped plugins (read off ctx.config by docs/plugins/*)
         "slackUrl",
         "slackOnlyFailures",
@@ -1734,6 +1766,69 @@
             });
           }
         };
+        const graphql = {
+          _typeOf(v2) {
+            if (v2 === null) return "null";
+            if (Array.isArray(v2)) return "array";
+            return typeof v2;
+          },
+          run(ctx2) {
+            let cfg = _override.graphql;
+            if (!cfg) return;
+            if (cfg === true) cfg = { noErrors: true };
+            if (typeof cfg !== "object") return;
+            const isSoft = !!ctx2.config.softFail;
+            const self = this;
+            function gqlTest(label2, fn) {
+              pm.test((isSoft ? "\u26AA [soft] " : "") + label2, function() {
+                if (isSoft) {
+                  try {
+                    fn();
+                  } catch (e2) {
+                    console.warn("\u26AA [soft] " + label2 + ": " + e2.message);
+                  }
+                } else {
+                  fn();
+                }
+              });
+            }
+            const errors = ctx2.api.get("errors");
+            const errArr = Array.isArray(errors) ? errors : [];
+            const firstMsg = function() {
+              return errArr.length ? String(errArr[0] && errArr[0].message || errArr[0]) : "";
+            };
+            if (cfg.noErrors === true) {
+              gqlTest(t(ctx2, "graphql.noErrorsName"), function() {
+                pm.expect(errArr.length, t(ctx2, "graphql.hasErrors", errArr.length, firstMsg())).to.equal(0);
+              });
+            }
+            if (typeof cfg.errorCount === "number") {
+              gqlTest(t(ctx2, "graphql.errorCountName", cfg.errorCount), function() {
+                pm.expect(errArr.length, t(ctx2, "graphql.errorCountFail", cfg.errorCount, errArr.length)).to.equal(cfg.errorCount);
+              });
+            }
+            if (typeof cfg.errorContains === "string") {
+              gqlTest(t(ctx2, "graphql.errorContainsName", cfg.errorContains), function() {
+                const hit = errArr.some(function(e2) {
+                  return String(e2 && e2.message || e2).indexOf(cfg.errorContains) !== -1;
+                });
+                pm.expect(hit, t(ctx2, "graphql.errorContainsFail", cfg.errorContains)).to.equal(true);
+              });
+            }
+            if (cfg.dataShape && typeof cfg.dataShape === "object" && !Array.isArray(cfg.dataShape)) {
+              Object.keys(cfg.dataShape).forEach(function(p2) {
+                const expected = cfg.dataShape[p2];
+                const fullPath = "data." + p2;
+                const val = ctx2.api.get(fullPath);
+                const actual = self._typeOf(val);
+                gqlTest('\u{1F517} GraphQL data "' + p2 + '": ' + expected, function() {
+                  pm.expect(val, t(ctx2, "assertShape.notFound", fullPath)).to.not.be.oneOf([void 0, null]);
+                  pm.expect(actual, t(ctx2, "assertShape.typeMismatch", fullPath, expected, actual)).to.equal(expected);
+                });
+              });
+            }
+          }
+        };
         const assertOrder = {
           _extract(item, field) {
             return field.split(".").reduce(function(acc, k) {
@@ -2473,6 +2568,7 @@
             assertions.run(ctx);
             assertEach.run(ctx);
             assertShape.run(ctx);
+            graphql.run(ctx);
             assertOrder.run(ctx);
             assertUnique.run(ctx);
             assertHeaders.run(ctx);
