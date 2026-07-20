@@ -27,7 +27,9 @@
 
     var onlyFailures = ctx.config.teamsOnlyFailures !== false;
 
-    var code    = ctx.api.status;
+    // ctx.api is REPLACED by the extractor with { get, find, all, count, save };
+    // status and timing live on ctx.response.
+    var code    = ctx.response.code;
     var isError = code >= 500;
     var results = ctx._meta.results || {};
 
@@ -35,7 +37,7 @@
     Object.keys(results).forEach(function(key) {
         var bucket = results[key];
         if (Array.isArray(bucket)) {
-            bucket.filter(function(r) { return r && r.passed === false; })
+            bucket.filter(function(r) { return r && r.ok === false; })
                   .forEach(function(r) { failedAssertions.push(r.name || key); });
         }
     });
@@ -51,7 +53,7 @@
     var facts = [
         { title: 'Request',       value: reqName },
         { title: 'Status Code',   value: String(code) },
-        { title: 'Response Time', value: ctx.api.responseTime + 'ms' },
+        { title: 'Response Time', value: ctx.response.time + 'ms' },
         { title: 'Environment',   value: envName },
     ];
 

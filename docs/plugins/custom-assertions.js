@@ -5,10 +5,13 @@
  * Используй как отправную точку для своей библиотеки.
  *
  * Доступные объекты:
- *   ctx.api.body    — parsed response body (object | string)
- *   ctx.api.status  — HTTP status code (number)
- *   ctx.api.headers — response headers object (lowercase keys)
- *   ctx.api.responseTime — ms (number)
+ *   ctx.response.parsed — parsed response body (object | string)
+ *   ctx.response.code   — HTTP status code (number)
+ *   ctx.response.time   — response time in ms (number)
+ *   ctx.response.size   — response size in bytes (number)
+ *   pm.response.headers — headers, via the Postman SDK (ctx has no header map)
+ *
+ *   ctx.api is the EXTRACTOR — { get, find, all, count, save } — not the response.
  *   ctx.config      — merged hephaestus config for this request
  *   ctx.iteration   — { index, count, data, get(key) }
  *
@@ -35,9 +38,9 @@
         pm.test(name, function() { fn(); });
     }
 
-    var body   = ctx.api.body;
-    var status = ctx.api.status;
-    var time   = ctx.api.responseTime;
+    var body   = ctx.response.parsed;
+    var status = ctx.response.code;
+    var time   = ctx.response.time;
 
     // ── Example: response time SLA ─────────────────────────────────────────
     // Провалит тест, если ответ медленнее 3 сек.
@@ -84,7 +87,7 @@
     // Проверяем наличие заголовка Access-Control-Allow-Origin на API-ответах
     if (ctx.config.checkCors) {
         assert('🌐 CORS: Access-Control-Allow-Origin present', function() {
-            pm.expect(ctx.api.headers).to.have.property('access-control-allow-origin');
+            pm.expect(pm.response.headers.get('Access-Control-Allow-Origin'), 'CORS header missing').to.be.a('string');
         });
     }
 
