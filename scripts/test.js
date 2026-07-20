@@ -272,6 +272,39 @@ test('Markdown contains request names', function() {
     assertContains(md, 'POST Login', 'missing POST Login');
 });
 
+test('docs without -o writes to stdout and leaves the collection untouched', function() {
+    // REGRESSION (data loss): `args[args.indexOf('-o') + 1]` resolves to args[0] —
+    // the input collection — when -o is absent, and the writer then overwrote the
+    // user's collection with the generated Markdown. Every previous docs test
+    // passed -o, which is exactly why this shipped.
+    const victim = path.join(TMP, 'victim-collection.json');
+    fs.copyFileSync(collectionFixtureFile, victim);
+    const before = fs.readFileSync(victim, 'utf8');
+    const out = run(NODE + ' "' + path.join(ROOT, 'scripts/docs.js') + '" "' + victim + '"');
+    assertContains(out, '# ', 'Markdown should be printed to stdout');
+    assert(fs.readFileSync(victim, 'utf8') === before, 'the input collection was MODIFIED');
+    JSON.parse(fs.readFileSync(victim, 'utf8')); // throws if no longer a collection
+});
+
+test('docs refuses to write over the input collection', function() {
+    const victim = path.join(TMP, 'victim2-collection.json');
+    fs.copyFileSync(collectionFixtureFile, victim);
+    const before = fs.readFileSync(victim, 'utf8');
+    let code = 0;
+    try { run(NODE + ' "' + path.join(ROOT, 'scripts/docs.js') + '" "' + victim + '" -o "' + victim + '"'); }
+    catch (e) { code = e.status || 1; }
+    assert(code === 1, 'writing docs over the input must exit 1, got ' + code);
+    assert(fs.readFileSync(victim, 'utf8') === before, 'the collection was modified anyway');
+});
+
+test('watch without -c reports usage instead of watching a flag as a file', function() {
+    let code = 0, out = '';
+    try { out = run(NODE + ' "' + path.join(ROOT, 'scripts/watch.js') + '" --delay 500'); }
+    catch (e) { code = e.status || 1; out = String(e.stdout || '') + String(e.stderr || ''); }
+    assert(code === 1, 'missing -c must exit 1, got ' + code);
+    assertContains(out, 'Usage', 'should print usage');
+});
+
 test('Markdown contains method info', function() {
     const md = fs.readFileSync(docsOut, 'utf8');
     assertContains(md, 'GET', 'missing GET method');

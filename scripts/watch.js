@@ -29,7 +29,11 @@ const RESULTS = path.join(os.tmpdir(), 'hephaestus-watch-results.json');
 // ─── CLI ──────────────────────────────────────────────────────────────────────
 
 const rawArgs    = process.argv.slice(2);
-const collection = rawArgs[rawArgs.indexOf('-c') + 1];
+// Explicit index: `rawArgs[indexOf('-c') + 1]` silently resolves to rawArgs[0]
+// when -c is absent, so `watch --delay 500` would try to watch a file named "--delay".
+const cIdx       = rawArgs.indexOf('-c');
+const cVal       = cIdx !== -1 ? rawArgs[cIdx + 1] : undefined;
+const collection = (cVal && !cVal.startsWith('-')) ? cVal : undefined;
 const delay      = rawArgs.includes('--delay') ? parseInt(rawArgs[rawArgs.indexOf('--delay') + 1], 10) : 400;
 const extraArgs  = rawArgs.includes('--args') ? rawArgs[rawArgs.indexOf('--args') + 1] : '';
 

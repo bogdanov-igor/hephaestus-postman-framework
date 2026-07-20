@@ -99,6 +99,14 @@ previously hardcoded English even in `ru`.
   review showed it under-masked concatenated secret names like `passwd`/`apikey`/`privatekey`.)
 
 ### Fixed
+- **`docs` no longer destroys the collection it reads.** Without `-o`, the output
+  path resolved to `args[args.indexOf('-o') + 1]` — which is `args[0]`, the input
+  file — so `hephaestus docs collection.json` (documented as printing to stdout)
+  overwrote the user's collection with the generated Markdown. The path is now
+  resolved explicitly, and writing docs over the input is refused outright. Every
+  previous docs test passed `-o`, which is exactly why this shipped since v3.7.
+- **`watch` without `-c`** resolved the collection path to the first argument, so
+  `watch --delay 500` tried to watch a file named `--delay`. It now reports usage.
 - **`snapshot.storage: "postman-api"`** no longer silently no-ops (which left a run
   with **zero** snapshot protection while looking configured). It now warns once and
   falls back to `collection-vars`, so snapshots actually save/compare. (Real
