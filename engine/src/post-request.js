@@ -13,6 +13,7 @@
 import { configMerge } from './shared/config-merge.js';
 import { iterationData } from './shared/iteration-data.js';
 import { isSensitive } from './shared/mask.js';
+import { parseRetryAfterMs } from './shared/retry-after.js';
 import { t, statusLabel } from './shared/i18n.js';
 
 (function hephaestusPostRequest() {
@@ -677,10 +678,15 @@ import { t, statusLabel } from './shared/i18n.js';
     // На последней попытке падает с понятным сообщением.
     //
     //   retryOnStatus: {
-    //     statuses:   [503, 429],   // статусы, при которых повторять
-    //     maxRetries: 3             // макс. кол-во повторов (default: 3)
+    //     statuses:         [503, 429],  // статусы, при которых повторять
+    //     maxRetries:       3,           // макс. кол-во повторов (default: 3)
+    //     respectRetryAfter: true,       // (opt-in) уважать заголовок Retry-After
+    //     retryAfterCapMs:  10000        // предел ожидания по Retry-After (default: 10s)
     //   }
     //
+    // Retry-After: если сервер прислал заголовок и запрошенная пауза ≤ retryAfterCapMs,
+    // движок блокирующе ждёт её перед повтором (в песочнице Postman нет async-sleep,
+    // переживающего setNextRequest); если пауза больше предела — повторы прекращаются.
     // Счётчик хранится в pm.variables (автоочистка при успехе / исчерпании).
     // ════════════════════════════════════════════════════════════
     const retryOnStatus = {
@@ -702,10 +708,31 @@ import { t, statusLabel } from './shared/i18n.js';
             const count = parseInt(pm.variables.get(key) || '0', 10);
 
             if (count < maxRetries) {
+                // Retry-After (opt-in): honor the server's requested backoff before re-running.
+                // Postman's sandbox has no async sleep that survives setNextRequest, so the wait
+                // is a bounded BLOCKING busy-wait, capped by retryAfterCapMs (default 10s). If the
+                // server asks for longer than the cap, stop retrying rather than hammer it.
+                if (cfg.respectRetryAfter) {
+                    const capMs  = typeof cfg.retryAfterCapMs === 'number' ? cfg.retryAfterCapMs : 10000;
+                    const hdrVal = (pm.response.headers && pm.response.headers.get) ? pm.response.headers.get('Retry-After') : null;
+                    const waitMs = parseRetryAfterMs(hdrVal, Date.now());
+                    if (waitMs !== null && waitMs > capMs) {
+                        pm.variables.unset(key);
+                        pm.test(t(_ctx, 'retryOnStatus.retryAfterName', code), function() {
+                            throw new Error(t(_ctx, 'retryOnStatus.retryAfterExceeds',
+                                Math.round(waitMs / 1000), Math.round(capMs / 1000)));
+                        });
+                        return false; // stop retrying; pipeline continues so logger emits the summary
+                    }
+                    if (waitMs) { // > 0 and within cap
+                        console.log(t(_ctx, 'retryOnStatus.retryAfterWait', (waitMs / 1000), pm.info.requestName));
+                        const _end = Date.now() + waitMs;
+                        while (Date.now() < _end) { /* blocking: no async sleep survives setNextRequest */ }
+                    }
+                }
                 pm.variables.set(key, String(count + 1));
-                pm.test('⚡ Retry ' + (count + 1) + '/' + maxRetries + ' (status ' + code + ')', function() {
-                    // This test will show as "passed" to indicate retry in progress
-                    // (we don't throw — we just log)
+                pm.test(t(_ctx, 'retryOnStatus.retryName', (count + 1), maxRetries, code), function() {
+                    // Shows as "passed" — indicates a retry is in progress (we log, don't throw).
                 });
                 console.log(t(_ctx, 'retryOnStatus.rerunLog', (count + 1), maxRetries, code, pm.info.requestName));
                 pm.setNextRequest(pm.info.requestName);

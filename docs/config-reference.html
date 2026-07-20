@@ -692,11 +692,14 @@ newman run col.json --env-var ci=true</pre>
   <div class="opt-body">
     <pre class="example"><span class="kw">const</span> override = {
     <span class="key">retryOnStatus</span>: {
-        <span class="key">statuses</span>:   [<span class="num">503</span>, <span class="num">429</span>],  <span class="cmt">// retry on these HTTP codes</span>
-        <span class="key">maxRetries</span>: <span class="num">3</span>             <span class="cmt">// default: 3</span>
+        <span class="key">statuses</span>:          [<span class="num">503</span>, <span class="num">429</span>],  <span class="cmt">// retry on these HTTP codes</span>
+        <span class="key">maxRetries</span>:        <span class="num">3</span>,            <span class="cmt">// default: 3</span>
+        <span class="key">respectRetryAfter</span>: <span class="kw">true</span>,         <span class="cmt">// opt-in: honor the Retry-After header</span>
+        <span class="key">retryAfterCapMs</span>:   <span class="num">10000</span>         <span class="cmt">// max wait honored (default: 10s)</span>
     }
 };</pre>
     <p style="font-size:.78rem;color:var(--muted);margin-top:8px">Counter stored in <code>pm.variables</code> (key: <code>hephaestus.retry.&lt;requestName&gt;</code>), auto-cleared on success or exhaustion.</p>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:8px"><strong>Retry-After</strong> (<code>respectRetryAfter: true</code>): on a retried response the engine reads the server's <code>Retry-After</code> header (delta-seconds or HTTP-date) and blocks that long before re-running, up to <code>retryAfterCapMs</code>. If the requested backoff exceeds the cap it stops retrying instead of hammering. The wait is a bounded blocking busy-wait — the Postman sandbox has no async sleep that survives <code>setNextRequest</code>.</p>
   </div>
 </div>
 

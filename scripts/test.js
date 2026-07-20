@@ -466,6 +466,44 @@ test('isSensitive masks all real secret fields incl. concatenated-lowercase (no 
     assertContains(out, 'ok', 'mask probe did not pass');
 });
 
+// ─── 9c. engine shared/retry-after.js (Retry-After parsing) ───────────────────
+// The golden harness can't drive a setNextRequest retry loop, so the parse — the
+// security/correctness-critical part of the Retry-After feature — is locked here.
+// nowMs is injected so the HTTP-date branch is deterministic.
+
+console.log('\n⑨ᶜ engine shared/retry-after.js');
+
+const raProbe = path.join(TMP, 'retry-after-probe.mjs');
+fs.writeFileSync(raProbe, [
+    // file:// URL so the import is a valid ESM specifier on Windows too.
+    "import { parseRetryAfterMs as p } from " + JSON.stringify(require('url').pathToFileURL(path.join(ROOT, 'engine/src/shared/retry-after.js')).href) + ";",
+    "const NOW = 1000000000000;", // fixed reference instant
+    "function eq(a, b, label) { if (a !== b) { console.error('FAIL ' + label + ': got ' + a + ', want ' + b); process.exit(2); } }",
+    // delta-seconds
+    "eq(p('120', NOW), 120000, 'delta 120s');",
+    "eq(p('0', NOW), 0, 'delta 0s (retry now)');",
+    "eq(p('3600', NOW), 3600000, 'delta 3600s');",
+    "eq(p('  30  ', NOW), 30000, 'delta trimmed');",
+    // HTTP-date — future, past, exact-now
+    "eq(p(new Date(NOW + 5000).toUTCString(), NOW), 5000, 'http-date +5s');",
+    "eq(p(new Date(NOW - 5000).toUTCString(), NOW), 0, 'http-date in the past => 0');",
+    "eq(p(new Date(NOW).toUTCString(), NOW), 0, 'http-date == now => 0 (sub-second floors)');",
+    // absent / empty / unparseable => null (caller decides)
+    "eq(p(null, NOW), null, 'null header');",
+    "eq(p(undefined, NOW), null, 'undefined header');",
+    "eq(p('', NOW), null, 'empty header');",
+    "eq(p('   ', NOW), null, 'whitespace header');",
+    "eq(p('later', NOW), null, 'unparseable word');",
+    "eq(p('-5', NOW), null, 'negative not a delta, not a date');",
+    "eq(p('12.5', NOW), null, 'fractional not an integer delta');",
+    "console.log('ok');"
+].join('\n'));
+
+test('parseRetryAfterMs handles delta-seconds, HTTP-date (future/past) and invalid input', function() {
+    const out = run(NODE + ' ' + JSON.stringify(raProbe));
+    assertContains(out, 'ok', 'retry-after probe did not pass');
+});
+
 // ─── 10. generate-report.js ───────────────────────────────────────────────────
 
 console.log('\n⑩ generate-report.js');

@@ -91,6 +91,10 @@ function startMockServer() {
         if (url === '/nostore') {
             return json({ ok: true }, 200, { 'Cache-Control': 'no-store' });
         }
+        if (url === '/retry503-longwait') {
+            // 503 with a Retry-After far beyond the cap → engine must stop retrying.
+            return json({ error: 'unavailable' }, 503, { 'Retry-After': '3600' });
+        }
         return json({ error: 'not found' }, 404);
     });
     return new Promise(function (resolve) {
@@ -390,6 +394,14 @@ function buildCollection(preSrc, postSrc, baseUrl) {
             name: 'neg-secaudit-cacheable',
             request: { method: 'GET', url: baseUrl + '/obj' },
             event: methodScripts({}, { securityAudit: { enabled: true, requireHeaders: [], forbidHeaders: [], forbidBodyPatterns: [], checkCors: false, requireNoStore: true } })
+        },
+        {
+            // retryOnStatus + respectRetryAfter: server asks to wait 3600s, far above the
+            // 10s cap → engine stops retrying (no setNextRequest, single pass) and fails
+            // with a clear message. expectedStatus:[503] isolates the Retry-After failure.
+            name: 'neg-retryafter-exceeds-cap',
+            request: { method: 'GET', url: baseUrl + '/retry503-longwait' },
+            event: methodScripts({}, { expectedStatus: [503], retryOnStatus: { statuses: [503], maxRetries: 3, respectRetryAfter: true } })
         }
     ];
 
