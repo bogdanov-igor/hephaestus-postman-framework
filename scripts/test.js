@@ -1186,6 +1186,38 @@ test('CLI exposes doctor: --help lists it and the subcommand delegates (exit 0)'
     assert(doc.ok === true, 'CLI doctor --json should report ok:true on clean checkout');
 });
 
+// ─── 19. bench.js (engine overhead benchmark) ─────────────────────────────────
+
+console.log('\n⑲ bench.js');
+
+const bench = require(path.join(ROOT, 'scripts/bench.js'));
+const BENCH = path.join(ROOT, 'scripts/bench.js');
+
+test('bench parseArgs: defaults and flag parsing', function() {
+    const d = bench.parseArgs([]);
+    assert(d.requests === 40 && d.runs === 5 && d.json === false && d.maxMs === null, 'defaults wrong: ' + JSON.stringify(d));
+    const a = bench.parseArgs(['--requests', '12', '--runs', '3', '--json', '--max-ms', '5']);
+    assert(a.requests === 12 && a.runs === 3 && a.json === true && a.maxMs === 5, 'flags wrong: ' + JSON.stringify(a));
+    // guards: non-positive / missing values fall back to defaults, never 0 or NaN
+    const g = bench.parseArgs(['--requests', '0', '--runs', '-3']);
+    assert(g.requests === 40 && g.runs === 5, 'non-positive should fall back: ' + JSON.stringify(g));
+});
+
+test('bench median: odd and even lengths', function() {
+    assert(bench.median([3, 1, 2]) === 2, 'odd median');
+    assert(bench.median([4, 1, 3, 2]) === 2.5, 'even median');
+    assert(bench.median([7]) === 7, 'single');
+});
+
+test('bench --json produces a valid overhead report and exits 0', function() {
+    const out = run(NODE + ' "' + BENCH + '" --requests 2 --runs 1 --json');
+    const r = JSON.parse(out);
+    assert(r.requests === 2 && r.runs === 1, 'echoes params');
+    assert(r.engineBundleBytes && r.engineBundleBytes.total > 0, 'reports bundle size');
+    assert(typeof r.overheadPerRequestMs === 'number' && r.overheadPerRequestMs >= 0, 'non-negative overhead');
+    assert(r.medianRunMs && r.medianRunMs.engine > 0 && r.medianRunMs.baseline > 0, 'reports run medians');
+});
+
 // ─── Cleanup ─────────────────────────────────────────────────────────────────
 
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch(e) { /* ignore */ }
