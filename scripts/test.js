@@ -544,6 +544,45 @@ test('structuralDiff ignores values/array-length but catches add/remove/type-cha
     assertContains(out, 'ok', 'structure probe did not pass');
 });
 
+// ─── 9e. check-locales.js (locale catalog gate) ───────────────────────────────
+// t() falls back to `ru` when a locale is missing, so an incomplete translation
+// would ship silently. This gate is what makes a locale contribution reviewable.
+
+console.log('\n⑨ᵉ check-locales.js');
+
+const locales = require(path.join(ROOT, 'scripts/check-locales.js'));
+
+test('check-locales catches a missing locale, an arity mismatch and status drift', function() {
+    const r = locales.analyse({
+        'a.missing': { ru: function() { return 'р'; } },                                  // no en
+        'a.arity':   { ru: function(x) { return 'р' + x; }, en: function() { return 'e'; } },
+        'a.ok':      { ru: function(x) { return 'р' + x; }, en: function(x) { return 'e' + x; } }
+    }, { ru: { 200: 'ок' }, en: { 200: 'ok', 404: 'nf' } });
+    const joined = r.errors.join(' | ');
+    assertContains(joined, 'a.missing', 'missing locale reported');
+    assertContains(joined, 'a.arity', 'arity mismatch reported');
+    assertContains(joined, 'statusLabel 404', 'status-code drift reported');
+    assert(joined.indexOf('a.ok') === -1, 'a consistent message must not be reported: ' + joined);
+});
+
+test('check-locales accepts array/number template arguments (no false positives)', function() {
+    // Some templates take an array (they .join()/.map() it) — the validator must not
+    // report those as broken just because a string placeholder would throw.
+    const r = locales.analyse({
+        'a.list': { ru: function(xs) { return 'р' + xs.join(','); }, en: function(xs) { return 'e' + xs.join(','); } },
+        'a.num':  { ru: function(n) { return 'р' + (n + 1); },       en: function(n) { return 'e' + (n + 1); } }
+    }, {});
+    assert(r.errors.length === 0, 'array/number templates must pass: ' + r.errors.join(' | '));
+});
+
+test('the shipped catalog is complete and consistent across every locale', function() {
+    const out = run(NODE + ' "' + path.join(ROOT, 'scripts/check-locales.js') + '" --json');
+    const r = JSON.parse(out);
+    assert(r.errors.length === 0, 'shipped catalog has problems: ' + r.errors.join(' | '));
+    assert(r.locales.indexOf('ru') !== -1 && r.locales.indexOf('en') !== -1, 'ru + en present');
+    assert(r.ids > 100, 'expected a populated catalog, got ' + r.ids + ' ids');
+});
+
 // ─── 10. generate-report.js ───────────────────────────────────────────────────
 
 console.log('\n⑩ generate-report.js');

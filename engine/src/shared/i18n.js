@@ -233,3 +233,10 @@ export function t(ctx, id) {
     const fn = entry[locOf(ctx)] || entry.ru;
     return fn.apply(null, args);
 }
+
+// Exposed for `npm run check:locales` (scripts/check-locales.js), which validates
+// that every message id carries every locale with a matching parameter count — a
+// missing translation would otherwise fall back to `ru` silently in t() above.
+// esbuild tree-shakes these out of the engine bundles; they cost nothing shipped.
+export const MESSAGES = M;
+export const STATUS_LABELS = STATUS;

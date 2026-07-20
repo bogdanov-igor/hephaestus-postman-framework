@@ -25,6 +25,7 @@
     "lint:fix": "eslint engine/ setup/ templates/ --fix",
     "syntax": "node --check engine/pre-request.js && node --check engine/post-request.js && node --check setup/engine-update.js && node --check setup/snapshot-clear.js && node --check setup/snapshot-view.js && node --check templates/method.pre-request.js && node --check templates/method.post-request.js",
     "validate:defaults": "node -e \"JSON.parse(require('fs').readFileSync('setup/defaults.json','utf8')); console.log('✅ defaults.json valid')\"",
+    "check:locales": "node scripts/check-locales.js",
     "build": "node scripts/build.js",
     "build:emit": "node scripts/build.js --emit",
     "test": "node scripts/test.js && node scripts/test-engine.js",
