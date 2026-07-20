@@ -1082,6 +1082,61 @@
     }
   });
 
+  // engine/src/shared/structure.js
+  function structurePaths(obj) {
+    const out = /* @__PURE__ */ Object.create(null);
+    function add(key, type) {
+      if (out[key] === void 0) {
+        out[key] = type;
+        return;
+      }
+      if (("|" + out[key] + "|").indexOf("|" + type + "|") === -1) {
+        out[key] = out[key].split("|").concat(type).sort().join("|");
+      }
+    }
+    function walk(v2, path2) {
+      if (Array.isArray(v2)) {
+        if (v2.length === 0) {
+          add(path2 + "[*]", "empty-array");
+          return;
+        }
+        for (let i = 0; i < v2.length; i++) walk(v2[i], path2 + "[*]");
+        return;
+      }
+      if (v2 !== null && typeof v2 === "object") {
+        const keys = Object.keys(v2);
+        if (keys.length === 0) {
+          add(path2 || "(root)", "empty-object");
+          return;
+        }
+        keys.forEach(function(k) {
+          walk(v2[k], path2 ? path2 + "." + k : k);
+        });
+        return;
+      }
+      add(path2 || "(root)", v2 === null ? "null" : typeof v2);
+    }
+    walk(obj, "");
+    return out;
+  }
+  function structuralDiff(stored, current) {
+    const a = structurePaths(stored);
+    const b = current === void 0 ? /* @__PURE__ */ Object.create(null) : structurePaths(current);
+    const diff = [];
+    Object.keys(a).forEach(function(p2) {
+      if (!(p2 in b)) diff.push("- " + p2 + " (" + a[p2] + ")");
+      else if (a[p2] !== b[p2]) diff.push("~ " + p2 + ": " + a[p2] + " \u2192 " + b[p2]);
+    });
+    Object.keys(b).forEach(function(p2) {
+      if (!(p2 in a)) diff.push("+ " + p2 + " (" + b[p2] + ")");
+    });
+    return diff.sort();
+  }
+  var init_structure = __esm({
+    "engine/src/shared/structure.js"() {
+    }
+  });
+
   // engine/src/post-request.js
   var require_post_request = __commonJS({
     "engine/src/post-request.js"(exports, module) {
@@ -1089,6 +1144,7 @@
       init_iteration_data();
       init_mask();
       init_retry_after();
+      init_structure();
       init_i18n();
       (function hephaestusPostRequest() {
         const VERSION = "3.9.0";
@@ -2203,6 +2259,9 @@
             if (mode === "strict") {
               isEqual = this._deepEqual(storedData, currentData);
               if (!isEqual) this._findDiff(storedData, currentData, "").forEach((d) => diff.push(d));
+            } else if (mode === "structural") {
+              structuralDiff(storedData, currentData).forEach((d) => diff.push(d));
+              isEqual = diff.length === 0;
             } else {
               isEqual = this._nonStrictMatch(storedData, currentData, diff, "");
             }

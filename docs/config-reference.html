@@ -537,13 +537,13 @@ footer{text-align:center;padding:20px;font-size:.75rem;color:var(--muted);border
     <pre class="example"><span class="kw">const</span> override = {
     <span class="key">snapshot</span>: {
         <span class="key">enabled</span>:         <span class="kw">true</span>,
-        <span class="key">mode</span>:            <span class="str">"non-strict"</span>, <span class="cmt">// "strict" | "non-strict"</span>
+        <span class="key">mode</span>:            <span class="str">"non-strict"</span>, <span class="cmt">// "strict" | "non-strict" | "structural"</span>
         <span class="key">autoSaveMissing</span>: <span class="kw">true</span>,         <span class="cmt">// save on first run</span>
         <span class="key">checkPaths</span>:      [<span class="str">"data.status"</span>, <span class="str">"data.items[*].id"</span>],
         <span class="key">ignorePaths</span>:     [<span class="str">"data.timestamp"</span>, <span class="str">"data.requestId"</span>],
     }
 };</pre>
-    <p style="font-size:.78rem;color:var(--muted);margin-top:8px"><strong>strict</strong> — full deep-equal comparison (with ignorePaths). <strong>non-strict</strong> — all baseline keys must be present in current response (allows new keys).</p>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:8px"><strong>strict</strong> — full deep-equal comparison (with ignorePaths). <strong>non-strict</strong> — all baseline keys must be present in current response (allows new keys). <strong>structural</strong> — compares the <em>shape</em> only (every leaf path → its type, array indices collapsed to <code>[*]</code>): catches a field added/removed or a type change, but ignores volatile values (timestamps, ids, counts) and array length.</p>
     <p style="font-size:.78rem;color:var(--muted);margin-top:6px">Stored in <code>hephaestus.snapshots</code> collection variable. View with <a href="snapshot-viewer.html">Snapshot Viewer</a> or <code>📋 snapshot-view</code> request.</p>
   </div>
 </div>

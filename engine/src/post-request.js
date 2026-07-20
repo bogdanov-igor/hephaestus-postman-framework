@@ -14,6 +14,7 @@ import { configMerge } from './shared/config-merge.js';
 import { iterationData } from './shared/iteration-data.js';
 import { isSensitive } from './shared/mask.js';
 import { parseRetryAfterMs } from './shared/retry-after.js';
+import { structuralDiff } from './shared/structure.js';
 import { t, statusLabel } from './shared/i18n.js';
 
 (function hephaestusPostRequest() {
@@ -1067,6 +1068,9 @@ import { t, statusLabel } from './shared/i18n.js';
     // Режимы:
     //   strict     — полное deep-equal сравнение (с учётом ignorePaths)
     //   non-strict — все ключи из baseline должны присутствовать в текущем ответе
+    //   structural — сравнение ФОРМЫ (пути→типы), значения игнорируются: ловит
+    //                изменения контракта (поле добавлено/удалено, тип сменился),
+    //                но не реагирует на волатильные значения (id, время, счётчики)
     //
     // checkPaths — список путей для сравнения (оптимизирует объём хранилища)
     // ignorePaths — пути, которые исключаются из сравнения
@@ -1282,6 +1286,10 @@ import { t, statusLabel } from './shared/i18n.js';
             if (mode === 'strict') {
                 isEqual = this._deepEqual(storedData, currentData);
                 if (!isEqual) this._findDiff(storedData, currentData, '').forEach(d => diff.push(d));
+            } else if (mode === 'structural') {
+                // Compare SHAPE only (leaf paths → types); ignore volatile values.
+                structuralDiff(storedData, currentData).forEach(d => diff.push(d));
+                isEqual = diff.length === 0;
             } else {
                 isEqual = this._nonStrictMatch(storedData, currentData, diff, '');
             }
