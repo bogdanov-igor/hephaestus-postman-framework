@@ -226,7 +226,7 @@ function kb(bytes) { return (bytes / 1024).toFixed(1) + ' KB'; }
 function report(r) {
     const L = [];
     L.push('');
-    L.push('  Hephaestus — engine overhead');
+    L.push('  ⚒️  Hephaestus — Engine Overhead');
     L.push('  ' + '─'.repeat(40));
     L.push('  Engine bundle    ' + kb(r.engineBundleBytes.total) +
         '  (pre ' + kb(r.engineBundleBytes.pre) + ' · post ' + kb(r.engineBundleBytes.post) + ')');

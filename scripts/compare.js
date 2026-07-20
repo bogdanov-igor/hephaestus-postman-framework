@@ -241,7 +241,7 @@ const W = 70;
 const HR = c.dim('─'.repeat(W));
 
 console.log('');
-console.log(c.bold('  🔥 HEPHAESTUS  Newman Run Comparator'));
+console.log(c.bold('  ⚒️  Hephaestus — Newman Run Comparator'));
 console.log(HR);
 console.log(c.dim('  Before: ') + (bInfo.name || files[0]));
 console.log(c.dim('  After:  ') + (aInfo.name || files[1]));

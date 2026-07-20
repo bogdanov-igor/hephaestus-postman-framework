@@ -674,6 +674,41 @@ test('HTML contains key elements', function() {
     assertContains(html, 'PASS RATE',     'missing SVG pass-rate chart');
 });
 
+test('report does not mistake a flag for the output filename', function() {
+    // REGRESSION: `outFile = args[1]` made `report results.json --history` write a
+    // file literally named "--history" (same class of bug as docs/-o and watch/-c).
+    const out = path.join(TMP, 'report-flagargs.html');
+    run(NODE + ' "' + path.join(ROOT, 'scripts/generate-report.js') + '" "' + newmanFixtureFile + '" "' + out + '" --history');
+    assert(fs.existsSync(out), 'report not written to the positional path');
+    assert(!fs.existsSync(path.join(process.cwd(), '--history')), 'created a file named "--history"');
+});
+
+test('report renders a Trends section only when --history is given', function() {
+    const hist = path.join(TMP, 'report-history.jsonl');
+    fs.writeFileSync(hist,
+        JSON.stringify({ passRate: 90, p95: 300 }) + '\n' +
+        JSON.stringify({ passRate: 95, p95: 250 }) + '\n', 'utf8');
+
+    const withOut = path.join(TMP, 'report-trends.html');
+    run(NODE + ' "' + path.join(ROOT, 'scripts/generate-report.js') + '" "' + newmanFixtureFile + '" "' + withOut + '" --history "' + hist + '"');
+    const withHtml = fs.readFileSync(withOut, 'utf8');
+    assertContains(withHtml, 'Trends',      'missing Trends section');
+    assertContains(withHtml, 'class="spark"', 'missing sparkline');
+    assertContains(withHtml, '95%',         'missing latest pass rate');
+
+    // Without the flag the report must be unchanged from before this feature.
+    const plain = fs.readFileSync(reportOut, 'utf8');
+    assert(plain.indexOf('class="spark"') === -1, 'Trends leaked into a report without --history');
+});
+
+test('report survives a malformed history file', function() {
+    const bad = path.join(TMP, 'report-bad-history.jsonl');
+    fs.writeFileSync(bad, '{not json\n' + JSON.stringify({ passRate: 100, p95: 10 }) + '\n', 'utf8');
+    const out = path.join(TMP, 'report-badhist.html');
+    run(NODE + ' "' + path.join(ROOT, 'scripts/generate-report.js') + '" "' + newmanFixtureFile + '" "' + out + '" --history "' + bad + '"');
+    assertContains(fs.readFileSync(out, 'utf8'), 'Trends', 'good lines should still render');
+});
+
 test('HTML has no external <script> or <link rel=stylesheet>', function() {
     const html = fs.readFileSync(reportOut, 'utf8');
     // Allow anchor hrefs to GitHub, forbid external JS/CSS asset loads
