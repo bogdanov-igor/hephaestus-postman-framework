@@ -23,7 +23,12 @@ const path = require('path');
 
 const args      = process.argv.slice(2);
 const inputFile = args.find(a => !a.startsWith('-'));
-const outputArg = args[args.indexOf('-o') + 1];
+// NB: `args[args.indexOf('-o') + 1]` looks harmless but resolves to args[0] — the
+// INPUT collection — when -o is absent, and the writer below then overwrote the
+// user's collection with the generated Markdown. Resolve it explicitly instead.
+const oIdx      = args.indexOf('-o');
+const outArgRaw = oIdx !== -1 ? args[oIdx + 1] : undefined;
+const outputArg = (outArgRaw && !outArgRaw.startsWith('-')) ? outArgRaw : null;
 const noToc     = args.includes('--no-toc');
 const jsonMode  = args.includes('--json');
 
@@ -323,6 +328,11 @@ const header = [
 const md = [header].concat(noToc ? [] : [tocLines.join('\n'), '']).concat(sections).join('\n\n');
 
 if (outputArg) {
+    // Defence in depth: never write the docs over the collection we just read.
+    if (path.resolve(outputArg) === path.resolve(inputFile)) {
+        console.error('Refusing to write docs over the input collection: ' + inputFile);
+        process.exit(1);
+    }
     fs.writeFileSync(path.resolve(outputArg), md, 'utf8');
     const relOut = path.relative(process.cwd(), path.resolve(outputArg));
     console.log('✅ Docs generated → ' + relOut);
