@@ -12,6 +12,7 @@ Run Hephaestus collections from the CLI and integrate with any CI/CD system.
 - [CI Mode Output](#ci-mode-output)
 - [Parsing CI JSON](#parsing-ci-json)
 - [HTML Reports](#html-reports)
+- [Gating the pipeline](#gating-the-pipeline)
 - [GitHub Actions](#github-actions)
 - [GitLab CI](#gitlab-ci)
 - [Jenkins](#jenkins)
@@ -153,6 +154,53 @@ newman run collection/hephaestus-template.postman_collection.json \
 ```
 
 Open `results/report.html` in a browser — includes test results, response times, and console logs.
+
+---
+
+## Gating the pipeline
+
+Newman's exit code only says *"some assertion failed"*. The Hephaestus CLI adds gates
+for the things a pipeline actually needs to block on — each **exits 1** when it trips,
+so a plain step is enough, no shell plumbing.
+
+| Gate | Command | Fails the build when |
+|---|---|---|
+| Preflight | `hephaestus doctor` | engine integrity / version drift **before** the run |
+| Assertions | `newman run …` | any assertion failed |
+| Latency | `hephaestus summary results.json --sla=500` | p95 is over budget |
+| Regression | `hephaestus compare before.json after.json` | an assertion that used to pass now fails |
+| Flakiness | `hephaestus flaky r1.json r2.json r3.json --fail-on-flaky` | an assertion flaps across repeated runs |
+| Spec coverage | `hephaestus coverage --spec openapi.yaml collection.json --min 80` | spec coverage drops below the floor |
+| Engine overhead | `hephaestus bench --max-ms 5` | per-request engine cost exceeds the budget |
+
+A pipeline that uses all of them:
+
+```yaml
+- name: Preflight
+  run: node bin/hephaestus.js doctor
+
+- name: Run collection
+  run: newman run collection.json -e env.json -r json --reporter-json-export results.json
+
+- name: Summary + latency gate
+  if: always()
+  run: node bin/hephaestus.js summary results.json --sla=500 --history
+
+- name: Regression gate
+  if: always()
+  run: node bin/hephaestus.js compare baseline.json results.json
+
+- name: Spec coverage gate
+  run: node bin/hephaestus.js coverage --spec openapi.yaml collection.json --min 80
+```
+
+`--history` appends the run to `.hephaestus/history.jsonl`; `hephaestus trends` renders
+pass-rate and p95 sparklines from it, and `hephaestus panel` shows the same locally.
+Keep the history file as a CI artifact (or commit it) if you want the trend to survive
+between runs.
+
+> Paths above assume a clone of this repo (`node bin/hephaestus.js …`). Once the package
+> is published the same commands run as `npx hephaestus …`.
 
 ---
 

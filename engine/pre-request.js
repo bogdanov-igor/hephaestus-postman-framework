@@ -1,8 +1,51 @@
 (() => {
   // engine/src/shared/i18n.js
   function locOf(ctx) {
-    return ctx && ctx.config && ctx.config.locale === "en" ? "en" : "ru";
+    const want = ctx && ctx.config && ctx.config.locale;
+    return want && STATUS[want] ? want : "ru";
   }
+  var STATUS = {
+    ru: {
+      200: "\u0423\u0441\u043F\u0435\u0448\u043D\u043E",
+      201: "\u0421\u043E\u0437\u0434\u0430\u043D",
+      202: "\u041F\u0440\u0438\u043D\u044F\u0442\u043E",
+      204: "\u041D\u0435\u0442 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0433\u043E",
+      301: "\u041F\u0435\u0440\u0435\u043C\u0435\u0449\u0451\u043D",
+      302: "\u041D\u0430\u0439\u0434\u0435\u043D",
+      400: "\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u0437\u0430\u043F\u0440\u043E\u0441",
+      401: "\u041D\u0435\u0430\u0432\u0442\u043E\u0440\u0438\u0437\u043E\u0432\u0430\u043D",
+      403: "\u0414\u043E\u0441\u0442\u0443\u043F \u0437\u0430\u043F\u0440\u0435\u0449\u0451\u043D",
+      404: "\u041D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D",
+      405: "\u041C\u0435\u0442\u043E\u0434 \u0437\u0430\u043F\u0440\u0435\u0449\u0451\u043D",
+      409: "\u041A\u043E\u043D\u0444\u043B\u0438\u043A\u0442",
+      422: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0435 \u0434\u0430\u043D\u043D\u044B\u0435",
+      429: "\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u043C\u043D\u043E\u0433\u043E \u0437\u0430\u043F\u0440\u043E\u0441\u043E\u0432",
+      500: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430",
+      502: "\u041F\u043B\u043E\u0445\u043E\u0439 \u0448\u043B\u044E\u0437",
+      503: "\u0421\u0435\u0440\u0432\u0438\u0441 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D",
+      504: "\u0422\u0430\u0439\u043C\u0430\u0443\u0442 \u0448\u043B\u044E\u0437\u0430"
+    },
+    en: {
+      200: "OK",
+      201: "Created",
+      202: "Accepted",
+      204: "No Content",
+      301: "Moved Permanently",
+      302: "Found",
+      400: "Bad Request",
+      401: "Unauthorized",
+      403: "Forbidden",
+      404: "Not Found",
+      405: "Method Not Allowed",
+      409: "Conflict",
+      422: "Unprocessable Entity",
+      429: "Too Many Requests",
+      500: "Internal Server Error",
+      502: "Bad Gateway",
+      503: "Service Unavailable",
+      504: "Gateway Timeout"
+    }
+  };
   var M = {
     "metrics.status": {
       ru: function(e, c, l) {

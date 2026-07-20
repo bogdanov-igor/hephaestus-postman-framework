@@ -24,7 +24,8 @@
 
   // engine/src/shared/i18n.js
   function locOf(ctx2) {
-    return ctx2 && ctx2.config && ctx2.config.locale === "en" ? "en" : "ru";
+    const want = ctx2 && ctx2.config && ctx2.config.locale;
+    return want && STATUS[want] ? want : "ru";
   }
   function statusLabel(ctx2, code2) {
     const loc = locOf(ctx2);

@@ -88,6 +88,41 @@ The engine files are **single-file monoliths** that get fetched via `engine-upda
 - Add new fields with sensible defaults (disabled by default)
 - Update the configuration table in both READMEs
 
+### Adding or extending a locale (`engine/src/shared/i18n.js`)
+
+Every user-facing string the engine emits goes through one catalog. Each entry maps
+a message id to one template function per locale:
+
+```js
+'metrics.status': { ru: function(e, c, l) { return e + ' Статус: ' + c + ' — ' + l; },
+                    en: function(e, c, l) { return e + ' Status: ' + c + ' — ' + l; } },
+```
+
+To add a language, add your key (e.g. `de`) to **every** entry in `M`, and to every
+code in the `STATUS` map. The status map is not optional: `locOf()` treats it as the
+marker that a locale exists, so a language missing from it is never selected no
+matter how many messages you translate. Two more rules matter:
+
+- **Same parameters, same order.** `t()` applies the call site's arguments to your
+  function, so a template that declares fewer parameters silently drops data out of
+  the message.
+- **Never change the `ru` templates.** They reproduce the historical output
+  byte-for-byte and the golden baseline pins them — a change there is a breaking
+  change for every existing collection.
+
+Then run the gate:
+
+```sh
+npm run check:locales     # completeness + parameter parity + render smoke
+npm test                  # includes the same gate, plus the golden baseline
+```
+
+`check:locales` fails on a missing locale, a parameter-count mismatch, a template
+that throws, or status labels that cover different codes in different languages. It
+also *notes* messages that render identically to `ru` — fine when the text is
+language-neutral (`Content-Type: …`), a red flag when it means "copied, not
+translated". `locale` is selected per request via config: `{ "locale": "de" }`.
+
 ---
 
 ## Code Style
@@ -126,7 +161,7 @@ Since the engine runs inside the Postman sandbox, testing requires Postman itsel
 
 2. Make your changes. Run all checks:
    ```bash
-   npm run syntax && npm run lint && npm run validate:defaults && npm run build
+   npm run syntax && npm run lint && npm run validate:defaults && npm run check:locales && npm run build
    ```
 
 3. Open a Pull Request against `main`. Fill in the PR template.

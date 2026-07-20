@@ -11,8 +11,13 @@
 // golden harness locks this). Add English under `en`; missing ids fall back to ru.
 // ════════════════════════════════════════════════════════════
 
+// A locale is selectable when the catalog actually carries it — the status map is
+// the marker, since a complete locale must translate the status labels too. This
+// was hardcoded to 'en'/'ru', which meant a fully contributed third locale could
+// never be selected. Behaviour for ru / en / absent / unknown is unchanged.
 function locOf(ctx) {
-    return (ctx && ctx.config && ctx.config.locale === 'en') ? 'en' : 'ru';
+    const want = ctx && ctx.config && ctx.config.locale;
+    return (want && STATUS[want]) ? want : 'ru';
 }
 
 const STATUS = {
@@ -233,3 +238,10 @@ export function t(ctx, id) {
     const fn = entry[locOf(ctx)] || entry.ru;
     return fn.apply(null, args);
 }
+
+// Exposed for `npm run check:locales` (scripts/check-locales.js), which validates
+// that every message id carries every locale with a matching parameter count — a
+// missing translation would otherwise fall back to `ru` silently in t() above.
+// esbuild tree-shakes these out of the engine bundles; they cost nothing shipped.
+export const MESSAGES = M;
+export const STATUS_LABELS = STATUS;
