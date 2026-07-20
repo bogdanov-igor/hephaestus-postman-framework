@@ -1188,6 +1188,55 @@ test('coverage --min errors (exit 1) on missing/empty/non-numeric value — no s
 console.log('\n⑰ mock.js');
 
 const mock = require(path.join(ROOT, 'scripts/mock.js'));
+
+// ─── init --demo ──────────────────────────────────────────────────────────────
+
+test('init --demo scaffolds a demo that mock can actually serve', function() {
+    const demoDir = path.join(TMP, 'demo-scaffold');
+    run(NODE + ' "' + path.join(ROOT, 'scripts/init.js') + '" --demo "' + demoDir + '"');
+
+    const colFile = path.join(demoDir, 'demo-collection.json');
+    assert(fs.existsSync(colFile), 'demo-collection.json not written');
+    assert(fs.existsSync(path.join(demoDir, 'demo-environment.json')), 'demo-environment.json not written');
+    assert(fs.existsSync(path.join(demoDir, 'README.md')), 'README.md not written');
+
+    const col = JSON.parse(fs.readFileSync(colFile, 'utf8'));
+    assert(col.item.length === 5, 'expected 5 demo requests, got ' + col.item.length);
+
+    // The demo only works offline if every request has a snapshot that mock
+    // resolves to a route — no orphans, no collisions.
+    const b = mock.buildRoutes(col);
+    assert(Object.keys(b.routes).length === 5, 'expected 5 mock routes, got ' + Object.keys(b.routes).length);
+    assert(b.orphans.length === 0,    'snapshots with no matching request: ' + b.orphans.join(', '));
+    assert(b.collisions.length === 0, 'colliding routes: ' + JSON.stringify(b.collisions));
+
+    // Static paths only: a {{var}} segment would register the route with the
+    // braces in it and 404 at run time.
+    Object.keys(b.routes).forEach(function(r) {
+        assert(r.indexOf('{{') === -1 && r.indexOf('/:') === -1, 'dynamic segment in demo route: ' + r);
+    });
+
+    // The engine must still be wired in, or the demo demonstrates nothing.
+    const names = (col.variable || []).map(function(v) { return v.key; });
+    assert(names.indexOf('hephaestus.v3.post') !== -1, 'engine missing from the demo collection');
+});
+
+test('init --demo refuses to overwrite an existing demo without --force', function() {
+    const demoDir = path.join(TMP, 'demo-twice');
+    run(NODE + ' "' + path.join(ROOT, 'scripts/init.js') + '" --demo "' + demoDir + '"');
+    const colFile = path.join(demoDir, 'demo-collection.json');
+    fs.writeFileSync(colFile, '{"edited":true}', 'utf8');
+
+    let code = 0;
+    try { run(NODE + ' "' + path.join(ROOT, 'scripts/init.js') + '" --demo "' + demoDir + '"'); }
+    catch (e) { code = e.status || 1; }
+    assert(code === 1, 'second --demo must exit 1, got ' + code);
+    assert(fs.readFileSync(colFile, 'utf8') === '{"edited":true}', 'the existing demo was overwritten');
+
+    run(NODE + ' "' + path.join(ROOT, 'scripts/init.js') + '" --demo "' + demoDir + '" --force');
+    assert(fs.readFileSync(colFile, 'utf8') !== '{"edited":true}', '--force did not overwrite');
+});
+
 const MOCK = path.join(ROOT, 'scripts/mock.js');
 
 const MOCK_COLLECTION = {

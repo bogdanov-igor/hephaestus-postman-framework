@@ -33,7 +33,7 @@ const COMMANDS = {
     'sync-examples': { script: 'sync-examples.js', usage: 'sync-examples <collection.json> [-o out.json]', about: 'Snapshots → Postman Example Responses' },
     openapi: { script: 'openapi-import.js',  usage: 'openapi <spec.yaml|json> [-o collection.json]',      about: 'OpenAPI/Swagger → Hephaestus collection' },
     coverage:{ script: 'coverage.js',        usage: 'coverage --spec <spec> <collection.json> [--min N]', about: 'OpenAPI/Swagger coverage of a collection' },
-    init:    { script: 'init.js',            usage: 'init [--defaults]',                                 about: 'Interactive config/environment wizard' },
+    init:    { script: 'init.js',            usage: 'init [--defaults] [--demo [dir]]',                  about: 'Config wizard; --demo scaffolds a runnable offline demo' },
     watch:   { script: 'watch.js',           usage: 'watch -c <collection.json> [-e env.json]',          about: 'Re-run Newman on file changes' },
     trends:  { script: 'trends.js',          usage: 'trends [history.jsonl] [--last N] [--json]',        about: 'Pass-rate / p95 sparkline trends across runs' },
     mock:    { script: 'mock.js',            usage: 'mock <collection.json> [-p <port>] [--filter <s>]', about: 'Replay saved snapshots as a local mock API' },

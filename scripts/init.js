@@ -8,6 +8,7 @@
  * Usage:
  *   node scripts/init.js             — interactive
  *   node scripts/init.js --defaults  — show current defaults.json and exit
+ *   node scripts/init.js --demo [dir] — scaffold a runnable offline demo
  */
 
 'use strict';
@@ -21,6 +22,57 @@ const ROOT = path.resolve(__dirname, '..');
 if (process.argv.includes('--defaults')) {
     const src = path.join(ROOT, 'setup/defaults.json');
     console.log(fs.readFileSync(src, 'utf8'));
+    process.exit(0);
+}
+
+// ─── --demo ───────────────────────────────────────────────────────────────────
+// Non-interactive on purpose: the whole promise is "one command, then it runs".
+
+if (process.argv.includes('--demo')) {
+    const demo    = require('./lib/demo.js');
+    const argv    = process.argv.slice(2);
+    const dIdx    = argv.indexOf('--demo');
+    const dArg    = argv[dIdx + 1];
+    const outDir  = path.resolve((dArg && !dArg.startsWith('-')) ? dArg : 'hephaestus-demo');
+
+    // Refuse to scribble into a directory that already holds a demo's worth of
+    // files — someone may have edited them.
+    const colFile = path.join(outDir, 'demo-collection.json');
+    const envFile = path.join(outDir, 'demo-environment.json');
+    if (fs.existsSync(colFile) && !argv.includes('--force')) {
+        console.error('Demo already exists at ' + path.relative(process.cwd(), colFile));
+        console.error('Pass --force to overwrite it.');
+        process.exit(1);
+    }
+
+    let built;
+    try { built = demo.buildDemo(); }
+    catch (e) { console.error('Could not build the demo: ' + e.message); process.exit(1); }
+
+    fs.mkdirSync(outDir, { recursive: true });
+    fs.writeFileSync(colFile, JSON.stringify(built.collection, null, 2) + '\n', 'utf8');
+    fs.writeFileSync(envFile, JSON.stringify(built.environment, null, 2) + '\n', 'utf8');
+
+    const relCol = path.relative(process.cwd(), colFile) || colFile;
+    const relEnv = path.relative(process.cwd(), envFile) || envFile;
+    fs.writeFileSync(path.join(outDir, 'README.md'), demo.readme(relCol, relEnv), 'utf8');
+
+    console.log('');
+    console.log('  ⚒️  Hephaestus — Demo');
+    console.log('  ' + '─'.repeat(58));
+    console.log('  ' + built.collection.item.length + ' requests, ' + 'served from their own snapshots — no network needed.');
+    console.log('');
+    console.log('  Written:');
+    console.log('    ' + relCol);
+    console.log('    ' + relEnv);
+    console.log('    ' + (path.relative(process.cwd(), path.join(outDir, 'README.md')) || 'README.md'));
+    console.log('');
+    console.log('  Run it — two terminals:');
+    console.log('    1) hephaestus mock ' + relCol + ' -p ' + built.port);
+    console.log('    2) newman run ' + relCol + ' -e ' + relEnv);
+    console.log('');
+    console.log('  Expected: 5/5 green, including the 404 that is supposed to be a 404.');
+    console.log('');
     process.exit(0);
 }
 

@@ -48,6 +48,23 @@ same engine in English. The golden harness pins both.
 
 ## Quickstart
 
+**See it run first — 60 seconds, no account, no network:**
+
+```bash
+npx hephaestus init --demo
+hephaestus mock hephaestus-demo/demo-collection.json -p 4010   # terminal 1
+newman run hephaestus-demo/demo-collection.json \
+  -e hephaestus-demo/demo-environment.json                     # terminal 2
+```
+
+Five requests, 35 assertions, all green — served from snapshots stored inside
+the collection itself. Each request is one feature (`expectedStatus`,
+`assertShape` + `assertEach` + `assertOrder`, `assertions` + `varsToSave`,
+`snapshot`, and a 404 that is *supposed* to be a 404). Open any of them in
+Postman: the whole test is the `override` block at the top of the Tests tab.
+
+Then set it up for your own API.
+
 Two runtimes ship in one repo: the **engine** that runs inside Postman, and a
 **zero-dependency Node CLI** for Newman and CI. Start with the engine.
 
