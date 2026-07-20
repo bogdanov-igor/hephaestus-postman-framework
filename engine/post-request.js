@@ -1148,7 +1148,7 @@
       init_structure();
       init_i18n();
       (function hephaestusPostRequest() {
-        const VERSION = "3.9.0";
+        const VERSION = "4.0.0";
         const _override = typeof override !== "undefined" && override !== null ? override : {};
         const ctx = {
           config: {},

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Hephaestus — Run Trends  v3.9.0
+ * Hephaestus — Run Trends  v4.0.0
  *
  * Zero-backend history view: reads the JSONL history written by
  * `summary.js --history` and renders unicode sparklines for pass-rate and p95

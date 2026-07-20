@@ -4,6 +4,19 @@
 
 ## [Unreleased]
 
+---
+
+## [4.0.0] — 2026-07-20
+
+A major release: the engine gained five new capabilities, the CLI grew from a
+reporting helper into a set of CI gates plus local tooling, and the project now
+runs and is verified on Windows as well as Linux.
+
+**Upgrading is a drop-in for existing collections.** Every new engine feature is
+opt-in and off by default, and the `ru` output stays byte-identical — with one
+deliberate exception, noted under *Changed*: the retry-in-progress test name was
+previously hardcoded English even in `ru`.
+
 ### Added
 - **Engine i18n** — every user-facing string (test names, log lines, errors) is
   routed through a locale catalog (`engine/src/shared/i18n.js`). Set
@@ -52,8 +65,32 @@
   request input ever joined into a path (so no directory traversal), `X-Frame-Options`
   + CSP `frame-ancestors 'none'`, and writes that require `Content-Type: application/json`
   with a same-origin `Origin` and no CORS headers — a foreign page cannot POST to it.
+- **`hephaestus bench`** — measures what the engine actually costs per request by
+  running an identical request set through Newman twice (full engine vs a no-op) so
+  the delta isolates engine work: ~1.6 ms/request here. `--json` for CI and
+  `--max-ms` as a regression gate.
+- **Windows support, verified in CI** — the test matrix now runs `windows-latest`
+  alongside `ubuntu-latest`. A `.gitattributes` pins LF in the working tree, without
+  which a Windows checkout produced CRLF and broke the build check, the golden
+  byte-compare, and the `doctor` SHA-256 integrity check — that last one also gave
+  every Windows user a false engine-integrity failure.
+- **`npm run check:locales`** — validates the locale catalog so a translation can be
+  reviewed: every message carries every locale, parameter counts and argument types
+  match across locales, nothing renders `undefined`, and the status map covers each
+  locale (which is what makes it selectable). See CONTRIBUTING for the locale guide.
 
 ### Changed
+- **Any locale the catalog carries is now selectable.** `locOf()` was hardcoded to
+  `'en' : 'ru'`, so a fully translated third locale could never be used. It now picks
+  any locale present in the catalog and still falls back to `ru`; `ru` / `en` / absent
+  / unknown behave exactly as before.
+- **The retry-in-progress test name is localised.** It was hardcoded English even in
+  `ru`; with `locale: "ru"` it now reads `⚡ Повтор 1/3 (статус 503)` instead of
+  `⚡ Retry 1/3 (status 503)`. This is the one user-visible `ru` string that changed in
+  4.0 — `retryOnStatus` had no golden coverage, which is how it stayed English so long.
+- **The stated engine size is measured, not remembered** — the READMEs claimed 172 KB;
+  `hephaestus bench` reports the real figure (207 KB for both planes) and the badges
+  now track it.
 - **`iterationData` is now a shared module** (`engine/src/shared/iteration-data.js`),
   single-sourced into both engine planes via esbuild instead of two hand-synced copies.
 - **Secret-redaction check single-sourced** into `engine/src/shared/mask.js` and

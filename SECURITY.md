@@ -4,9 +4,9 @@
 
 | Version | Supported |
 |---|---|
-| 3.9.x | ✅ |
-| 3.8.x | ⚠️ Critical fixes only |
-| < 3.8 | ❌ |
+| 4.0.x | ✅ |
+| 3.9.x | ⚠️ Critical fixes only |
+| < 3.9 | ❌ |
 
 ## Reporting a Vulnerability
 

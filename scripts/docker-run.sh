@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Hephaestus — Docker Newman Runner  v3.9.0
+# Hephaestus — Docker Newman Runner  v4.0.0
 #
 # Запускает Newman в Docker, генерирует HTML и JUnit отчёты.
 #
@@ -23,7 +23,7 @@ ENVIRONMENT=""
 OUTPUT_DIR="."
 RUN_TEST=false
 NO_BUILD=false
-IMAGE="hephaestus-runner:3.9.0"
+IMAGE="hephaestus-runner:4.0.0"
 
 # ─── Parse args ───────────────────────────────────────────────────────────────
 while [[ $# -gt 0 ]]; do
@@ -49,7 +49,7 @@ REPORT_HTML="$OUTPUT_DIR/hephaestus-report.html"
 JUNIT_XML="$OUTPUT_DIR/junit-report.xml"
 
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║  🔥 Hephaestus Docker Runner  v3.9.0                       ║"
+echo "║  🔥 Hephaestus Docker Runner  v4.0.0                       ║"
 echo "╠══════════════════════════════════════════════════════════════╣"
 echo "║  Collection:  $COLLECTION"
 echo "║  Environment: ${ENVIRONMENT:-(none)}"

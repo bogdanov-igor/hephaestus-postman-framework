@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Hephaestus — Local Mock Server  v3.9.0
+ * Hephaestus — Local Mock Server  v4.0.0
  *
  * Replays saved Hephaestus snapshots as a zero-dependency HTTP server, so a
  * frontend (or any client) can develop offline against the recorded API.
@@ -26,7 +26,7 @@ const fs   = require('fs');
 const path = require('path');
 const http = require('http');
 
-const VERSION = '3.9.0';
+const VERSION = '4.0.0';
 
 const STATUS_TEXT = {
     200: 'OK', 201: 'Created', 202: 'Accepted', 204: 'No Content',

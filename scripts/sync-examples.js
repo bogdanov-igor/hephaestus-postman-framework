@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Hephaestus — Snapshot → Postman Examples  v3.9.0
+ * Hephaestus — Snapshot → Postman Examples  v4.0.0
  *
  * Reads the saved Hephaestus snapshots from a collection's `hephaestus.snapshots`
  * variable and writes them back into the collection as native Postman "Example

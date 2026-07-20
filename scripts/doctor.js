@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Hephaestus — Pre-flight Doctor  v3.9.0
+ * Hephaestus — Pre-flight Doctor  v4.0.0
  *
  * A user/operator health check: "is my Hephaestus checkout + environment
  * healthy, and is the engine I'm about to run intact?" Unlike `npm run build`
