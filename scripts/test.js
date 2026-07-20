@@ -504,6 +504,37 @@ test('parseRetryAfterMs handles delta-seconds, HTTP-date (future/past) and inval
     assertContains(out, 'ok', 'retry-after probe did not pass');
 });
 
+// ─── 9d. engine shared/structure.js (structural snapshot diff) ────────────────
+// The golden harness only drives a couple of seeded structural compares, so the
+// diff logic — the whole point of snapshot mode:"structural" — is locked here.
+
+console.log('\n⑨ᵈ engine shared/structure.js');
+
+const structProbe = path.join(TMP, 'structure-probe.mjs');
+fs.writeFileSync(structProbe, [
+    "import { structuralDiff as d } from " + JSON.stringify(require('url').pathToFileURL(path.join(ROOT, 'engine/src/shared/structure.js')).href) + ";",
+    "function eq(got, want, label){ const g=JSON.stringify(got), w=JSON.stringify(want); if(g!==w){ console.error('FAIL '+label+': got '+g+' want '+w); process.exit(2); } }",
+    // Same shape, different values AND different array length → NO diff (the whole point)
+    "eq(d({id:1,name:'a',tags:['x']}, {id:999,name:'zzz',tags:['p','q','r']}), [], 'values+array-length ignored');",
+    // Type change, added field, removed field (sorted)
+    "eq(d({id:1,name:'a',old:true}, {id:'1',name:'a',neu:2}), ['+ neu (number)','- old (boolean)','~ id: number → string'], 'add/remove/typechange');",
+    // Nested + arrays collapse to [*]
+    "eq(d({data:{items:[{id:1}]}}, {data:{items:[{id:1},{id:2}]}}), [], 'nested array same shape');",
+    "eq(d({data:{items:[{id:1}]}}, {data:{items:[{id:1,extra:'x'}]}}), ['+ data.items[*].extra (string)'], 'nested field added');",
+    // null vs value is a type change; empty containers are distinct leaves
+    "eq(d({a:null}, {a:5}), ['~ a: null → number'], 'null to number');",
+    "eq(d({a:{}}, {a:{x:1}}), ['+ a.x (number)','- a (empty-object)'], 'empty object filled');",
+    "eq(d({a:[]}, {a:[1]}), ['~ a[*]: empty-array → number'], 'empty array filled → type change at a[*]');",
+    // Identical → empty
+    "eq(d({x:1,y:'s',z:true}, {x:2,y:'t',z:false}), [], 'identical shape');",
+    "console.log('ok');"
+].join('\n'));
+
+test('structuralDiff ignores values/array-length but catches add/remove/type-change', function() {
+    const out = run(NODE + ' ' + JSON.stringify(structProbe));
+    assertContains(out, 'ok', 'structure probe did not pass');
+});
+
 // ─── 10. generate-report.js ───────────────────────────────────────────────────
 
 console.log('\n⑩ generate-report.js');

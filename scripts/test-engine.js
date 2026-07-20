@@ -98,6 +98,14 @@ function startMockServer() {
             // GraphQL returns HTTP 200 even with an errors[] array — the classic trap.
             return json({ data: null, errors: [{ message: 'User not found', path: ['user'] }] });
         }
+        if (url === '/struct-same') {
+            // Same SHAPE as the seeded baseline, different values + array length.
+            return json({ id: 999, name: 'different', tags: ['p', 'q', 'r'] });
+        }
+        if (url === '/struct-changed') {
+            // id type flipped (number → string) and a field added vs the baseline.
+            return json({ id: '1', name: 'x', extra: true });
+        }
         if (url === '/retry503-longwait') {
             // 503 with a Retry-After far beyond the cap → engine must stop retrying.
             return json({ error: 'unavailable' }, 503, { 'Retry-After': '3600' });
@@ -427,6 +435,20 @@ function buildCollection(preSrc, postSrc, baseUrl) {
             name: 'neg-retryafter-exceeds-cap',
             request: { method: 'GET', url: baseUrl + '/retry503-longwait' },
             event: methodScripts({}, { expectedStatus: [503], retryOnStatus: { statuses: [503], maxRetries: 3, respectRetryAfter: true } })
+        },
+        {
+            // Structural snapshot: same shape as the seeded baseline (values + array
+            // length differ) → MATCH. Name matches the seeded key EngineTest::structural-match.
+            name: 'structural-match',
+            request: { method: 'GET', url: baseUrl + '/struct-same' },
+            event: methodScripts({}, { snapshot: { enabled: true, mode: 'structural', autoSaveMissing: false } })
+        },
+        {
+            // Structural snapshot: id type flipped + a field added vs the seeded baseline
+            // → structural DIFF (expected fail). Name matches EngineTest::neg-structural-changed.
+            name: 'neg-structural-changed',
+            request: { method: 'GET', url: baseUrl + '/struct-changed' },
+            event: methodScripts({}, { snapshot: { enabled: true, mode: 'structural', autoSaveMissing: false } })
         }
     ];
 
@@ -438,7 +460,18 @@ function buildCollection(preSrc, postSrc, baseUrl) {
             { key: 'hephaestus.v3.post', value: postSrc },
             { key: 'hephaestus.defaults', value: JSON.stringify(defaults) },
             { key: 'hephaestus.collectionName', value: 'EngineTest' },
-            { key: 'hephaestus.snapshots', value: '{}' },
+            // Pre-seeded structural baselines so the mode:"structural" COMPARE path is
+            // exercised (the empty store below only ever hits the SAVE path otherwise).
+            { key: 'hephaestus.snapshots', value: JSON.stringify({
+                'EngineTest::structural-match::200::json': {
+                    savedAt: '2020-01-01T00:00:00.000Z', statusCode: 200, format: 'json',
+                    mode: 'structural', checkPaths: [], data: { id: 1, name: 'x', tags: ['a'] }
+                },
+                'EngineTest::neg-structural-changed::200::json': {
+                    savedAt: '2020-01-01T00:00:00.000Z', statusCode: 200, format: 'json',
+                    mode: 'structural', checkPaths: [], data: { id: 1, name: 'x' }
+                }
+            }) },
             // Plugin coverage: verifies the eval'd plugin can reach ctx AND _override
             // (the closure contract that a module split must preserve).
             { key: 'hephaestus.plugins', value: JSON.stringify([{ name: 'test-plugin', post: 'hephaestus.plugin.test' }]) },
