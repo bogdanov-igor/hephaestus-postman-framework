@@ -200,8 +200,8 @@ node bin/hephaestus.js summary results.json --sla=500   # p95-гейт, exit 1 �
 `urlBuilder` · `auth` · `dateUtils` · `logger`.
 
 **Post-request** — `configMerge` · `normalizeResponse` · `metrics` ·
-`extractor` · `assertions` · `assertEach` · `assertShape` · `assertOrder` ·
-`assertUnique` · `assertHeaders` · `retryOnStatus` · `snapshot` · `schema` ·
+`extractor` · `assertions` · `assertEach` · `assertShape` · `graphql` ·
+`assertOrder` · `assertUnique` · `assertHeaders` · `retryOnStatus` · `snapshot` · `schema` ·
 `securityAudit` · `plugins` · `logger`.
 
 `assertions` покрывает `keysToFind` / `varsToSave` / `keysToCount` / `assertMap` /

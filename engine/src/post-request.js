@@ -817,6 +817,75 @@ import { t, statusLabel } from './shared/i18n.js';
     };
 
     // ════════════════════════════════════════════════════════════
+    // MODULE: graphql
+    //
+    // GraphQL всегда отвечает 200 — даже когда в теле есть errors[]. Этот модуль
+    // проверяет контракт GraphQL-ответа: массив ошибок и форму data.*.
+    //
+    //   graphql: true                          // краткая форма { noErrors: true }
+    //   graphql: {
+    //     noErrors:      true,                  // errors[] пуст / отсутствует
+    //     errorCount:    2,                     // ЛИБО ровно N ошибок (негативный тест)
+    //     errorContains: "not found",           // хотя бы одна ошибка содержит подстроку
+    //     dataShape:     { "user.id": "number" } // проверки типов под data.*
+    //   }
+    // ════════════════════════════════════════════════════════════
+    const graphql = {
+        _typeOf(v) { if (v === null) return 'null'; if (Array.isArray(v)) return 'array'; return typeof v; },
+        run(ctx) {
+            let cfg = _override.graphql;
+            if (!cfg) return;
+            if (cfg === true) cfg = { noErrors: true };
+            if (typeof cfg !== 'object') return;
+
+            const isSoft = !!ctx.config.softFail;
+            const self   = this;
+            function gqlTest(label, fn) {
+                pm.test((isSoft ? '⚪ [soft] ' : '') + label, function() {
+                    if (isSoft) { try { fn(); } catch(e) { console.warn('⚪ [soft] ' + label + ': ' + e.message); } }
+                    else { fn(); }
+                });
+            }
+
+            const errors = ctx.api.get('errors');
+            const errArr = Array.isArray(errors) ? errors : [];
+            const firstMsg = function() { return errArr.length ? String((errArr[0] && errArr[0].message) || errArr[0]) : ''; };
+
+            if (cfg.noErrors === true) {
+                gqlTest(t(ctx, 'graphql.noErrorsName'), function() {
+                    pm.expect(errArr.length, t(ctx, 'graphql.hasErrors', errArr.length, firstMsg())).to.equal(0);
+                });
+            }
+
+            if (typeof cfg.errorCount === 'number') {
+                gqlTest(t(ctx, 'graphql.errorCountName', cfg.errorCount), function() {
+                    pm.expect(errArr.length, t(ctx, 'graphql.errorCountFail', cfg.errorCount, errArr.length)).to.equal(cfg.errorCount);
+                });
+            }
+
+            if (typeof cfg.errorContains === 'string') {
+                gqlTest(t(ctx, 'graphql.errorContainsName', cfg.errorContains), function() {
+                    const hit = errArr.some(function(e) { return String((e && e.message) || e).indexOf(cfg.errorContains) !== -1; });
+                    pm.expect(hit, t(ctx, 'graphql.errorContainsFail', cfg.errorContains)).to.equal(true);
+                });
+            }
+
+            if (cfg.dataShape && typeof cfg.dataShape === 'object' && !Array.isArray(cfg.dataShape)) {
+                Object.keys(cfg.dataShape).forEach(function(p) {
+                    const expected = cfg.dataShape[p];
+                    const fullPath = 'data.' + p;
+                    const val      = ctx.api.get(fullPath);
+                    const actual   = self._typeOf(val);
+                    gqlTest('🔗 GraphQL data "' + p + '": ' + expected, function() {
+                        pm.expect(val, t(ctx, 'assertShape.notFound', fullPath)).to.not.be.oneOf([undefined, null]);
+                        pm.expect(actual, t(ctx, 'assertShape.typeMismatch', fullPath, expected, actual)).to.equal(expected);
+                    });
+                });
+            }
+        }
+    };
+
+    // ════════════════════════════════════════════════════════════
     // MODULE: assertOrder
     //
     // Проверяет, что массив отсортирован по заданному полю.
@@ -1743,6 +1812,7 @@ import { t, statusLabel } from './shared/i18n.js';
             assertions.run(ctx);
             assertEach.run(ctx);
             assertShape.run(ctx);
+            graphql.run(ctx);
             assertOrder.run(ctx);
             assertUnique.run(ctx);
             assertHeaders.run(ctx);

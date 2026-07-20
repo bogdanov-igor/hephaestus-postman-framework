@@ -380,6 +380,37 @@
     }, en: function(fieldPath, expected, actual) {
       return '\u{1F6AB} "' + fieldPath + '": expected ' + expected + ", got " + actual;
     } },
+    // ─── graphql ───
+    "graphql.noErrorsName": { ru: function() {
+      return "\u{1F517} GraphQL: \u043E\u0442\u0432\u0435\u0442 \u0431\u0435\u0437 \u043E\u0448\u0438\u0431\u043E\u043A";
+    }, en: function() {
+      return "\u{1F517} GraphQL: no errors";
+    } },
+    "graphql.hasErrors": { ru: function(count, first) {
+      return "\u{1F6AB} \u0412 \u043E\u0442\u0432\u0435\u0442\u0435 \u043E\u0448\u0438\u0431\u043E\u043A GraphQL: " + count + '. \u041F\u0435\u0440\u0432\u0430\u044F: "' + first + '"';
+    }, en: function(count, first) {
+      return "\u{1F6AB} GraphQL errors in response: " + count + '. First: "' + first + '"';
+    } },
+    "graphql.errorCountName": { ru: function(n) {
+      return "\u{1F517} GraphQL: \u0447\u0438\u0441\u043B\u043E \u043E\u0448\u0438\u0431\u043E\u043A = " + n;
+    }, en: function(n) {
+      return "\u{1F517} GraphQL: exactly " + n + " error(s)";
+    } },
+    "graphql.errorCountFail": { ru: function(expected, actual) {
+      return "\u{1F6AB} \u041E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C \u043E\u0448\u0438\u0431\u043E\u043A: " + expected + ", \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043E: " + actual;
+    }, en: function(expected, actual) {
+      return "\u{1F6AB} Expected " + expected + " error(s), got " + actual;
+    } },
+    "graphql.errorContainsName": { ru: function(needle) {
+      return '\u{1F517} GraphQL: \u043E\u0448\u0438\u0431\u043A\u0430 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u0442 "' + needle + '"';
+    }, en: function(needle) {
+      return '\u{1F517} GraphQL: an error contains "' + needle + '"';
+    } },
+    "graphql.errorContainsFail": { ru: function(needle) {
+      return '\u{1F6AB} \u041D\u0438 \u043E\u0434\u043D\u0430 \u043E\u0448\u0438\u0431\u043A\u0430 \u043D\u0435 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u0442 "' + needle + '"';
+    }, en: function(needle) {
+      return '\u{1F6AB} No error message contains "' + needle + '"';
+    } },
     // ─── assertOrder ───
     "assertOrder.violationsCount": { ru: function(count) {
       return "\u274C " + count + " \u043D\u0430\u0440\u0443\u0448\u0435\u043D\u0438\u0439";
@@ -816,6 +847,7 @@
     "assertUnique",
     "assertHeaders",
     "retryOnStatus",
+    "graphql",
     // config for the shipped plugins (read off ctx.config by docs/plugins/*)
     "slackUrl",
     "slackOnlyFailures",

@@ -46,6 +46,101 @@
       "ok": true
     },
     {
+      "item": "graphql-expect-errors",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "graphql-expect-errors",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "graphql-expect-errors",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "graphql-expect-errors",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "graphql-expect-errors",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "graphql-expect-errors",
+      "name": "🔗 GraphQL: ошибка содержит \"not found\"",
+      "ok": true
+    },
+    {
+      "item": "graphql-expect-errors",
+      "name": "🔗 GraphQL: число ошибок = 1",
+      "ok": true
+    },
+    {
+      "item": "graphql-expect-errors",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "graphql-expect-errors",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
+      "item": "graphql-ok",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "graphql-ok",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "graphql-ok",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "graphql-ok",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "graphql-ok",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "graphql-ok",
+      "name": "🔗 GraphQL data \"user.id\": number",
+      "ok": true
+    },
+    {
+      "item": "graphql-ok",
+      "name": "🔗 GraphQL data \"user.name\": string",
+      "ok": true
+    },
+    {
+      "item": "graphql-ok",
+      "name": "🔗 GraphQL: ответ без ошибок",
+      "ok": true
+    },
+    {
+      "item": "graphql-ok",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "graphql-ok",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
       "item": "headers-assert-en",
       "name": "⚠️ URL: insecure http protocol",
       "ok": true
@@ -367,6 +462,46 @@
     },
     {
       "item": "maxbytes-ok",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
+      "item": "neg-graphql-errors",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "neg-graphql-errors",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "neg-graphql-errors",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "neg-graphql-errors",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-graphql-errors",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-graphql-errors",
+      "name": "🔗 GraphQL: ответ без ошибок",
+      "ok": false
+    },
+    {
+      "item": "neg-graphql-errors",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "neg-graphql-errors",
       "name": "🟢 Статус: 200 — Успешно",
       "ok": true
     },
@@ -1573,6 +1708,34 @@
       "security": null,
       "errors": []
     },
+    "graphql-expect-errors": {
+      "request": "graphql-expect-errors",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "graphql-ok": {
+      "request": "graphql-ok",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
     "headers-assert": {
       "request": "headers-assert",
       "method": "GET",
@@ -1675,6 +1838,20 @@
     },
     "maxbytes-ok": {
       "request": "maxbytes-ok",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "neg-graphql-errors": {
+      "request": "neg-graphql-errors",
       "method": "GET",
       "status": 200,
       "format": "json",

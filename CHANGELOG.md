@@ -24,6 +24,10 @@
   carry Secure / HttpOnly / SameSite), `checkJwt` (reject `alg:none` and expired
   `exp` on JWTs in the body/cookies), and `requireNoStore` (auth responses must send
   `Cache-Control: no-store`). All off by default — existing configs are unchanged.
+- **GraphQL asserts** — a new opt-in `graphql` override for the trap where GraphQL
+  answers HTTP 200 even with an `errors[]` array: `noErrors` (errors empty/absent),
+  `errorCount` / `errorContains` (negative testing), and `dataShape` (type checks
+  under `data.*`). `graphql: true` is shorthand for `{ noErrors: true }`.
 - **`retryOnStatus` honors `Retry-After`** — set `respectRetryAfter: true` and the
   engine reads the server's `Retry-After` header on a retried response (delta-seconds
   or HTTP-date). It waits that long (up to `retryAfterCapMs`, default 10 s) before

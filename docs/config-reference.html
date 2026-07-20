@@ -418,6 +418,27 @@ footer{text-align:center;padding:20px;font-size:.75rem;color:var(--muted);border
 <div class="opt" onclick="tog(this)">
   <div class="opt-head">
     <div>
+      <div class="opt-name">graphql</div>
+      <div class="opt-desc">GraphQL contract asserts. A GraphQL endpoint returns HTTP <code>200</code> even when the body carries an <code>errors[]</code> array — this catches that. <code>graphql: true</code> is shorthand for <code>{ noErrors: true }</code>.</div>
+    </div>
+    <span class="opt-type">object | true</span><span class="opt-since">v3.10</span>
+  </div>
+  <div class="opt-body">
+    <pre class="example"><span class="kw">const</span> override = {
+    <span class="key">graphql</span>: {
+        <span class="key">noErrors</span>:      <span class="kw">true</span>,               <span class="cmt">// errors[] empty / absent</span>
+        <span class="key">errorCount</span>:    <span class="num">2</span>,                  <span class="cmt">// OR exactly N errors (negative testing)</span>
+        <span class="key">errorContains</span>: <span class="str">"not found"</span>,        <span class="cmt">// some error.message contains this</span>
+        <span class="key">dataShape</span>: { <span class="key">"user.id"</span>: <span class="str">"number"</span> } <span class="cmt">// type checks under data.*</span>
+    }
+};</pre>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:8px"><code>dataShape</code> paths are relative to <code>data</code> (so <code>"user.id"</code> checks <code>data.user.id</code>) and use the same type set as <code>assertShape</code>. Every check is independent; combine as needed.</p>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
       <div class="opt-name">assertOrder</div>
       <div class="opt-desc">Asserts an array is sorted by a given field. Checks consecutive pairs.</div>
     </div>

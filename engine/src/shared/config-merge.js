@@ -21,7 +21,7 @@ const KNOWN_KEYS = [
     'snapshot', 'snapshotRecord', 'schema', 'securityAudit', 'secrets',
     'envRequired', 'ci', 'locale', 'logLevel', 'softFail', 'randomData',
     'keysToFind', 'varsToSave', 'keysToCount', 'assertions', 'assertEach',
-    'assertShape', 'assertOrder', 'assertUnique', 'assertHeaders', 'retryOnStatus',
+    'assertShape', 'assertOrder', 'assertUnique', 'assertHeaders', 'retryOnStatus', 'graphql',
     // config for the shipped plugins (read off ctx.config by docs/plugins/*)
     'slackUrl', 'slackOnlyFailures', 'teamsUrl', 'teamsOnlyFailures',
     'slaMsLimit', 'checkCors', 'assertJsonApi'

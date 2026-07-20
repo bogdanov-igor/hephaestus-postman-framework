@@ -188,8 +188,8 @@ inventory, not the exact call order:
 `urlBuilder` · `auth` · `dateUtils` · `logger`.
 
 **Post-request** — `configMerge` · `normalizeResponse` · `metrics` ·
-`extractor` · `assertions` · `assertEach` · `assertShape` · `assertOrder` ·
-`assertUnique` · `assertHeaders` · `retryOnStatus` · `snapshot` · `schema` ·
+`extractor` · `assertions` · `assertEach` · `assertShape` · `graphql` ·
+`assertOrder` · `assertUnique` · `assertHeaders` · `retryOnStatus` · `snapshot` · `schema` ·
 `securityAudit` · `plugins` · `logger`.
 
 `assertions` covers `keysToFind` / `varsToSave` / `keysToCount` / `assertMap` /
