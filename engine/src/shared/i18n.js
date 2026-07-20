@@ -11,8 +11,13 @@
 // golden harness locks this). Add English under `en`; missing ids fall back to ru.
 // ════════════════════════════════════════════════════════════
 
+// A locale is selectable when the catalog actually carries it — the status map is
+// the marker, since a complete locale must translate the status labels too. This
+// was hardcoded to 'en'/'ru', which meant a fully contributed third locale could
+// never be selected. Behaviour for ru / en / absent / unknown is unchanged.
 function locOf(ctx) {
-    return (ctx && ctx.config && ctx.config.locale === 'en') ? 'en' : 'ru';
+    const want = ctx && ctx.config && ctx.config.locale;
+    return (want && STATUS[want]) ? want : 'ru';
 }
 
 const STATUS = {

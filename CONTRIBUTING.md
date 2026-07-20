@@ -99,7 +99,9 @@ a message id to one template function per locale:
 ```
 
 To add a language, add your key (e.g. `de`) to **every** entry in `M`, and to every
-code in the `STATUS` map. Two rules matter:
+code in the `STATUS` map. The status map is not optional: `locOf()` treats it as the
+marker that a locale exists, so a language missing from it is never selected no
+matter how many messages you translate. Two more rules matter:
 
 - **Same parameters, same order.** `t()` applies the call site's arguments to your
   function, so a template that declares fewer parameters silently drops data out of

@@ -565,14 +565,52 @@ test('check-locales catches a missing locale, an arity mismatch and status drift
     assert(joined.indexOf('a.ok') === -1, 'a consistent message must not be reported: ' + joined);
 });
 
-test('check-locales accepts array/number template arguments (no false positives)', function() {
-    // Some templates take an array (they .join()/.map() it) — the validator must not
-    // report those as broken just because a string placeholder would throw.
+test('check-locales accepts array/number/object template arguments (no false positives)', function() {
+    // Templates take arrays (.join()), numbers, or error-like objects (.message) —
+    // none of those may be reported as broken just because a string probe would fail.
     const r = locales.analyse({
         'a.list': { ru: function(xs) { return 'р' + xs.join(','); }, en: function(xs) { return 'e' + xs.join(','); } },
-        'a.num':  { ru: function(n) { return 'р' + (n + 1); },       en: function(n) { return 'e' + (n + 1); } }
+        'a.num':  { ru: function(n) { return 'р' + (n + 1); },       en: function(n) { return 'e' + (n + 1); } },
+        'a.err':  { ru: function(e) { return 'р' + (e ? e.message : 'нет'); }, en: function(e) { return 'e' + (e ? e.message : 'none'); } }
     }, {});
-    assert(r.errors.length === 0, 'array/number templates must pass: ' + r.errors.join(' | '));
+    assert(r.errors.length === 0, 'array/number/object templates must pass: ' + r.errors.join(' | '));
+});
+
+test('check-locales catches locales that disagree on the argument type', function() {
+    // The call site passes exactly one type, so if ru needs an array and en needs a
+    // string, one of them throws inside the engine — accepting each independently
+    // (first shape that does not throw) would let that ship.
+    const r = locales.analyse({
+        'a.list': { ru: function(xs) { return 'р' + xs.join(','); }, en: function(s) { return 'e' + s.toUpperCase(); } }
+    }, { ru: { 200: 'ок' }, en: { 200: 'ok' } });
+    assertContains(r.errors.join(' | '), 'disagree on the argument type', 'type divergence reported');
+});
+
+test('check-locales catches a template that reads a field nothing provides', function() {
+    const r = locales.analyse({
+        'a.leak': { ru: function(o) { return 'р' + o.nope; }, en: function(o) { return 'e' + o.nope; } }
+    }, { ru: { 200: 'ок' }, en: { 200: 'ok' } });
+    assertContains(r.errors.join(' | '), 'leaks undefined', 'undefined leak reported');
+});
+
+test('check-locales does not pass vacuously (dropped locale, empty catalog, status gaps)', function() {
+    // Deriving the expected locales purely from the catalog would call each of these
+    // "consistent" — the baseline is what makes wholesale loss an error.
+    const dropped = locales.analyse({ 'a': { ru: function() { return 'р'; } } }, { ru: { 200: 'ок' } });
+    assertContains(dropped.errors.join(' | '), 'missing "en"', 'dropping a locale everywhere is an error');
+
+    const empty = locales.analyse({}, {});
+    assertContains(empty.errors.join(' | '), 'catalog is empty', 'empty catalog is an error');
+
+    // A locale translated in every message but absent from the status map cannot be
+    // selected at runtime (locOf keys off the status map).
+    const noStatus = locales.analyse({ 'a': { ru: function() { return 'р'; }, en: function() { return 'e'; } } },
+        { ru: { 200: 'ок' } });
+    assertContains(noStatus.errors.join(' | '), 'missing locale "en"', 'locale absent from status map reported');
+
+    const emptyLabel = locales.analyse({ 'a': { ru: function() { return 'р'; }, en: function() { return 'e'; } } },
+        { ru: { 200: 'ок' }, en: { 200: '' } });
+    assertContains(emptyLabel.errors.join(' | '), 'empty or non-string label', 'empty status label reported');
 });
 
 test('the shipped catalog is complete and consistent across every locale', function() {
