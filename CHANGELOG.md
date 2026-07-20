@@ -35,6 +35,10 @@
   hammering. Opt-in — default `retryOnStatus` behavior is unchanged. (The wait is a
   bounded blocking busy-wait — the Postman sandbox has no async sleep that survives
   `setNextRequest`.)
+- **`hephaestus generate`** — an interactive, zero-dependency wizard (`node:readline`,
+  no LLM/network) that asks plane / auth / fields / shape / snapshot and prints a
+  ready-to-paste `override` block plus the engine `eval(...)` line, so you scaffold a
+  request's config without memorising the schema.
 
 ### Changed
 - **`iterationData` is now a shared module** (`engine/src/shared/iteration-data.js`),
