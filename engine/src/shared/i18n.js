@@ -126,7 +126,7 @@ const M = {
     // ─── graphql ───
     'graphql.noErrorsName': { ru: function() { return '🔗 GraphQL: ответ без ошибок'; }, en: function() { return '🔗 GraphQL: no errors'; } },
     'graphql.hasErrors': { ru: function(count, first) { return '🚫 В ответе ошибок GraphQL: ' + count + '. Первая: "' + first + '"'; }, en: function(count, first) { return '🚫 GraphQL errors in response: ' + count + '. First: "' + first + '"'; } },
-    'graphql.errorCountName': { ru: function(n) { return '🔗 GraphQL: ровно ' + n + ' ошибок'; }, en: function(n) { return '🔗 GraphQL: exactly ' + n + ' error(s)'; } },
+    'graphql.errorCountName': { ru: function(n) { return '🔗 GraphQL: число ошибок = ' + n; }, en: function(n) { return '🔗 GraphQL: exactly ' + n + ' error(s)'; } },
     'graphql.errorCountFail': { ru: function(expected, actual) { return '🚫 Ожидалось ошибок: ' + expected + ', получено: ' + actual; }, en: function(expected, actual) { return '🚫 Expected ' + expected + ' error(s), got ' + actual; } },
     'graphql.errorContainsName': { ru: function(needle) { return '🔗 GraphQL: ошибка содержит "' + needle + '"'; }, en: function(needle) { return '🔗 GraphQL: an error contains "' + needle + '"'; } },
     'graphql.errorContainsFail': { ru: function(needle) { return '🚫 Ни одна ошибка не содержит "' + needle + '"'; }, en: function(needle) { return '🚫 No error message contains "' + needle + '"'; } },

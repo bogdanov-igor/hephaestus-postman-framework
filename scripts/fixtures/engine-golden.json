@@ -77,7 +77,7 @@
     },
     {
       "item": "graphql-expect-errors",
-      "name": "🔗 GraphQL: ровно 1 ошибок",
+      "name": "🔗 GraphQL: число ошибок = 1",
       "ok": true
     },
     {

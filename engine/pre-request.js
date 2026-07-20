@@ -372,7 +372,7 @@
       return "\u{1F6AB} GraphQL errors in response: " + count + '. First: "' + first + '"';
     } },
     "graphql.errorCountName": { ru: function(n) {
-      return "\u{1F517} GraphQL: \u0440\u043E\u0432\u043D\u043E " + n + " \u043E\u0448\u0438\u0431\u043E\u043A";
+      return "\u{1F517} GraphQL: \u0447\u0438\u0441\u043B\u043E \u043E\u0448\u0438\u0431\u043E\u043A = " + n;
     }, en: function(n) {
       return "\u{1F517} GraphQL: exactly " + n + " error(s)";
     } },
