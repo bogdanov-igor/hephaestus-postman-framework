@@ -1271,6 +1271,83 @@ test('bench --max-ms fails loud on a non-numeric budget (never silently disables
     });
 });
 
+// ─── 21. panel.js (local dev panel) ───────────────────────────────────────────
+// A localhost server that can WRITE deserves its guards locked down, not just its
+// happy path: loopback-only Host (anti DNS-rebinding) and a write path a foreign
+// page cannot reach (JSON content-type + same-origin).
+
+console.log('\n㉑ panel.js');
+
+const panel = require(path.join(ROOT, 'scripts/panel.js'));
+
+test('panel parseHistory skips malformed lines instead of blanking the view', function() {
+    const runs = panel.parseHistory('{"ts":"t1","passRate":90}\nBROKEN\n\n{"ts":"t2"}\n');
+    assert(runs.length === 2 && runs[0].ts === 't1' && runs[1].ts === 't2', 'kept the good lines: ' + JSON.stringify(runs));
+    assert(panel.parseHistory('').length === 0 && panel.parseHistory(null).length === 0, 'empty/null → []');
+});
+
+test('panel extractSnapshots reads the collection variable, tolerates junk', function() {
+    const ok = panel.extractSnapshots({ variable: [{ key: 'hephaestus.snapshots', value: '{"k":{"a":1}}' }] });
+    assert(ok.k && ok.k.a === 1, 'parsed store');
+    assert(JSON.stringify(panel.extractSnapshots({ variable: [{ key: 'hephaestus.snapshots', value: 'NOTJSON' }] })) === '{}', 'bad JSON → {}');
+    assert(JSON.stringify(panel.extractSnapshots({})) === '{}', 'no variable → {}');
+    assert(JSON.stringify(panel.extractSnapshots(null)) === '{}', 'null collection → {}');
+});
+
+test('panel isLoopbackHost accepts only loopback (DNS-rebinding guard)', function() {
+    assert(panel.isLoopbackHost('127.0.0.1:7373', 7373) === true, '127.0.0.1');
+    assert(panel.isLoopbackHost('localhost:7373', 7373) === true, 'localhost');
+    assert(panel.isLoopbackHost('evil.com:7373', 7373) === false, 'foreign host rejected');
+    assert(panel.isLoopbackHost('127.0.0.1:9999', 7373) === false, 'wrong port rejected');
+    assert(panel.isLoopbackHost(undefined, 7373) === false, 'missing Host rejected');
+});
+
+test('panel isWriteAllowed blocks the cross-origin form-POST (CSRF) vector', function() {
+    assert(panel.isWriteAllowed({ 'content-type': 'application/json' }, 7373) === true, 'json, no origin');
+    assert(panel.isWriteAllowed({ 'content-type': 'application/json', origin: 'http://127.0.0.1:7373' }, 7373) === true, 'json, own origin');
+    assert(panel.isWriteAllowed({ 'content-type': 'application/x-www-form-urlencoded' }, 7373) === false, 'simple form POST rejected');
+    assert(panel.isWriteAllowed({ 'content-type': 'text/plain' }, 7373) === false, 'text/plain rejected');
+    assert(panel.isWriteAllowed({ 'content-type': 'application/json', origin: 'http://evil.com' }, 7373) === false, 'foreign origin rejected');
+    assert(panel.isWriteAllowed({}, 7373) === false, 'no content-type rejected');
+});
+
+// End-to-end: the server serves the page, reads history, and enforces the guards.
+// Runs in a probe so the async server work stays out of this synchronous harness.
+const panelProbe = path.join(TMP, 'panel-probe.js');
+fs.writeFileSync(panelProbe, [
+    "const p = require(" + JSON.stringify(path.join(ROOT, 'scripts/panel.js')) + ");",
+    "const http = require('http'), fs = require('fs'), os = require('os'), pathm = require('path');",
+    "const dfile = pathm.join(os.tmpdir(), 'hephaestus-panel-probe-defaults.json');",
+    "fs.writeFileSync(dfile, JSON.stringify({ baseUrl: 'before' }));",
+    "const srv = p.createPanelServer({ port: 0, history: '/nonexistent.jsonl', collection: null, defaultsFile: dfile });",
+    "function fail(m){ console.error('FAIL ' + m); process.exit(2); }",
+    "srv.listen(0, '127.0.0.1', function(){",
+    "  const pt = srv.address().port;",
+    "  function req(o, body){ return new Promise(function(res){ const r = http.request(Object.assign({host:'127.0.0.1',port:pt},o), function(rs){ let d=''; rs.on('data',c=>d+=c); rs.on('end',()=>res({code:rs.statusCode,body:d})); }); r.on('error',e=>res({code:0,body:String(e)})); if(body) r.write(body); r.end(); }); }",
+    "  (async function(){",
+    "    const home = await req({method:'GET',path:'/'});",
+    "    if (home.code !== 200 || home.body.indexOf('Dev Panel') === -1) fail('GET / -> ' + home.code);",
+    "    const hist = await req({method:'GET',path:'/api/history'});",
+    "    if (hist.code !== 200 || JSON.parse(hist.body).runs.length !== 0) fail('history -> ' + hist.code);",
+    "    const evil = await req({method:'GET',path:'/',headers:{Host:'evil.com:'+pt}});",
+    "    if (evil.code !== 403) fail('evil Host should 403, got ' + evil.code);",
+    "    const csrf = await req({method:'POST',path:'/api/defaults',headers:{'Content-Type':'application/x-www-form-urlencoded'}}, 'a=1');",
+    "    if (csrf.code !== 403) fail('form POST should 403, got ' + csrf.code);",
+    "    const bad = await req({method:'POST',path:'/api/defaults',headers:{'Content-Type':'application/json'}}, 'NOTJSON');",
+    "    if (bad.code !== 400) fail('invalid JSON should 400, got ' + bad.code);",
+    "    const ok = await req({method:'POST',path:'/api/defaults',headers:{'Content-Type':'application/json'}}, JSON.stringify({baseUrl:'after'}));",
+    "    if (ok.code !== 200) fail('valid write should 200, got ' + ok.code);",
+    "    if (JSON.parse(fs.readFileSync(dfile,'utf8')).baseUrl !== 'after') fail('write did not land');",
+    "    srv.close(function(){ console.log('ok'); process.exit(0); });",
+    "  })();",
+    "});"
+].join('\n'));
+
+test('panel server: serves the page, reads history, and enforces host/CSRF/JSON guards', function() {
+    const out = run(NODE + ' ' + JSON.stringify(panelProbe));
+    assertContains(out, 'ok', 'panel probe did not pass');
+});
+
 // ─── Cleanup ─────────────────────────────────────────────────────────────────
 
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch(e) { /* ignore */ }

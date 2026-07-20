@@ -38,7 +38,8 @@ const COMMANDS = {
     trends:  { script: 'trends.js',          usage: 'trends [history.jsonl] [--last N] [--json]',        about: 'Pass-rate / p95 sparkline trends across runs' },
     mock:    { script: 'mock.js',            usage: 'mock <collection.json> [-p <port>] [--filter <s>]', about: 'Replay saved snapshots as a local mock API' },
     doctor:  { script: 'doctor.js',          usage: 'doctor [-e <env.json>] [--json]',                   about: 'Pre-flight health check: engine integrity, versions, drift' },
-    bench:   { script: 'bench.js',           usage: 'bench [--requests N] [--runs K] [--json] [--max-ms M]', about: 'Measure engine overhead per request (A/B vs a no-op)' }
+    bench:   { script: 'bench.js',           usage: 'bench [--requests N] [--runs K] [--json] [--max-ms M]', about: 'Measure engine overhead per request (A/B vs a no-op)' },
+    panel:   { script: 'panel.js',           usage: 'panel [-c <collection.json>] [--port N]',           about: 'Local dev panel: run history, snapshots, defaults editor' }
 };
 
 const pkgVersion = require(path.join(ROOT, 'package.json')).version;
