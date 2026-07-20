@@ -131,7 +131,10 @@ const collectionFixtureFile = path.join(TMP, 'collection.json');
 fs.writeFileSync(newmanFixtureFile, JSON.stringify(NEWMAN_FIXTURE));
 fs.writeFileSync(collectionFixtureFile, JSON.stringify(COLLECTION_FIXTURE));
 
-const NODE = process.execPath;
+// Quoted for safe interpolation into run()'s shell command strings — a Node install
+// path may contain spaces (e.g. C:\Program Files\nodejs\node.exe on Windows). Plain
+// double-quotes (not JSON.stringify, which would escape backslashes and break cmd.exe).
+const NODE = '"' + process.execPath + '"';
 
 console.log('\n🔬 Hephaestus Tool Suite Tests\n');
 
@@ -443,7 +446,8 @@ console.log('\n⑨ᵇ engine shared/mask.js');
 
 const maskProbe = path.join(TMP, 'mask-probe.mjs');
 fs.writeFileSync(maskProbe, [
-    "import { isSensitive } from " + JSON.stringify(path.join(ROOT, 'engine/src/shared/mask.js')) + ";",
+    // A bare absolute path is not a valid ESM specifier on Windows (needs a file:// URL).
+    "import { isSensitive } from " + JSON.stringify(require('url').pathToFileURL(path.join(ROOT, 'engine/src/shared/mask.js')).href) + ";",
     "const S = ['token','password','pass','secret','key','authorization','session'];",
     // MUST mask — real secret field names, incl. concatenated-lowercase (regression guard)
     "const must = ['password','passwd','passphrase','passcode','passkey','apikey','apiKey','api_key','x-api-key','privatekey','publickey','sshkey','masterkey','dbpass','userpass','sessionToken','authorization','secretValue','user_pass'];",
@@ -460,6 +464,44 @@ fs.writeFileSync(maskProbe, [
 test('isSensitive masks all real secret fields incl. concatenated-lowercase (no leak)', function() {
     const out = run(NODE + ' ' + JSON.stringify(maskProbe));
     assertContains(out, 'ok', 'mask probe did not pass');
+});
+
+// ─── 9c. engine shared/retry-after.js (Retry-After parsing) ───────────────────
+// The golden harness can't drive a setNextRequest retry loop, so the parse — the
+// security/correctness-critical part of the Retry-After feature — is locked here.
+// nowMs is injected so the HTTP-date branch is deterministic.
+
+console.log('\n⑨ᶜ engine shared/retry-after.js');
+
+const raProbe = path.join(TMP, 'retry-after-probe.mjs');
+fs.writeFileSync(raProbe, [
+    // file:// URL so the import is a valid ESM specifier on Windows too.
+    "import { parseRetryAfterMs as p } from " + JSON.stringify(require('url').pathToFileURL(path.join(ROOT, 'engine/src/shared/retry-after.js')).href) + ";",
+    "const NOW = 1000000000000;", // fixed reference instant
+    "function eq(a, b, label) { if (a !== b) { console.error('FAIL ' + label + ': got ' + a + ', want ' + b); process.exit(2); } }",
+    // delta-seconds
+    "eq(p('120', NOW), 120000, 'delta 120s');",
+    "eq(p('0', NOW), 0, 'delta 0s (retry now)');",
+    "eq(p('3600', NOW), 3600000, 'delta 3600s');",
+    "eq(p('  30  ', NOW), 30000, 'delta trimmed');",
+    // HTTP-date — future, past, exact-now
+    "eq(p(new Date(NOW + 5000).toUTCString(), NOW), 5000, 'http-date +5s');",
+    "eq(p(new Date(NOW - 5000).toUTCString(), NOW), 0, 'http-date in the past => 0');",
+    "eq(p(new Date(NOW).toUTCString(), NOW), 0, 'http-date == now => 0 (sub-second floors)');",
+    // absent / empty / unparseable => null (caller decides)
+    "eq(p(null, NOW), null, 'null header');",
+    "eq(p(undefined, NOW), null, 'undefined header');",
+    "eq(p('', NOW), null, 'empty header');",
+    "eq(p('   ', NOW), null, 'whitespace header');",
+    "eq(p('later', NOW), null, 'unparseable word');",
+    "eq(p('-5', NOW), null, 'negative not a delta, not a date');",
+    "eq(p('12.5', NOW), null, 'fractional not an integer delta');",
+    "console.log('ok');"
+].join('\n'));
+
+test('parseRetryAfterMs handles delta-seconds, HTTP-date (future/past) and invalid input', function() {
+    const out = run(NODE + ' ' + JSON.stringify(raProbe));
+    assertContains(out, 'ok', 'retry-after probe did not pass');
 });
 
 // ─── 10. generate-report.js ───────────────────────────────────────────────────
@@ -1087,7 +1129,7 @@ test('mock serves a matching request over HTTP and 404s an unknown path', functi
         'go("/thing",40,hit=>go("/missing",5,miss=>process.stdout.write(hit+"~~"+miss)));'
     ].join('\n'));
 
-    const srv = spawn(NODE, [MOCK, mockCollectionFile, '-p', String(PORT), '--quiet', '--no-color'], { stdio: 'ignore' });
+    const srv = spawn(process.execPath, [MOCK, mockCollectionFile, '-p', String(PORT), '--quiet', '--no-color'], { stdio: 'ignore' });
     try {
         const out = run(NODE + ' "' + clientFile + '" ' + PORT);
         const parts = out.split('~~');
@@ -1184,6 +1226,49 @@ test('CLI exposes doctor: --help lists it and the subcommand delegates (exit 0)'
     assertContains(run(NODE + ' "' + CLI + '" --help'), 'doctor', 'help should list doctor');
     const doc = JSON.parse(run(NODE + ' "' + CLI + '" doctor --json'));
     assert(doc.ok === true, 'CLI doctor --json should report ok:true on clean checkout');
+});
+
+// ─── 19. bench.js (engine overhead benchmark) ─────────────────────────────────
+
+console.log('\n⑲ bench.js');
+
+const bench = require(path.join(ROOT, 'scripts/bench.js'));
+const BENCH = path.join(ROOT, 'scripts/bench.js');
+
+test('bench parseArgs: defaults and flag parsing', function() {
+    const d = bench.parseArgs([]);
+    assert(d.requests === 40 && d.runs === 5 && d.json === false && d.maxMs === null, 'defaults wrong: ' + JSON.stringify(d));
+    const a = bench.parseArgs(['--requests', '12', '--runs', '3', '--json', '--max-ms', '5']);
+    assert(a.requests === 12 && a.runs === 3 && a.json === true && a.maxMs === 5, 'flags wrong: ' + JSON.stringify(a));
+    // guards: non-positive / missing values fall back to defaults, never 0 or NaN
+    const g = bench.parseArgs(['--requests', '0', '--runs', '-3']);
+    assert(g.requests === 40 && g.runs === 5, 'non-positive should fall back: ' + JSON.stringify(g));
+});
+
+test('bench median: odd and even lengths', function() {
+    assert(bench.median([3, 1, 2]) === 2, 'odd median');
+    assert(bench.median([4, 1, 3, 2]) === 2.5, 'even median');
+    assert(bench.median([7]) === 7, 'single');
+});
+
+test('bench --json produces a valid overhead report and exits 0', function() {
+    const out = run(NODE + ' "' + BENCH + '" --requests 2 --runs 1 --json');
+    const r = JSON.parse(out);
+    assert(r.requests === 2 && r.runs === 1, 'echoes params');
+    assert(r.engineBundleBytes && r.engineBundleBytes.total > 0, 'reports bundle size');
+    assert(typeof r.overheadPerRequestMs === 'number' && r.overheadPerRequestMs >= 0, 'non-negative overhead');
+    assert(r.medianRunMs && r.medianRunMs.engine > 0 && r.medianRunMs.baseline > 0, 'reports run medians');
+});
+
+test('bench --max-ms fails loud on a non-numeric budget (never silently disables the gate)', function() {
+    // A malformed budget (e.g. an unset CI var) must exit 1, not pass green — the
+    // fail-open direction would hide a real regression. Exits before running Newman.
+    ['--max-ms abc', '--max-ms'].forEach(function(variant) {
+        let code = 0;
+        try { run(NODE + ' "' + BENCH + '" ' + variant); }
+        catch(e) { code = e.status || 1; }
+        assert(code === 1, '`bench ' + variant + '` must exit 1, got ' + code);
+    });
 });
 
 // ─── Cleanup ─────────────────────────────────────────────────────────────────

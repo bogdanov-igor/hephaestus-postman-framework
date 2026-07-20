@@ -98,6 +98,10 @@ function startMockServer() {
             // GraphQL returns HTTP 200 even with an errors[] array — the classic trap.
             return json({ data: null, errors: [{ message: 'User not found', path: ['user'] }] });
         }
+        if (url === '/retry503-longwait') {
+            // 503 with a Retry-After far beyond the cap → engine must stop retrying.
+            return json({ error: 'unavailable' }, 503, { 'Retry-After': '3600' });
+        }
         return json({ error: 'not found' }, 404);
     });
     return new Promise(function (resolve) {
@@ -415,6 +419,14 @@ function buildCollection(preSrc, postSrc, baseUrl) {
             name: 'graphql-expect-errors',
             request: { method: 'GET', url: baseUrl + '/graphql-errors' },
             event: methodScripts({}, { graphql: { errorCount: 1, errorContains: 'not found' } })
+        },
+        {
+            // retryOnStatus + respectRetryAfter: server asks to wait 3600s, far above the
+            // 10s cap → engine stops retrying (no setNextRequest, single pass) and fails
+            // with a clear message. expectedStatus:[503] isolates the Retry-After failure.
+            name: 'neg-retryafter-exceeds-cap',
+            request: { method: 'GET', url: baseUrl + '/retry503-longwait' },
+            event: methodScripts({}, { expectedStatus: [503], retryOnStatus: { statuses: [503], maxRetries: 3, respectRetryAfter: true } })
         }
     ];
 

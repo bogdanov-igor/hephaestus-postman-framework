@@ -586,6 +586,46 @@
       "ok": true
     },
     {
+      "item": "neg-retryafter-exceeds-cap",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "neg-retryafter-exceeds-cap",
+      "name": "⚡ Retry-After: пауза превышает предел (статус 503)",
+      "ok": false
+    },
+    {
+      "item": "neg-retryafter-exceeds-cap",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "neg-retryafter-exceeds-cap",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "neg-retryafter-exceeds-cap",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-retryafter-exceeds-cap",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": false
+    },
+    {
+      "item": "neg-retryafter-exceeds-cap",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "neg-retryafter-exceeds-cap",
+      "name": "🟢 Статус: 503 — Сервис недоступен",
+      "ok": true
+    },
+    {
       "item": "neg-secaudit-cacheable",
       "name": "⚠️ URL: небезопасный протокол http",
       "ok": true
@@ -1844,6 +1884,20 @@
       "request": "neg-maxbytes-over",
       "method": "GET",
       "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "neg-retryafter-exceeds-cap": {
+      "request": "neg-retryafter-exceeds-cap",
+      "method": "GET",
+      "status": 503,
       "format": "json",
       "found": [],
       "saved": [],

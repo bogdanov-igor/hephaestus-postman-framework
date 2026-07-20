@@ -28,6 +28,13 @@
   answers HTTP 200 even with an `errors[]` array: `noErrors` (errors empty/absent),
   `errorCount` / `errorContains` (negative testing), and `dataShape` (type checks
   under `data.*`). `graphql: true` is shorthand for `{ noErrors: true }`.
+- **`retryOnStatus` honors `Retry-After`** — set `respectRetryAfter: true` and the
+  engine reads the server's `Retry-After` header on a retried response (delta-seconds
+  or HTTP-date). It waits that long (up to `retryAfterCapMs`, default 10 s) before
+  re-running; if the server asks for longer than the cap, it stops retrying instead of
+  hammering. Opt-in — default `retryOnStatus` behavior is unchanged. (The wait is a
+  bounded blocking busy-wait — the Postman sandbox has no async sleep that survives
+  `setNextRequest`.)
 
 ### Changed
 - **`iterationData` is now a shared module** (`engine/src/shared/iteration-data.js`),

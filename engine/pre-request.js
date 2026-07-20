@@ -156,6 +156,26 @@
     }, en: function(maxRetries, code, expected) {
       return "All " + maxRetries + " attempts returned status " + code + ". Expected not " + expected + ".";
     } },
+    "retryOnStatus.retryName": { ru: function(attempt, maxRetries, code) {
+      return "\u26A1 \u041F\u043E\u0432\u0442\u043E\u0440 " + attempt + "/" + maxRetries + " (\u0441\u0442\u0430\u0442\u0443\u0441 " + code + ")";
+    }, en: function(attempt, maxRetries, code) {
+      return "\u26A1 Retry " + attempt + "/" + maxRetries + " (status " + code + ")";
+    } },
+    "retryOnStatus.retryAfterName": { ru: function(code) {
+      return "\u26A1 Retry-After: \u043F\u0430\u0443\u0437\u0430 \u043F\u0440\u0435\u0432\u044B\u0448\u0430\u0435\u0442 \u043F\u0440\u0435\u0434\u0435\u043B (\u0441\u0442\u0430\u0442\u0443\u0441 " + code + ")";
+    }, en: function(code) {
+      return "\u26A1 Retry-After: wait exceeds cap (status " + code + ")";
+    } },
+    "retryOnStatus.retryAfterExceeds": { ru: function(waitS, capS) {
+      return "\u0421\u0435\u0440\u0432\u0435\u0440 \u0437\u0430\u043F\u0440\u043E\u0441\u0438\u043B \u043F\u043E\u0432\u0442\u043E\u0440 \u0447\u0435\u0440\u0435\u0437 " + waitS + " \u0441 (\u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043E\u043A Retry-After), \u044D\u0442\u043E \u0431\u043E\u043B\u044C\u0448\u0435 \u043F\u0440\u0435\u0434\u0435\u043B\u0430 " + capS + " \u0441 \u2014 \u043F\u043E\u0432\u0442\u043E\u0440\u044B \u043E\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u044B.";
+    }, en: function(waitS, capS) {
+      return "Server asked to retry after " + waitS + "s (Retry-After header), exceeding the " + capS + "s cap \u2014 retries stopped.";
+    } },
+    "retryOnStatus.retryAfterWait": { ru: function(waitS, requestName) {
+      return "[HEPHAESTUS] \u26A1 Retry-After: \u0436\u0434\u0443 " + waitS + " \u0441 \u043F\u0435\u0440\u0435\u0434 \u043F\u043E\u0432\u0442\u043E\u0440\u043E\u043C: " + requestName;
+    }, en: function(waitS, requestName) {
+      return "[HEPHAESTUS] \u26A1 Retry-After: waiting " + waitS + "s before retrying: " + requestName;
+    } },
     // ─── assertions ───
     "assertions.found": { ru: function(soft, name, path) {
       return (soft ? "\u26AA [soft] " : "\u{1F50E} ") + "\u041D\u0430\u0439\u0434\u0435\u043D\u043E: '" + name + "' (" + path + ")";

@@ -235,6 +235,26 @@
         }, en: function(maxRetries, code2, expected) {
           return "All " + maxRetries + " attempts returned status " + code2 + ". Expected not " + expected + ".";
         } },
+        "retryOnStatus.retryName": { ru: function(attempt, maxRetries, code2) {
+          return "\u26A1 \u041F\u043E\u0432\u0442\u043E\u0440 " + attempt + "/" + maxRetries + " (\u0441\u0442\u0430\u0442\u0443\u0441 " + code2 + ")";
+        }, en: function(attempt, maxRetries, code2) {
+          return "\u26A1 Retry " + attempt + "/" + maxRetries + " (status " + code2 + ")";
+        } },
+        "retryOnStatus.retryAfterName": { ru: function(code2) {
+          return "\u26A1 Retry-After: \u043F\u0430\u0443\u0437\u0430 \u043F\u0440\u0435\u0432\u044B\u0448\u0430\u0435\u0442 \u043F\u0440\u0435\u0434\u0435\u043B (\u0441\u0442\u0430\u0442\u0443\u0441 " + code2 + ")";
+        }, en: function(code2) {
+          return "\u26A1 Retry-After: wait exceeds cap (status " + code2 + ")";
+        } },
+        "retryOnStatus.retryAfterExceeds": { ru: function(waitS, capS) {
+          return "\u0421\u0435\u0440\u0432\u0435\u0440 \u0437\u0430\u043F\u0440\u043E\u0441\u0438\u043B \u043F\u043E\u0432\u0442\u043E\u0440 \u0447\u0435\u0440\u0435\u0437 " + waitS + " \u0441 (\u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043E\u043A Retry-After), \u044D\u0442\u043E \u0431\u043E\u043B\u044C\u0448\u0435 \u043F\u0440\u0435\u0434\u0435\u043B\u0430 " + capS + " \u0441 \u2014 \u043F\u043E\u0432\u0442\u043E\u0440\u044B \u043E\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u044B.";
+        }, en: function(waitS, capS) {
+          return "Server asked to retry after " + waitS + "s (Retry-After header), exceeding the " + capS + "s cap \u2014 retries stopped.";
+        } },
+        "retryOnStatus.retryAfterWait": { ru: function(waitS, requestName) {
+          return "[HEPHAESTUS] \u26A1 Retry-After: \u0436\u0434\u0443 " + waitS + " \u0441 \u043F\u0435\u0440\u0435\u0434 \u043F\u043E\u0432\u0442\u043E\u0440\u043E\u043C: " + requestName;
+        }, en: function(waitS, requestName) {
+          return "[HEPHAESTUS] \u26A1 Retry-After: waiting " + waitS + "s before retrying: " + requestName;
+        } },
         // ─── assertions ───
         "assertions.found": { ru: function(soft2, name2, path2) {
           return (soft2 ? "\u26AA [soft] " : "\u{1F50E} ") + "\u041D\u0430\u0439\u0434\u0435\u043D\u043E: '" + name2 + "' (" + path2 + ")";
@@ -1043,12 +1063,32 @@
     }
   });
 
+  // engine/src/shared/retry-after.js
+  function parseRetryAfterMs(value, nowMs) {
+    if (value === null || value === void 0) return null;
+    const s = String(value).trim();
+    if (s === "") return null;
+    if (/^\d+$/.test(s)) {
+      return parseInt(s, 10) * 1e3;
+    }
+    if (!/[A-Za-z]/.test(s)) return null;
+    const when = Date.parse(s);
+    if (isNaN(when)) return null;
+    const diff = when - nowMs;
+    return diff > 0 ? diff : 0;
+  }
+  var init_retry_after = __esm({
+    "engine/src/shared/retry-after.js"() {
+    }
+  });
+
   // engine/src/post-request.js
   var require_post_request = __commonJS({
     "engine/src/post-request.js"(exports, module) {
       init_config_merge();
       init_iteration_data();
       init_mask();
+      init_retry_after();
       init_i18n();
       (function hephaestusPostRequest() {
         const VERSION = "3.9.0";
@@ -1703,8 +1743,31 @@
             const key = "hephaestus.retry." + pm.info.requestName;
             const count = parseInt(pm.variables.get(key) || "0", 10);
             if (count < maxRetries) {
+              if (cfg.respectRetryAfter) {
+                const capMs = typeof cfg.retryAfterCapMs === "number" ? cfg.retryAfterCapMs : 1e4;
+                const hdrVal = pm.response.headers && pm.response.headers.get ? pm.response.headers.get("Retry-After") : null;
+                const waitMs = parseRetryAfterMs(hdrVal, Date.now());
+                if (waitMs !== null && waitMs > capMs) {
+                  pm.variables.unset(key);
+                  pm.test(t(_ctx, "retryOnStatus.retryAfterName", code2), function() {
+                    throw new Error(t(
+                      _ctx,
+                      "retryOnStatus.retryAfterExceeds",
+                      Math.round(waitMs / 1e3),
+                      Math.round(capMs / 1e3)
+                    ));
+                  });
+                  return false;
+                }
+                if (waitMs) {
+                  console.log(t(_ctx, "retryOnStatus.retryAfterWait", waitMs / 1e3, pm.info.requestName));
+                  const _end = Date.now() + waitMs;
+                  while (Date.now() < _end) {
+                  }
+                }
+              }
               pm.variables.set(key, String(count + 1));
-              pm.test("\u26A1 Retry " + (count + 1) + "/" + maxRetries + " (status " + code2 + ")", function() {
+              pm.test(t(_ctx, "retryOnStatus.retryName", count + 1, maxRetries, code2), function() {
               });
               console.log(t(_ctx, "retryOnStatus.rerunLog", count + 1, maxRetries, code2, pm.info.requestName));
               pm.setNextRequest(pm.info.requestName);

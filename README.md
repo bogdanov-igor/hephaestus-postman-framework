@@ -5,7 +5,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/version-3.9.0-e25822?style=flat-square" alt="version 3.9.0">
   <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="MIT">
-  <img src="https://img.shields.io/badge/engine-172%20KB-success?style=flat-square" alt="172 KB engine">
+  <img src="https://img.shields.io/badge/engine-191%20KB-success?style=flat-square" alt="191 KB engine">
   <img src="https://img.shields.io/badge/runtime%20deps-0-success?style=flat-square" alt="zero runtime dependencies">
   <img src="https://img.shields.io/badge/tests-46%20%C2%B7%20200%20golden-success?style=flat-square" alt="46 tests, 200 golden assertions">
   <img src="https://img.shields.io/badge/locale-ru%20%C2%B7%20en-success?style=flat-square" alt="locale ru / en">
@@ -116,7 +116,7 @@ before installing, and saves them to `hephaestus.v3.pre` / `hephaestus.v3.post`.
 ## What's inside
 
 - **The engine.** ES modules in `engine/src/**`, bundled by esbuild into two
-  files (~172 KB total) and eval'd inside the Postman sandbox — engine-as-data,
+  files (~191 KB total) and eval'd inside the Postman sandbox — engine-as-data,
   no plugin install, no external runtime. One pre-request pipeline and one
   post-request pipeline drive a chain of modules through a shared `ctx`.
 - **Zero-download collection.** The shipped collection embeds the current
