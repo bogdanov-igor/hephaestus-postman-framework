@@ -173,7 +173,7 @@ async function main() {
 
         if (await p.yesNo('Enable snapshot regression?', false)) {
             answers.snapshot.enabled = true;
-            answers.snapshot.mode = await p.choose('  Snapshot mode', ['non-strict', 'strict'], 0);
+            answers.snapshot.mode = await p.choose('  Snapshot mode', ['non-strict', 'strict', 'structural'], 0);
         }
     }
 

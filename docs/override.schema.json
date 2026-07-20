@@ -117,8 +117,8 @@
         },
         "mode": {
           "type": "string",
-          "description": "strict = full deep-equal; non-strict = every baseline key must be present in the current response. Default: non-strict.",
-          "enum": ["strict", "non-strict"]
+          "description": "strict = full deep-equal; non-strict = every baseline key must be present in the current response; structural = compare shape only (leaf path -> type), ignoring values. Default: non-strict.",
+          "enum": ["strict", "non-strict", "structural"]
         },
         "autoSaveMissing": {
           "type": "boolean",

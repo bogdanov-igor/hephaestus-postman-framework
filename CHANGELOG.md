@@ -35,6 +35,11 @@
   hammering. Opt-in — default `retryOnStatus` behavior is unchanged. (The wait is a
   bounded blocking busy-wait — the Postman sandbox has no async sleep that survives
   `setNextRequest`.)
+- **Snapshot `mode: "structural"`** — a third snapshot mode alongside `strict` /
+  `non-strict` that compares the response *shape* (every leaf path → its type, array
+  indices collapsed to `[*]`) and ignores leaf values. Catches contract changes (a
+  field added/removed, a type flipped) without the false diffs that volatile values
+  (timestamps, ids, counts) or array length cause in a strict diff.
 - **`hephaestus generate`** — an interactive, zero-dependency wizard (`node:readline`,
   no LLM/network) that asks plane / auth / fields / shape / snapshot and prints a
   ready-to-paste `override` block plus the engine `eval(...)` line, so you scaffold a
