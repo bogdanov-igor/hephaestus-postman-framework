@@ -1221,6 +1221,30 @@ test('init --demo scaffolds a demo that mock can actually serve', function() {
     assert(names.indexOf('hephaestus.v3.post') !== -1, 'engine missing from the demo collection');
 });
 
+test('every override key the demo uses is a key the engine knows', function() {
+    // The demo shipped a `metrics: { maxResponseTime: 2000 }` block that the engine
+    // silently ignored — there is no `metrics` key, it is top-level. A demo that
+    // demonstrates a no-op is worse than one that omits the feature, and nothing
+    // caught it: unknown keys only fail under strictMode, which the demo does not
+    // enable. This validates against the engine's own list instead.
+    const src   = fs.readFileSync(path.join(ROOT, 'engine/src/shared/config-merge.js'), 'utf8');
+    const block = src.match(/export const KNOWN_KEYS = \[([\s\S]*?)\];/);
+    assert(block, 'KNOWN_KEYS not found in config-merge.js — did it stop being exported?');
+    const known = block[1].match(/'[^']+'/g).map(function(q) { return q.slice(1, -1); });
+
+    const demo = require(path.join(ROOT, 'scripts/lib/demo.js'));
+    demo.ITEMS.forEach(function(item) {
+        const body = item.post.join('\n');
+        // Top-level keys only: `    key:` at exactly four spaces of indentation.
+        const keys = (body.match(/^ {4}(\w+):/gm) || []).map(function(m) { return m.trim().replace(':', ''); });
+        assert(keys.length > 0, 'no override keys parsed out of "' + item.name + '"');
+        keys.forEach(function(k) {
+            assert(known.indexOf(k) !== -1,
+                '"' + item.name + '" uses override key "' + k + '", which the engine does not know');
+        });
+    });
+});
+
 test('init --demo refuses to overwrite an existing demo without --force', function() {
     const demoDir = path.join(TMP, 'demo-twice');
     run(NODE + ' "' + path.join(ROOT, 'scripts/init.js') + '" --demo "' + demoDir + '"');

@@ -120,9 +120,10 @@ const ITEMS = [
             "        type: 'number'",
             '    },',
             '',
-            '    metrics: {',
-            '        maxResponseTime: 2000',
-            '    }',
+            '    // Top-level, not nested under a "metrics" block — there is no such',
+            '    // block, and an unknown key is silently ignored unless strictMode',
+            '    // is on. strictMode catches exactly this class of typo.',
+            '    maxResponseTime: 2000',
             '};',
         ],
         snapshot: {
