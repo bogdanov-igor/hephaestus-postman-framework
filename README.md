@@ -223,6 +223,7 @@ npm run <command> -- [args]
 | `sync-examples <collection.json>` | Snapshots → Postman Example Responses |
 | `openapi <spec>` | OpenAPI / Swagger → Hephaestus collection |
 | `init` | Interactive config / environment wizard |
+| `panel [-c <collection.json>]` | Local dev panel: run history, snapshots, defaults editor |
 | `watch -c <collection.json>` | Re-run Newman on file change |
 
 `node bin/hephaestus.js --help` lists everything.

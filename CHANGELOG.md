@@ -35,6 +35,14 @@
   hammering. Opt-in — default `retryOnStatus` behavior is unchanged. (The wait is a
   bounded blocking busy-wait — the Postman sandbox has no async sleep that survives
   `setNextRequest`.)
+- **`hephaestus panel`** — a local dev panel: a zero-dependency `node:http` server on
+  `127.0.0.1` serving one self-contained page with local run history, saved snapshots,
+  an editable `defaults.json`, and doc links. Nothing is hosted and nothing leaves the
+  machine. Because it can write, it is locked down deliberately: loopback bind, a
+  loopback-only `Host` check (anti DNS-rebinding) against the actually-bound port, no
+  request-supplied file paths (so no directory traversal), and writes that require
+  `Content-Type: application/json` with a same-origin `Origin` and no CORS headers —
+  a foreign page cannot POST to it.
 
 ### Changed
 - **`iterationData` is now a shared module** (`engine/src/shared/iteration-data.js`),
