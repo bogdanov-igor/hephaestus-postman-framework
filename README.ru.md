@@ -236,6 +236,7 @@ npm run <command> -- [args]
 | `openapi <spec>` | OpenAPI / Swagger → коллекция Hephaestus |
 | `init` | Интерактивный мастер конфига / окружения |
 | `generate` | Интерактивный мастер → готовый к вставке блок `override` |
+| `panel [-c <collection.json>]` | Локальная панель: история прогонов, снапшоты, редактор defaults |
 | `watch -c <collection.json>` | Перезапуск Newman при изменении файла |
 
 `node bin/hephaestus.js --help` перечисляет всё.

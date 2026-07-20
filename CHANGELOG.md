@@ -44,6 +44,14 @@
   no LLM/network) that asks plane / auth / fields / shape / snapshot and prints a
   ready-to-paste `override` block plus the engine `eval(...)` line, so you scaffold a
   request's config without memorising the schema.
+- **`hephaestus panel`** — a local dev panel: a zero-dependency `node:http` server on
+  `127.0.0.1` serving one self-contained page with local run history, saved snapshots,
+  an editable `defaults.json`, and the local docs. Nothing is hosted and nothing leaves
+  the machine. Because it can write, it is locked down deliberately: loopback bind, a
+  loopback-only `Host` check (anti DNS-rebinding) against the actually-bound port, no
+  request input ever joined into a path (so no directory traversal), `X-Frame-Options`
+  + CSP `frame-ancestors 'none'`, and writes that require `Content-Type: application/json`
+  with a same-origin `Origin` and no CORS headers — a foreign page cannot POST to it.
 
 ### Changed
 - **`iterationData` is now a shared module** (`engine/src/shared/iteration-data.js`),
