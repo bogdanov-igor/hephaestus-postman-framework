@@ -504,6 +504,46 @@ test('parseRetryAfterMs handles delta-seconds, HTTP-date (future/past) and inval
     assertContains(out, 'ok', 'retry-after probe did not pass');
 });
 
+// ─── 9d. engine shared/structure.js (structural snapshot diff) ────────────────
+// The golden harness only drives a couple of seeded structural compares, so the
+// diff logic — the whole point of snapshot mode:"structural" — is locked here.
+
+console.log('\n⑨ᵈ engine shared/structure.js');
+
+const structProbe = path.join(TMP, 'structure-probe.mjs');
+fs.writeFileSync(structProbe, [
+    "import { structuralDiff as d } from " + JSON.stringify(require('url').pathToFileURL(path.join(ROOT, 'engine/src/shared/structure.js')).href) + ";",
+    "function eq(got, want, label){ const g=JSON.stringify(got), w=JSON.stringify(want); if(g!==w){ console.error('FAIL '+label+': got '+g+' want '+w); process.exit(2); } }",
+    // Same shape, different values AND different array length → NO diff (the whole point)
+    "eq(d({id:1,name:'a',tags:['x']}, {id:999,name:'zzz',tags:['p','q','r']}), [], 'values+array-length ignored');",
+    // Type change, added field, removed field (sorted)
+    "eq(d({id:1,name:'a',old:true}, {id:'1',name:'a',neu:2}), ['+ neu (number)','- old (boolean)','~ id: number → string'], 'add/remove/typechange');",
+    // Nested + arrays collapse to [*]
+    "eq(d({data:{items:[{id:1}]}}, {data:{items:[{id:1},{id:2}]}}), [], 'nested array same shape');",
+    "eq(d({data:{items:[{id:1}]}}, {data:{items:[{id:1,extra:'x'}]}}), ['+ data.items[*].extra (string)'], 'nested field added');",
+    // null vs value is a type change; empty containers are distinct leaves
+    "eq(d({a:null}, {a:5}), ['~ a: null → number'], 'null to number');",
+    "eq(d({a:{}}, {a:{x:1}}), ['+ a.x (number)','- a (empty-object)'], 'empty object filled');",
+    "eq(d({a:[]}, {a:[1]}), ['~ a[*]: empty-array → number'], 'empty array filled → type change at a[*]');",
+    // Identical → empty
+    "eq(d({x:1,y:'s',z:true}, {x:2,y:'t',z:false}), [], 'identical shape');",
+    // prototype-name safety: fields named after Object.prototype members are real leaves
+    "eq(d({id:1}, {id:1, toString:2}), ['+ toString (number)'], 'added field named toString detected');",
+    "eq(d({id:1, valueOf:2}, {id:1}), ['- valueOf (number)'], 'removed field named valueOf detected');",
+    "eq(d(JSON.parse('{\"__proto__\":1,\"id\":2}'), JSON.parse('{\"__proto__\":\"s\",\"id\":2}')), ['~ __proto__: number → string'], '__proto__ leaf tracked');",
+    // heterogeneous arrays: union of distinct types, order-independent
+    "eq(d({arr:[1]}, {arr:[1,'x']}), ['~ arr[*]: number → number|string'], 'mixed array types unioned');",
+    "eq(d({arr:['x',1]}, {arr:[1,'x']}), [], 'mixed array order-independent');",
+    // root-level array label is consistent between empty and non-empty
+    "eq(d([], [1]), ['~ [*]: empty-array → number'], 'root empty→filled array uses [*]');",
+    "console.log('ok');"
+].join('\n'));
+
+test('structuralDiff ignores values/array-length but catches add/remove/type-change', function() {
+    const out = run(NODE + ' ' + JSON.stringify(structProbe));
+    assertContains(out, 'ok', 'structure probe did not pass');
+});
+
 // ─── 10. generate-report.js ───────────────────────────────────────────────────
 
 console.log('\n⑩ generate-report.js');
@@ -1366,6 +1406,59 @@ fs.writeFileSync(panelProbe, [
 test('panel server: serves the page, reads history, and enforces host/CSRF/JSON guards', function() {
     const out = run(NODE + ' ' + JSON.stringify(panelProbe));
     assertContains(out, 'ok', 'panel probe did not pass');
+});
+
+// ─── 20. generate-test.js (override wizard) ───────────────────────────────────
+
+console.log('\n⑳ generate-test.js');
+
+const generate = require(path.join(ROOT, 'scripts/generate-test.js'));
+const GEN = path.join(ROOT, 'scripts/generate-test.js');
+
+test('generate buildOverride: post plane emits only chosen, non-default fields', function() {
+    const o = generate.buildOverride({
+        plane: 'post', locale: 'en', expectedStatus: 200,
+        keysToFind: [{ path: 'data.id', expect: '' }, { path: 'data.status', expect: 'active' }],
+        assertShape: { 'data.items': 'array' },
+        snapshot: { enabled: true, mode: 'structural' }
+    });
+    assert(o.locale === 'en' && o.expectedStatus === 200, 'locale + status');
+    assert(o.keysToFind.length === 2 && o.keysToFind[0].expect === undefined && o.keysToFind[1].expect === 'active', 'keysToFind expect optional');
+    assert(o.assertShape['data.items'] === 'array', 'assertShape');
+    assert(o.snapshot.enabled === true && o.snapshot.mode === 'structural' && o.snapshot.autoSaveMissing === true, 'snapshot');
+    // empty answers → empty override (no junk keys)
+    assert(JSON.stringify(generate.buildOverride({ plane: 'post' })) === '{}', 'empty post → {}');
+});
+
+test('generate buildOverride: pre plane emits auth only', function() {
+    const o = generate.buildOverride({ plane: 'pre', auth: { type: 'bearer', token: '{{prod.token}}' } });
+    assert(o.auth && o.auth.enabled === true && o.auth.type === 'bearer' && o.auth.token === '{{prod.token}}', 'bearer auth');
+    assert(o.expectedStatus === undefined && o.keysToFind === undefined, 'no post-only fields on pre plane');
+    assert(JSON.stringify(generate.buildOverride({ plane: 'pre', auth: { type: 'none' } })) === '{}', 'auth none → {}');
+    // basic-auth must emit the engine's field names (user/pass), not username/password
+    const b = generate.buildOverride({ plane: 'pre', auth: { type: 'basic', user: 'alice', pass: 's3cret' } });
+    assert(b.auth.user === 'alice' && b.auth.pass === 's3cret', 'basic uses user/pass (engine field names)');
+    assert(b.auth.username === undefined && b.auth.password === undefined, 'no username/password keys the engine ignores');
+});
+
+test('generate buildOverride: NaN expectedStatus is omitted (not emitted as null)', function() {
+    // typeof NaN === 'number' would slip through a loose guard and render as null.
+    assert(generate.buildOverride({ plane: 'post', expectedStatus: NaN }).expectedStatus === undefined, 'NaN omitted');
+    assert(generate.buildOverride({ plane: 'post', expectedStatus: 200 }).expectedStatus === 200, 'real status kept');
+});
+
+test('generate renderScript: correct eval line per plane', function() {
+    assertContains(generate.renderScript({ locale: 'en' }, 'post'), 'eval(pm.collectionVariables.get("hephaestus.v3.post"))', 'post eval line');
+    assertContains(generate.renderScript({ locale: 'en' }, 'pre'), 'eval(pm.collectionVariables.get("hephaestus.v3.pre"))', 'pre eval line');
+    assertContains(generate.renderScript({ expectedStatus: 200 }, 'post'), 'const override = {', 'override literal');
+});
+
+test('generate wizard runs end-to-end over piped answers and prints a block', function() {
+    // input buffered by the line-queue driver → reliable under a pipe. post, ru, 200, no extras.
+    const out = run(NODE + ' "' + GEN + '"', { input: '1\n1\n200\nn\nn\nn\n' });
+    assertContains(out, 'const override = {', 'prints the override block');
+    assertContains(out, 'hephaestus.v3.post', 'post plane eval line');
+    assertContains(out, '"expectedStatus": 200', 'carried the status answer');
 });
 
 // ─── Cleanup ─────────────────────────────────────────────────────────────────

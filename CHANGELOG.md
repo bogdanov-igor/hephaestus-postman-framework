@@ -35,14 +35,23 @@
   hammering. Opt-in — default `retryOnStatus` behavior is unchanged. (The wait is a
   bounded blocking busy-wait — the Postman sandbox has no async sleep that survives
   `setNextRequest`.)
+- **Snapshot `mode: "structural"`** — a third snapshot mode alongside `strict` /
+  `non-strict` that compares the response *shape* (every leaf path → its type, array
+  indices collapsed to `[*]`) and ignores leaf values. Catches contract changes (a
+  field added/removed, a type flipped) without the false diffs that volatile values
+  (timestamps, ids, counts) or array length cause in a strict diff.
+- **`hephaestus generate`** — an interactive, zero-dependency wizard (`node:readline`,
+  no LLM/network) that asks plane / auth / fields / shape / snapshot and prints a
+  ready-to-paste `override` block plus the engine `eval(...)` line, so you scaffold a
+  request's config without memorising the schema.
 - **`hephaestus panel`** — a local dev panel: a zero-dependency `node:http` server on
   `127.0.0.1` serving one self-contained page with local run history, saved snapshots,
-  an editable `defaults.json`, and doc links. Nothing is hosted and nothing leaves the
-  machine. Because it can write, it is locked down deliberately: loopback bind, a
+  an editable `defaults.json`, and the local docs. Nothing is hosted and nothing leaves
+  the machine. Because it can write, it is locked down deliberately: loopback bind, a
   loopback-only `Host` check (anti DNS-rebinding) against the actually-bound port, no
-  request-supplied file paths (so no directory traversal), and writes that require
-  `Content-Type: application/json` with a same-origin `Origin` and no CORS headers —
-  a foreign page cannot POST to it.
+  request input ever joined into a path (so no directory traversal), `X-Frame-Options`
+  + CSP `frame-ancestors 'none'`, and writes that require `Content-Type: application/json`
+  with a same-origin `Origin` and no CORS headers — a foreign page cannot POST to it.
 
 ### Changed
 - **`iterationData` is now a shared module** (`engine/src/shared/iteration-data.js`),

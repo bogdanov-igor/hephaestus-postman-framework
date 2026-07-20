@@ -866,6 +866,46 @@
       "ok": true
     },
     {
+      "item": "neg-structural-changed",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "neg-structural-changed",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "neg-structural-changed",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "neg-structural-changed",
+      "name": "📸 Snapshot structural (full): ❌ расхождение",
+      "ok": false
+    },
+    {
+      "item": "neg-structural-changed",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-structural-changed",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-structural-changed",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "neg-structural-changed",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
       "item": "obj-assertions-en",
       "name": "⚠️ URL: insecure http protocol",
       "ok": true
@@ -1646,6 +1686,46 @@
       "ok": true
     },
     {
+      "item": "structural-match",
+      "name": "⚠️ URL: небезопасный протокол http",
+      "ok": true
+    },
+    {
+      "item": "structural-match",
+      "name": "🌐 URL: базовый адрес задан",
+      "ok": true
+    },
+    {
+      "item": "structural-match",
+      "name": "📭 Тело ответа: не пустое",
+      "ok": true
+    },
+    {
+      "item": "structural-match",
+      "name": "📸 Snapshot structural (full): ✅ совпадает",
+      "ok": true
+    },
+    {
+      "item": "structural-match",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "structural-match",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "structural-match",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "structural-match",
+      "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
       "item": "xml-extract",
       "name": "⚠️ URL: небезопасный протокол http",
       "ok": true
@@ -2007,6 +2087,28 @@
       "security": null,
       "errors": []
     },
+    "neg-structural-changed": {
+      "request": "neg-structural-changed",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": {
+        "status": "diff",
+        "key": "EngineTest::neg-structural-changed::200::json",
+        "mode": "structural",
+        "diff": [
+          "+ extra (boolean)",
+          "~ id: number → string"
+        ]
+      },
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
     "obj-assertions": {
       "request": "obj-assertions",
       "method": "GET",
@@ -2264,6 +2366,25 @@
       "counts": [],
       "headers": [],
       "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "structural-match": {
+      "request": "structural-match",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": {
+        "status": "match",
+        "key": "EngineTest::structural-match::200::json",
+        "mode": "structural",
+        "diff": []
+      },
       "schema": null,
       "security": null,
       "errors": []
