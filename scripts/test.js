@@ -475,7 +475,8 @@ console.log('\n⑨ᶜ engine shared/retry-after.js');
 
 const raProbe = path.join(TMP, 'retry-after-probe.mjs');
 fs.writeFileSync(raProbe, [
-    "import { parseRetryAfterMs as p } from " + JSON.stringify(path.join(ROOT, 'engine/src/shared/retry-after.js')) + ";",
+    // file:// URL so the import is a valid ESM specifier on Windows too.
+    "import { parseRetryAfterMs as p } from " + JSON.stringify(require('url').pathToFileURL(path.join(ROOT, 'engine/src/shared/retry-after.js')).href) + ";",
     "const NOW = 1000000000000;", // fixed reference instant
     "function eq(a, b, label) { if (a !== b) { console.error('FAIL ' + label + ': got ' + a + ', want ' + b); process.exit(2); } }",
     // delta-seconds
