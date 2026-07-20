@@ -159,6 +159,9 @@ Open `results/report.html` in a browser — includes test results, response time
 
 ## Gating the pipeline
 
+> **Ready-to-copy pipelines** for GitHub Actions, GitLab CI and Jenkins live in
+> [`docs/ci/`](ci/) — change four variables at the top and commit.
+
 Newman's exit code only says *"some assertion failed"*. The Hephaestus CLI adds gates
 for the things a pipeline actually needs to block on — each **exits 1** when it trips,
 so a plain step is enough, no shell plumbing.
