@@ -1300,6 +1300,11 @@ test('panel isLoopbackHost accepts only loopback (DNS-rebinding guard)', functio
     assert(panel.isLoopbackHost('evil.com:7373', 7373) === false, 'foreign host rejected');
     assert(panel.isLoopbackHost('127.0.0.1:9999', 7373) === false, 'wrong port rejected');
     assert(panel.isLoopbackHost(undefined, 7373) === false, 'missing Host rejected');
+    // On port 80 browsers omit the port from Host — accept the bare form there only.
+    assert(panel.isLoopbackHost('127.0.0.1', 80) === true, 'bare host accepted on :80');
+    assert(panel.isLoopbackHost('localhost', 80) === true, 'bare localhost accepted on :80');
+    assert(panel.isLoopbackHost('127.0.0.1', 7373) === false, 'bare host rejected on a non-80 port');
+    assert(panel.isLoopbackHost('evil.com', 80) === false, 'bare foreign host still rejected');
 });
 
 test('panel isWriteAllowed blocks the cross-origin form-POST (CSRF) vector', function() {
@@ -1323,7 +1328,7 @@ fs.writeFileSync(panelProbe, [
     "function fail(m){ console.error('FAIL ' + m); process.exit(2); }",
     "srv.listen(0, '127.0.0.1', function(){",
     "  const pt = srv.address().port;",
-    "  function req(o, body){ return new Promise(function(res){ const r = http.request(Object.assign({host:'127.0.0.1',port:pt},o), function(rs){ let d=''; rs.on('data',c=>d+=c); rs.on('end',()=>res({code:rs.statusCode,body:d})); }); r.on('error',e=>res({code:0,body:String(e)})); if(body) r.write(body); r.end(); }); }",
+    "  function req(o, body){ return new Promise(function(res){ const r = http.request(Object.assign({host:'127.0.0.1',port:pt},o), function(rs){ let d=''; rs.on('data',c=>d+=c); rs.on('end',()=>res({code:rs.statusCode,body:d,h:rs.headers})); }); r.on('error',e=>res({code:0,body:String(e),h:{}})); if(body) r.write(body); r.end(); }); }",
     "  (async function(){",
     "    const home = await req({method:'GET',path:'/'});",
     "    if (home.code !== 200 || home.body.indexOf('Dev Panel') === -1) fail('GET / -> ' + home.code);",
@@ -1338,6 +1343,21 @@ fs.writeFileSync(panelProbe, [
     "    const ok = await req({method:'POST',path:'/api/defaults',headers:{'Content-Type':'application/json'}}, JSON.stringify({baseUrl:'after'}));",
     "    if (ok.code !== 200) fail('valid write should 200, got ' + ok.code);",
     "    if (JSON.parse(fs.readFileSync(dfile,'utf8')).baseUrl !== 'after') fail('write did not land');",
+    // the write-capable page must not be frameable
+    "    if ((home.h['x-frame-options']||'') !== 'DENY') fail('missing X-Frame-Options');",
+    "    if (!/frame-ancestors 'none'/.test(home.h['content-security-policy']||'')) fail('missing CSP frame-ancestors');",
+    // docs are served from a fixed map — a traversal-shaped key is simply unknown
+    "    const doc = await req({method:'GET',path:'/docs/config-reference.html'});",
+    "    if (doc.code !== 200) fail('docs page should 200, got ' + doc.code);",
+    "    const trav = await req({method:'GET',path:'/docs/../../etc/passwd'});",
+    "    if (trav.code !== 404) fail('doc traversal should 404, got ' + trav.code);",
+    // a multi-byte character split across TCP chunks must survive the write
+    "    const payload = JSON.stringify({ baseUrl: 'https://\\u00e9.example/\\u03c0' });",
+    "    const buf = Buffer.from(payload, 'utf8');",
+    "    const cut = buf.indexOf(Buffer.from('\\u00e9','utf8')) + 1;",
+    "    await new Promise(function(done){ const q = http.request({host:'127.0.0.1',port:pt,method:'POST',path:'/api/defaults',headers:{'Content-Type':'application/json','Content-Length':buf.length}}, function(s){ s.resume(); s.on('end', done); });",
+    "      q.write(buf.slice(0,cut)); setTimeout(function(){ q.write(buf.slice(cut)); q.end(); }, 20); });",
+    "    if (fs.readFileSync(dfile,'utf8').indexOf('\\u00e9.example/\\u03c0') === -1) fail('multibyte body corrupted across chunks');",
     "    srv.close(function(){ console.log('ok'); process.exit(0); });",
     "  })();",
     "});"

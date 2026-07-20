@@ -17,8 +17,11 @@
  *
  * SECURITY POSTURE (a local server that can WRITE deserves an explicit one):
  *   • binds 127.0.0.1 only — never reachable from the network;
- *   • every file path is fixed at startup from argv — no path comes from a
- *     request, so there is no directory traversal surface;
+ *   • every file path is fixed at startup from argv, and the one request-addressable
+ *     area (the docs pages) is a FIXED map where the request string is only a lookup
+ *     key — no request input is ever joined into a path, so there is no traversal;
+ *   • the page is served with X-Frame-Options: DENY + a strict CSP (frame-ancestors
+ *     'none'), so a foreign page cannot frame this write-capable UI;
  *   • Host header must be loopback → blocks DNS-rebinding;
  *   • writes require Content-Type: application/json and a same-origin (or absent)
  *     Origin, and no CORS headers are ever sent → a foreign page cannot POST here;
@@ -31,9 +34,23 @@ const http = require('http');
 
 const ROOT = path.resolve(__dirname, '..');
 const DEFAULT_PORT    = 7373;
-const DEFAULT_HISTORY = path.join(ROOT, '.hephaestus/history.jsonl');
+// cwd-relative, matching where `summary.js --history` WRITES it — resolving this
+// against the package root instead would make the panel look in the wrong place
+// (and show "no runs") whenever it is run from a project directory.
+const DEFAULT_HISTORY = path.resolve('.hephaestus/history.jsonl');
 const DEFAULTS_FILE   = path.join(ROOT, 'setup/defaults.json');
-const MAX_BODY        = 512 * 1024; // defaults.json is small; cap the write body
+const MAX_BODY        = 512 * 1024; // defaults.json is small; cap the write body (BYTES)
+const HISTORY_LIMIT   = 200;        // the page shows the tail; don't ship the whole log
+
+// Doc pages the panel may serve, as a FIXED map: the request string is only ever a
+// lookup key, never used to build a filesystem path — so there is still no traversal.
+const DOC_PAGES = {
+    'index.html':            path.join(ROOT, 'docs/index.html'),
+    'config-reference.html': path.join(ROOT, 'docs/config-reference.html'),
+    'features.html':         path.join(ROOT, 'docs/features.html'),
+    'quickstart.html':       path.join(ROOT, 'docs/quickstart.html'),
+    'snapshot-viewer.html':  path.join(ROOT, 'docs/snapshot-viewer.html')
+};
 
 // ── Pure helpers (unit-tested) ────────────────────────────────────────────────
 
@@ -77,8 +94,11 @@ function extractSnapshots(collection) {
 // Only loopback Hosts are served → a rebound DNS name cannot reach the panel.
 function isLoopbackHost(hostHeader, port) {
     if (!hostHeader) return false;
-    const h = String(hostHeader).toLowerCase();
-    const allowed = ['127.0.0.1:' + port, 'localhost:' + port, '[::1]:' + port];
+    const h = String(hostHeader).trim().toLowerCase();
+    const hosts = ['127.0.0.1', 'localhost', '[::1]'];
+    const allowed = hosts.map(function(x) { return x + ':' + port; });
+    // On port 80 a browser omits the port from Host entirely, so accept the bare form too.
+    if (port === 80) hosts.forEach(function(x) { allowed.push(x); });
     return allowed.indexOf(h) !== -1;
 }
 
@@ -133,7 +153,30 @@ function createPanelServer(opts) {
             res.writeHead(200, {
                 'Content-Type': 'text/html; charset=utf-8',
                 'Cache-Control': 'no-store',
-                'X-Content-Type-Options': 'nosniff'
+                'X-Content-Type-Options': 'nosniff',
+                // A write-capable page must not be frameable (clickjacking).
+                'X-Frame-Options': 'DENY',
+                'Content-Security-Policy':
+                    "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; " +
+                    "connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+            });
+            return res.end(html);
+        }
+
+        // Local docs: the request string is only a key into the fixed DOC_PAGES map,
+        // never joined into a path — so this adds no traversal surface.
+        if (req.method === 'GET' && url.indexOf('/docs/') === 0) {
+            const file = DOC_PAGES[url.slice('/docs/'.length)];
+            if (!file) return sendJson(res, 404, { error: 'unknown doc page' });
+            let html;
+            try { html = fs.readFileSync(file, 'utf8'); } catch (e) {
+                return sendJson(res, 404, { error: 'doc page not found on disk' });
+            }
+            res.writeHead(200, {
+                'Content-Type': 'text/html; charset=utf-8',
+                'Cache-Control': 'no-store',
+                'X-Content-Type-Options': 'nosniff',
+                'X-Frame-Options': 'DENY'
             });
             return res.end(html);
         }
@@ -142,7 +185,13 @@ function createPanelServer(opts) {
             let text = '';
             try { text = fs.readFileSync(historyFile, 'utf8'); } catch (e) { text = ''; }
             const runs = parseHistory(text);
-            return sendJson(res, 200, { file: historyFile, runs: runs });
+            // Ship only the tail the page renders — the history file is append-only
+            // and unbounded, and the client shows the most recent runs anyway.
+            return sendJson(res, 200, {
+                file: historyFile,
+                total: runs.length,
+                runs: runs.slice(-HISTORY_LIMIT)
+            });
         }
 
         if (req.method === 'GET' && url === '/api/snapshots') {
@@ -161,15 +210,22 @@ function createPanelServer(opts) {
             if (!isWriteAllowed(req.headers, boundPort)) {
                 return sendJson(res, 403, { error: 'write rejected: needs application/json from this panel' });
             }
-            let body = '';
+            // Collect raw Buffers and decode ONCE: `body += chunk` would decode each
+            // socket read on its own and mangle any multi-byte character that straddles
+            // a chunk boundary (silently writing U+FFFD into the user's config). Sizing
+            // is on bytes for the same reason — a string length would count UTF-16 units.
+            const chunks = [];
+            let size = 0;
             let tooBig = false;
             req.on('data', function(chunk) {
                 if (tooBig) return;
-                body += chunk;
-                if (body.length > MAX_BODY) { tooBig = true; sendJson(res, 413, { error: 'body too large' }); req.destroy(); }
+                size += chunk.length;
+                if (size > MAX_BODY) { tooBig = true; sendJson(res, 413, { error: 'body too large' }); req.destroy(); return; }
+                chunks.push(chunk);
             });
             req.on('end', function() {
                 if (tooBig) return;
+                const body = Buffer.concat(chunks).toString('utf8');
                 let parsed;
                 try { parsed = JSON.parse(body); } catch (e) {
                     return sendJson(res, 400, { error: 'invalid JSON: ' + e.message });
@@ -239,7 +295,7 @@ function renderPage() {
 '<li><a href="/docs/features.html">features</a></li>' +
 '<li><a href="/docs/quickstart.html">quickstart</a></li>' +
 '<li><a href="/docs/snapshot-viewer.html">snapshot viewer</a></li>' +
-'</ul><div class="empty">Links open the files on disk — serve them with your editor/browser if the panel is not hosting them.</div>' +
+'</ul><div class="empty">Served read-only from this repo\'s docs/ folder.</div>' +
 '</div></div>' +
 '<script>' +
 'function esc(s){return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];});}' +
@@ -250,8 +306,10 @@ function renderPage() {
 'fetch("/api/history").then(function(r){return r.json()}).then(function(d){' +
 'var el=document.getElementById("hist");' +
 'if(!d.runs||!d.runs.length){el.innerHTML=\'<div class="empty">No runs yet. Produce some with: <code>hephaestus summary results.json --history</code></div>\';return;}' +
-'var rows=d.runs.slice(-50).reverse().map(function(r){return "<tr><td>"+esc(r.ts||"")+"</td><td>"+esc(r.passRate)+"%</td><td>"+esc(r.p95)+" ms</td><td>"+esc(r.total)+"</td><td>"+esc(r.failed)+"</td><td>"+esc(r.requests)+"</td></tr>";}).join("");' +
-'el.innerHTML="<table><tr><th>When</th><th>Pass</th><th>p95</th><th>Asserts</th><th>Failed</th><th>Requests</th></tr>"+rows+"</table>";});' +
+'var shown=d.runs.slice(-50);' +
+'var rows=shown.reverse().map(function(r){return "<tr><td>"+esc(r.ts||"")+"</td><td>"+esc(r.passRate)+"%</td><td>"+esc(r.p95)+" ms</td><td>"+esc(r.total)+"</td><td>"+esc(r.failed)+"</td><td>"+esc(r.requests)+"</td></tr>";}).join("");' +
+'var note=(d.total&&d.total>shown.length)?(\'<div class="empty">showing \'+shown.length+\' of \'+esc(d.total)+\' runs — \'+esc(d.file)+\'</div>\'):"";' +
+'el.innerHTML="<table><tr><th>When</th><th>Pass</th><th>p95</th><th>Asserts</th><th>Failed</th><th>Requests</th></tr>"+rows+"</table>"+note;});' +
 'fetch("/api/snapshots").then(function(r){return r.json()}).then(function(d){' +
 'var el=document.getElementById("snaps");var keys=Object.keys(d.snapshots||{});' +
 'if(!d.collection){el.innerHTML=\'<div class="empty">Start the panel with <code>-c &lt;collection.json&gt;</code> to browse snapshots.</div>\';return;}' +
