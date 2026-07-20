@@ -70,6 +70,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;backdrop-filter:blur(12px);b
 .v3-7{background:rgba(63,185,80,.1);color:var(--green);border:1px solid rgba(63,185,80,.2)}
 .v3-8{background:rgba(247,127,0,.1);color:var(--accent);border:1px solid rgba(247,127,0,.2)}
 .v3-9{background:rgba(247,120,186,.1);color:#f778ba;border:1px solid rgba(247,120,186,.2)}
+.v4-0{background:rgba(226,88,34,.12);color:#e25822;border:1px solid rgba(226,88,34,.3)}
 
 .mini-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px}
 .mini-card h4{font-size:.85rem;font-weight:700;margin-bottom:6px}
@@ -98,7 +99,7 @@ footer{text-align:center;padding:32px;font-size:.75rem;color:var(--muted);border
 
 <div class="hero-sm">
   <h1>All Features</h1>
-  <p>Complete reference for every module, assertion operator, and tool in Hephaestus v3.9.</p>
+  <p>Complete reference for every module, assertion operator, and tool in Hephaestus v4.0.</p>
 </div>
 
 <div class="page-inner">
@@ -742,6 +743,64 @@ footer{text-align:center;padding:32px;font-size:.75rem;color:var(--muted);border
 <span class="c-cmt"># → each request with a snapshot baseline
 #   gains a matching Example Response,
 #   visible in the Postman app.</span></pre>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- NEW IN 4.0 -->
+<div class="section" id="v4">
+<div class="section-header">
+  <div class="section-icon">⚒️</div>
+  <h2>New in 4.0<span class="version-badge v4-0">v4.0</span></h2>
+  <span class="section-tag">engine + CLI</span>
+</div>
+<div class="two-col">
+  <div>
+    <div class="desc-box" style="margin-bottom:16px">
+      <h3>Engine — all opt-in, all off by default</h3>
+      <ul>
+        <li><code>graphql</code> — GraphQL answers <strong>200 even with an <code>errors[]</code> array</strong>; assert <code>noErrors</code>, <code>errorCount</code>/<code>errorContains</code> for negative tests, and <code>dataShape</code> under <code>data.*</code>.</li>
+        <li><code>snapshot.mode: "structural"</code> — compares the response <em>shape</em> (leaf path → type) and ignores values, so volatile timestamps and ids stop causing false diffs while a field added, removed or retyped still fails.</li>
+        <li><code>retryOnStatus.respectRetryAfter</code> — honours the server's <code>Retry-After</code>, waiting up to <code>retryAfterCapMs</code> and refusing to hammer past it.</li>
+        <li><code>maxBytes</code> — a response-size budget; the <code>maxResponseTime</code> for payload size.</li>
+        <li><strong>securityAudit v2</strong> — <code>cookieFlags</code>, <code>checkJwt</code> (rejects <code>alg:none</code> and expired tokens) and <code>requireNoStore</code>.</li>
+        <li><strong>Override typo-guard</strong> — an unknown key warns with a "did you mean"; <code>strictMode: true</code> fails the run so CI blocks on a typo.</li>
+      </ul>
+    </div>
+    <div class="desc-box">
+      <h3>Any locale is now selectable</h3>
+      <p>Locale selection was hardcoded to <code>ru</code>/<code>en</code>, so a fully translated third language could never be used. Any locale the catalog carries is now selectable, and <code>npm run check:locales</code> validates a contribution — completeness, parameter parity, argument types, status coverage.</p>
+    </div>
+  </div>
+  <div>
+    <div class="desc-box" style="margin-bottom:16px">
+      <h3>CLI — gates and local tooling</h3>
+      <ul>
+        <li><code>doctor</code> — pre-flight: engine integrity, version drift, config sanity.</li>
+        <li><code>coverage --spec</code> — % of an OpenAPI spec your collection covers, with a <code>--min</code> gate.</li>
+        <li><code>flaky</code> — assertions that flap across repeated runs (<code>--fail-on-flaky</code>).</li>
+        <li><code>trends</code> + <code>summary --history</code> — pass-rate and p95 sparklines from a local run log.</li>
+        <li><code>bench</code> — what the engine actually costs per request (~1.6 ms), with a <code>--max-ms</code> budget.</li>
+        <li><code>mock</code> — replay saved snapshots as a local API.</li>
+        <li><code>generate</code> — interactive wizard that prints a ready-to-paste <code>override</code>.</li>
+        <li><code>panel</code> — local dev panel: run history, snapshots, defaults editor, docs.</li>
+      </ul>
+      <p style="margin-top:10px">Every gate exits <strong>1</strong> when it trips — see the <a href="newman-ci.md">CI guide</a>.</p>
+    </div>
+    <div class="code-window">
+      <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">override</span></div>
+      <div class="code-body"><pre><span class="c-cmt">// a few of the new fields</span>
+<span class="c-kw">const</span> override = {
+    <span class="c-key">graphql</span>: { <span class="c-key">noErrors</span>: <span class="c-kw">true</span> },
+    <span class="c-key">snapshot</span>: { <span class="c-key">enabled</span>: <span class="c-kw">true</span>, <span class="c-key">mode</span>: <span class="c-str">"structural"</span> },
+    <span class="c-key">retryOnStatus</span>: {
+        <span class="c-key">statuses</span>: [<span class="c-num">503</span>, <span class="c-num">429</span>],
+        <span class="c-key">respectRetryAfter</span>: <span class="c-kw">true</span>
+    },
+    <span class="c-key">maxBytes</span>: <span class="c-num">1048576</span>,
+    <span class="c-key">strictMode</span>: <span class="c-kw">true</span>
+};</pre></div>
     </div>
   </div>
 </div>
