@@ -131,7 +131,10 @@ const collectionFixtureFile = path.join(TMP, 'collection.json');
 fs.writeFileSync(newmanFixtureFile, JSON.stringify(NEWMAN_FIXTURE));
 fs.writeFileSync(collectionFixtureFile, JSON.stringify(COLLECTION_FIXTURE));
 
-const NODE = process.execPath;
+// Quoted for safe interpolation into run()'s shell command strings — a Node install
+// path may contain spaces (e.g. C:\Program Files\nodejs\node.exe on Windows). Plain
+// double-quotes (not JSON.stringify, which would escape backslashes and break cmd.exe).
+const NODE = '"' + process.execPath + '"';
 
 console.log('\n🔬 Hephaestus Tool Suite Tests\n');
 
@@ -443,7 +446,8 @@ console.log('\n⑨ᵇ engine shared/mask.js');
 
 const maskProbe = path.join(TMP, 'mask-probe.mjs');
 fs.writeFileSync(maskProbe, [
-    "import { isSensitive } from " + JSON.stringify(path.join(ROOT, 'engine/src/shared/mask.js')) + ";",
+    // A bare absolute path is not a valid ESM specifier on Windows (needs a file:// URL).
+    "import { isSensitive } from " + JSON.stringify(require('url').pathToFileURL(path.join(ROOT, 'engine/src/shared/mask.js')).href) + ";",
     "const S = ['token','password','pass','secret','key','authorization','session'];",
     // MUST mask — real secret field names, incl. concatenated-lowercase (regression guard)
     "const must = ['password','passwd','passphrase','passcode','passkey','apikey','apiKey','api_key','x-api-key','privatekey','publickey','sshkey','masterkey','dbpass','userpass','sessionToken','authorization','secretValue','user_pass'];",
@@ -1087,7 +1091,7 @@ test('mock serves a matching request over HTTP and 404s an unknown path', functi
         'go("/thing",40,hit=>go("/missing",5,miss=>process.stdout.write(hit+"~~"+miss)));'
     ].join('\n'));
 
-    const srv = spawn(NODE, [MOCK, mockCollectionFile, '-p', String(PORT), '--quiet', '--no-color'], { stdio: 'ignore' });
+    const srv = spawn(process.execPath, [MOCK, mockCollectionFile, '-p', String(PORT), '--quiet', '--no-color'], { stdio: 'ignore' });
     try {
         const out = run(NODE + ' "' + clientFile + '" ' + PORT);
         const parts = out.split('~~');

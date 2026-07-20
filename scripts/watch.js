@@ -20,7 +20,11 @@
 
 const fs           = require('fs');
 const path         = require('path');
+const os           = require('os');
 const { spawn }    = require('child_process');
+
+// Newman writes its JSON report here; os.tmpdir() so it works on Windows (no /tmp).
+const RESULTS = path.join(os.tmpdir(), 'hephaestus-watch-results.json');
 
 // ─── CLI ──────────────────────────────────────────────────────────────────────
 
@@ -81,15 +85,18 @@ function runNewman() {
     const ts = timestamp();
     header('[' + ts + '] Run #' + runCount + ' — ' + path.basename(collection));
 
+    // shell:true so `newman` resolves to newman.cmd on Windows; path args are quoted
+    // so spaces (e.g. C:\Users\First Last\…) survive the shell.
+    const q    = function(s) { return '"' + s + '"'; };
     const cmd  = 'newman';
-    const args = ['run', path.resolve(collection)];
-    envFiles.forEach(function(e) { args.push('-e', path.resolve(e)); });
-    args.push('--reporter-json-export', '/tmp/hephaestus-watch-results.json');
+    const args = ['run', q(path.resolve(collection))];
+    envFiles.forEach(function(e) { args.push('-e', q(path.resolve(e))); });
+    args.push('--reporter-json-export', q(RESULTS));
     args.push('-r', 'json');
     if (extraArgs) args.push(...extraArgs.split(' ').filter(Boolean));
 
     const startTime = Date.now();
-    currentRun = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    currentRun = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'], shell: true });
 
     let stdout = '';
     let stderr = '';
@@ -104,7 +111,7 @@ function runNewman() {
         // Parse Newman JSON results
         let stats = null;
         try {
-            const res  = JSON.parse(fs.readFileSync('/tmp/hephaestus-watch-results.json', 'utf8'));
+            const res  = JSON.parse(fs.readFileSync(RESULTS, 'utf8'));
             const s    = res.run && res.run.stats || {};
             stats = {
                 requests: s.requests ? s.requests.total : 0,
@@ -137,10 +144,10 @@ function runNewman() {
         // Show full summary from summary.js if available
         try {
             const summaryScript = path.join(__dirname, 'summary.js');
-            if (fs.existsSync(summaryScript) && fs.existsSync('/tmp/hephaestus-watch-results.json')) {
+            if (fs.existsSync(summaryScript) && fs.existsSync(RESULTS)) {
                 const { execSync } = require('child_process');
                 const out = execSync(
-                    process.execPath + ' "' + summaryScript + '" /tmp/hephaestus-watch-results.json --no-color',
+                    '"' + process.execPath + '" "' + summaryScript + '" "' + RESULTS + '" --no-color',
                     { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }
                 );
                 console.log(out.split('\n').map(function(l) { return '  ' + l; }).join('\n'));
