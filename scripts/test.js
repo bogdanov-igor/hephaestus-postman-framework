@@ -1311,6 +1311,59 @@ test('bench --max-ms fails loud on a non-numeric budget (never silently disables
     });
 });
 
+// ─── 20. generate-test.js (override wizard) ───────────────────────────────────
+
+console.log('\n⑳ generate-test.js');
+
+const generate = require(path.join(ROOT, 'scripts/generate-test.js'));
+const GEN = path.join(ROOT, 'scripts/generate-test.js');
+
+test('generate buildOverride: post plane emits only chosen, non-default fields', function() {
+    const o = generate.buildOverride({
+        plane: 'post', locale: 'en', expectedStatus: 200,
+        keysToFind: [{ path: 'data.id', expect: '' }, { path: 'data.status', expect: 'active' }],
+        assertShape: { 'data.items': 'array' },
+        snapshot: { enabled: true, mode: 'structural' }
+    });
+    assert(o.locale === 'en' && o.expectedStatus === 200, 'locale + status');
+    assert(o.keysToFind.length === 2 && o.keysToFind[0].expect === undefined && o.keysToFind[1].expect === 'active', 'keysToFind expect optional');
+    assert(o.assertShape['data.items'] === 'array', 'assertShape');
+    assert(o.snapshot.enabled === true && o.snapshot.mode === 'structural' && o.snapshot.autoSaveMissing === true, 'snapshot');
+    // empty answers → empty override (no junk keys)
+    assert(JSON.stringify(generate.buildOverride({ plane: 'post' })) === '{}', 'empty post → {}');
+});
+
+test('generate buildOverride: pre plane emits auth only', function() {
+    const o = generate.buildOverride({ plane: 'pre', auth: { type: 'bearer', token: '{{prod.token}}' } });
+    assert(o.auth && o.auth.enabled === true && o.auth.type === 'bearer' && o.auth.token === '{{prod.token}}', 'bearer auth');
+    assert(o.expectedStatus === undefined && o.keysToFind === undefined, 'no post-only fields on pre plane');
+    assert(JSON.stringify(generate.buildOverride({ plane: 'pre', auth: { type: 'none' } })) === '{}', 'auth none → {}');
+    // basic-auth must emit the engine's field names (user/pass), not username/password
+    const b = generate.buildOverride({ plane: 'pre', auth: { type: 'basic', user: 'alice', pass: 's3cret' } });
+    assert(b.auth.user === 'alice' && b.auth.pass === 's3cret', 'basic uses user/pass (engine field names)');
+    assert(b.auth.username === undefined && b.auth.password === undefined, 'no username/password keys the engine ignores');
+});
+
+test('generate buildOverride: NaN expectedStatus is omitted (not emitted as null)', function() {
+    // typeof NaN === 'number' would slip through a loose guard and render as null.
+    assert(generate.buildOverride({ plane: 'post', expectedStatus: NaN }).expectedStatus === undefined, 'NaN omitted');
+    assert(generate.buildOverride({ plane: 'post', expectedStatus: 200 }).expectedStatus === 200, 'real status kept');
+});
+
+test('generate renderScript: correct eval line per plane', function() {
+    assertContains(generate.renderScript({ locale: 'en' }, 'post'), 'eval(pm.collectionVariables.get("hephaestus.v3.post"))', 'post eval line');
+    assertContains(generate.renderScript({ locale: 'en' }, 'pre'), 'eval(pm.collectionVariables.get("hephaestus.v3.pre"))', 'pre eval line');
+    assertContains(generate.renderScript({ expectedStatus: 200 }, 'post'), 'const override = {', 'override literal');
+});
+
+test('generate wizard runs end-to-end over piped answers and prints a block', function() {
+    // input buffered by the line-queue driver → reliable under a pipe. post, ru, 200, no extras.
+    const out = run(NODE + ' "' + GEN + '"', { input: '1\n1\n200\nn\nn\nn\n' });
+    assertContains(out, 'const override = {', 'prints the override block');
+    assertContains(out, 'hephaestus.v3.post', 'post plane eval line');
+    assertContains(out, '"expectedStatus": 200', 'carried the status answer');
+});
+
 // ─── Cleanup ─────────────────────────────────────────────────────────────────
 
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch(e) { /* ignore */ }
