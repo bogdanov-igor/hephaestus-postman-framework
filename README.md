@@ -221,7 +221,7 @@ npm run <command> -- [args]
 | `migrate <collection.json>` | Classify a collection's migration state |
 | `docs <collection.json>` | API docs from a collection's test scripts |
 | `sync-examples <collection.json>` | Snapshots → Postman Example Responses |
-| `openapi <spec>` | OpenAPI / Swagger → Hephaestus collection |
+| `openapi <spec>` | OpenAPI / Swagger → Hephaestus collection (`--negative` adds error-path tests) |
 | `init` | Interactive config / environment wizard |
 | `generate` | Interactive wizard → a ready-to-paste `override` block |
 | `panel [-c <collection.json>]` | Local dev panel: run history, snapshots, defaults editor |
