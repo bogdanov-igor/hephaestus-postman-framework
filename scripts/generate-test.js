@@ -33,15 +33,16 @@ function buildOverride(a) {
             o.auth = { enabled: true, type: type };
             if (type === 'bearer' && a.auth.token) o.auth.token = a.auth.token;
             if (type === 'basic') {
-                if (a.auth.username) o.auth.username = a.auth.username;
-                if (a.auth.password) o.auth.password = a.auth.password;
+                // Engine reads auth.user / auth.pass (pass is also the log-mask target).
+                if (a.auth.user) o.auth.user = a.auth.user;
+                if (a.auth.pass) o.auth.pass = a.auth.pass;
             }
         }
         return o;
     }
 
     // post-request plane
-    if (typeof a.expectedStatus === 'number') o.expectedStatus = a.expectedStatus;
+    if (Number.isFinite(a.expectedStatus)) o.expectedStatus = a.expectedStatus;
 
     const keys = (a.keysToFind || []).filter(function(k) { return k && k.path; });
     if (keys.length) {
@@ -131,17 +132,22 @@ async function main() {
     answers.locale = loc.indexOf('en') === 0 ? 'en' : (loc.indexOf('ru') === 0 ? 'ru' : null);
 
     if (answers.plane === 'pre') {
-        const authType = await p.choose('Auth?', ['none', 'bearer', 'basic', 'headers', 'variables'], 0);
+        // none / bearer / basic — the auth types the wizard fully scaffolds. headers /
+        // variables need a key/value map (auth.fields); configure those by hand for now.
+        const authType = await p.choose('Auth?', ['none', 'bearer', 'basic'], 0);
         answers.auth.type = authType;
         if (authType === 'bearer') answers.auth.token = await p.ask('Bearer token (e.g. {{prod.token}})', '{{token}}');
         if (authType === 'basic') {
-            answers.auth.username = await p.ask('Username', '{{user}}');
-            answers.auth.password = await p.ask('Password', '{{pass}}');
+            answers.auth.user = await p.ask('Username', '{{user}}');
+            answers.auth.pass = await p.ask('Password', '{{pass}}');
         }
     } else {
-        const statusStr = await p.ask('Expected HTTP status (blank to skip)', '200');
-        const statusNum = parseInt(statusStr, 10);
-        if (!isNaN(statusNum)) answers.expectedStatus = statusNum;
+        // No default → a blank line truly skips (keeps the engine's own default set).
+        // Only a plausible 3-digit HTTP code is accepted; anything else is ignored.
+        const statusStr = (await p.ask('Expected HTTP status, e.g. 200 (blank to skip)')).trim();
+        if (/^\d{3}$/.test(statusStr) && +statusStr >= 100 && +statusStr <= 599) {
+            answers.expectedStatus = +statusStr;
+        }
 
         if (await p.yesNo('Extract / assert response fields (keysToFind)?', true)) {
             let more = true;
@@ -167,7 +173,7 @@ async function main() {
 
         if (await p.yesNo('Enable snapshot regression?', false)) {
             answers.snapshot.enabled = true;
-            answers.snapshot.mode = await p.choose('  Snapshot mode', ['non-strict', 'strict', 'structural'], 0);
+            answers.snapshot.mode = await p.choose('  Snapshot mode', ['non-strict', 'strict'], 0);
         }
     }
 

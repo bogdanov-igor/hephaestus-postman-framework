@@ -1298,6 +1298,16 @@ test('generate buildOverride: pre plane emits auth only', function() {
     assert(o.auth && o.auth.enabled === true && o.auth.type === 'bearer' && o.auth.token === '{{prod.token}}', 'bearer auth');
     assert(o.expectedStatus === undefined && o.keysToFind === undefined, 'no post-only fields on pre plane');
     assert(JSON.stringify(generate.buildOverride({ plane: 'pre', auth: { type: 'none' } })) === '{}', 'auth none → {}');
+    // basic-auth must emit the engine's field names (user/pass), not username/password
+    const b = generate.buildOverride({ plane: 'pre', auth: { type: 'basic', user: 'alice', pass: 's3cret' } });
+    assert(b.auth.user === 'alice' && b.auth.pass === 's3cret', 'basic uses user/pass (engine field names)');
+    assert(b.auth.username === undefined && b.auth.password === undefined, 'no username/password keys the engine ignores');
+});
+
+test('generate buildOverride: NaN expectedStatus is omitted (not emitted as null)', function() {
+    // typeof NaN === 'number' would slip through a loose guard and render as null.
+    assert(generate.buildOverride({ plane: 'post', expectedStatus: NaN }).expectedStatus === undefined, 'NaN omitted');
+    assert(generate.buildOverride({ plane: 'post', expectedStatus: 200 }).expectedStatus === 200, 'real status kept');
 });
 
 test('generate renderScript: correct eval line per plane', function() {
