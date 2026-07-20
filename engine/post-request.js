@@ -1084,12 +1084,20 @@
 
   // engine/src/shared/structure.js
   function structurePaths(obj) {
-    const out = {};
+    const out = /* @__PURE__ */ Object.create(null);
+    function add(key, type) {
+      if (out[key] === void 0) {
+        out[key] = type;
+        return;
+      }
+      if (("|" + out[key] + "|").indexOf("|" + type + "|") === -1) {
+        out[key] = out[key].split("|").concat(type).sort().join("|");
+      }
+    }
     function walk(v2, path2) {
-      const key = path2 || "(root)";
       if (Array.isArray(v2)) {
         if (v2.length === 0) {
-          out[key + "[*]"] = "empty-array";
+          add(path2 + "[*]", "empty-array");
           return;
         }
         for (let i = 0; i < v2.length; i++) walk(v2[i], path2 + "[*]");
@@ -1098,7 +1106,7 @@
       if (v2 !== null && typeof v2 === "object") {
         const keys = Object.keys(v2);
         if (keys.length === 0) {
-          out[key] = "empty-object";
+          add(path2 || "(root)", "empty-object");
           return;
         }
         keys.forEach(function(k) {
@@ -1106,14 +1114,14 @@
         });
         return;
       }
-      out[key] = v2 === null ? "null" : typeof v2;
+      add(path2 || "(root)", v2 === null ? "null" : typeof v2);
     }
     walk(obj, "");
     return out;
   }
   function structuralDiff(stored, current) {
     const a = structurePaths(stored);
-    const b = structuralPathsSafe(current);
+    const b = current === void 0 ? /* @__PURE__ */ Object.create(null) : structurePaths(current);
     const diff = [];
     Object.keys(a).forEach(function(p2) {
       if (!(p2 in b)) diff.push("- " + p2 + " (" + a[p2] + ")");
@@ -1123,9 +1131,6 @@
       if (!(p2 in a)) diff.push("+ " + p2 + " (" + b[p2] + ")");
     });
     return diff.sort();
-  }
-  function structuralPathsSafe(v2) {
-    return v2 === void 0 ? {} : structurePaths(v2);
   }
   var init_structure = __esm({
     "engine/src/shared/structure.js"() {

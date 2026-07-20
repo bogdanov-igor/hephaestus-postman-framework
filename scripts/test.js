@@ -527,6 +527,15 @@ fs.writeFileSync(structProbe, [
     "eq(d({a:[]}, {a:[1]}), ['~ a[*]: empty-array → number'], 'empty array filled → type change at a[*]');",
     // Identical → empty
     "eq(d({x:1,y:'s',z:true}, {x:2,y:'t',z:false}), [], 'identical shape');",
+    // prototype-name safety: fields named after Object.prototype members are real leaves
+    "eq(d({id:1}, {id:1, toString:2}), ['+ toString (number)'], 'added field named toString detected');",
+    "eq(d({id:1, valueOf:2}, {id:1}), ['- valueOf (number)'], 'removed field named valueOf detected');",
+    "eq(d(JSON.parse('{\"__proto__\":1,\"id\":2}'), JSON.parse('{\"__proto__\":\"s\",\"id\":2}')), ['~ __proto__: number → string'], '__proto__ leaf tracked');",
+    // heterogeneous arrays: union of distinct types, order-independent
+    "eq(d({arr:[1]}, {arr:[1,'x']}), ['~ arr[*]: number → number|string'], 'mixed array types unioned');",
+    "eq(d({arr:['x',1]}, {arr:[1,'x']}), [], 'mixed array order-independent');",
+    // root-level array label is consistent between empty and non-empty
+    "eq(d([], [1]), ['~ [*]: empty-array → number'], 'root empty→filled array uses [*]');",
     "console.log('ok');"
 ].join('\n'));
 
