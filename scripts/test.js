@@ -1218,6 +1218,17 @@ test('bench --json produces a valid overhead report and exits 0', function() {
     assert(r.medianRunMs && r.medianRunMs.engine > 0 && r.medianRunMs.baseline > 0, 'reports run medians');
 });
 
+test('bench --max-ms fails loud on a non-numeric budget (never silently disables the gate)', function() {
+    // A malformed budget (e.g. an unset CI var) must exit 1, not pass green — the
+    // fail-open direction would hide a real regression. Exits before running Newman.
+    ['--max-ms abc', '--max-ms'].forEach(function(variant) {
+        let code = 0;
+        try { run(NODE + ' "' + BENCH + '" ' + variant); }
+        catch(e) { code = e.status || 1; }
+        assert(code === 1, '`bench ' + variant + '` must exit 1, got ' + code);
+    });
+});
+
 // ─── Cleanup ─────────────────────────────────────────────────────────────────
 
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch(e) { /* ignore */ }

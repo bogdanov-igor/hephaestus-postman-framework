@@ -94,12 +94,13 @@ function engineScripts() {
 }
 
 function baselineScripts() {
-    // Same HTTP request; a no-op test so Newman still records an execution but
-    // no engine runs. This is the cost we subtract out.
+    // A no-op prerequest AND test, so the baseline runs the same NUMBER of sandbox
+    // events as the engine side (which drives both planes). The fixed per-event
+    // Newman/sandbox cost then cancels in the delta, leaving only the engine's own
+    // eval + pipeline work — not the cost of booting one extra sandbox event.
     return [
-        { listen: 'test', script: { type: 'text/javascript', exec: [
-            '/* baseline: no engine */'
-        ] } }
+        { listen: 'prerequest', script: { type: 'text/javascript', exec: ['/* baseline: no engine */'] } },
+        { listen: 'test',       script: { type: 'text/javascript', exec: ['/* baseline: no engine */'] } }
     ];
 }
 
@@ -156,6 +157,16 @@ function median(xs) {
 
 async function main() {
     const args = parseArgs(process.argv.slice(2));
+
+    // Fail LOUD on a malformed budget. A CI gate that silently disables itself
+    // (e.g. `--max-ms $BUDGET` with BUDGET unset → NaN) is the dangerous direction:
+    // it would pass a real regression green. Guard it like --requests / --runs.
+    if (args.maxMs != null && !(args.maxMs >= 0)) {
+        process.stderr.write('bench: --max-ms needs a non-negative numeric budget (ms)\n');
+        process.exitCode = 1;
+        return;
+    }
+
     const preSrc  = fs.readFileSync(path.join(ROOT, 'engine/pre-request.js'), 'utf8');
     const postSrc = fs.readFileSync(path.join(ROOT, 'engine/post-request.js'), 'utf8');
     const sizePre  = Buffer.byteLength(preSrc, 'utf8');
