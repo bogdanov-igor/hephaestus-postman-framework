@@ -1522,6 +1522,95 @@ test('the gallery README lists exactly the config keys its plugins read', functi
       });
 });
 
+
+
+// ─── init --demo ──────────────────────────────────────────────────────────────
+
+test('init --demo scaffolds a demo that mock can actually serve', function() {
+    const demoDir = path.join(TMP, 'demo-scaffold');
+    run(NODE + ' "' + path.join(ROOT, 'scripts/init.js') + '" --demo "' + demoDir + '"');
+
+    const colFile = path.join(demoDir, 'demo-collection.json');
+    assert(fs.existsSync(colFile), 'demo-collection.json not written');
+    assert(fs.existsSync(path.join(demoDir, 'demo-environment.json')), 'demo-environment.json not written');
+    assert(fs.existsSync(path.join(demoDir, 'README.md')), 'README.md not written');
+
+    const col = JSON.parse(fs.readFileSync(colFile, 'utf8'));
+    assert(col.item.length === 5, 'expected 5 demo requests, got ' + col.item.length);
+
+    // The demo only works offline if every request has a snapshot that mock
+    // resolves to a route — no orphans, no collisions.
+    const b = mock.buildRoutes(col);
+    assert(Object.keys(b.routes).length === 5, 'expected 5 mock routes, got ' + Object.keys(b.routes).length);
+    assert(b.orphans.length === 0,    'snapshots with no matching request: ' + b.orphans.join(', '));
+    assert(b.collisions.length === 0, 'colliding routes: ' + JSON.stringify(b.collisions));
+
+    // Static paths only: a {{var}} segment would register the route with the
+    // braces in it and 404 at run time.
+    Object.keys(b.routes).forEach(function(r) {
+        assert(r.indexOf('{{') === -1 && r.indexOf('/:') === -1, 'dynamic segment in demo route: ' + r);
+    });
+
+    // The engine must still be wired in, or the demo demonstrates nothing.
+    const names = (col.variable || []).map(function(v) { return v.key; });
+    assert(names.indexOf('hephaestus.v3.post') !== -1, 'engine missing from the demo collection');
+});
+
+test('every override key the demo uses is a key the engine knows', function() {
+    // The demo shipped a `metrics: { maxResponseTime: 2000 }` block that the engine
+    // silently ignored — there is no `metrics` key, it is top-level. A demo that
+    // demonstrates a no-op is worse than one that omits the feature, and nothing
+    // caught it: unknown keys only fail under strictMode, which the demo does not
+    // enable. This validates against the engine's own list instead.
+    const src   = fs.readFileSync(path.join(ROOT, 'engine/src/shared/config-merge.js'), 'utf8');
+    const block = src.match(/export const KNOWN_KEYS = \[([\s\S]*?)\];/);
+    assert(block, 'KNOWN_KEYS not found in config-merge.js — did it stop being exported?');
+    const known = block[1].match(/'[^']+'/g).map(function(q) { return q.slice(1, -1); });
+
+    const demo = require(path.join(ROOT, 'scripts/lib/demo.js'));
+    demo.ITEMS.forEach(function(item) {
+        const body = item.post.join('\n');
+        // Top-level keys only: `    key:` at exactly four spaces of indentation.
+        const keys = (body.match(/^ {4}(\w+):/gm) || []).map(function(m) { return m.trim().replace(':', ''); });
+        assert(keys.length > 0, 'no override keys parsed out of "' + item.name + '"');
+        keys.forEach(function(k) {
+            assert(known.indexOf(k) !== -1,
+                '"' + item.name + '" uses override key "' + k + '", which the engine does not know');
+        });
+    });
+
+    // The generated README's feature table must not name a key the engine does not
+    // know either: the table still said `metrics` after the override was fixed to
+    // `maxResponseTime`, teaching users a key that is silently ignored. Every
+    // backtick-quoted identifier in the "What each request shows" table must be a
+    // real KNOWN_KEY.
+    const readme = demo.readme('demo-collection.json', 'demo-environment.json');
+    const tableRows = readme.split('\n').filter(function(l) { return /^\| \d /.test(l); });
+    tableRows.forEach(function(row) {
+        (row.match(/`([A-Za-z][A-Za-z0-9]*)`/g) || []).forEach(function(tok) {
+            const key = tok.replace(/`/g, '');
+            assert(known.indexOf(key) !== -1,
+                'demo README feature table names `' + key + '`, which is not a known override key');
+        });
+    });
+});
+
+test('init --demo refuses to overwrite an existing demo without --force', function() {
+    const demoDir = path.join(TMP, 'demo-twice');
+    run(NODE + ' "' + path.join(ROOT, 'scripts/init.js') + '" --demo "' + demoDir + '"');
+    const colFile = path.join(demoDir, 'demo-collection.json');
+    fs.writeFileSync(colFile, '{"edited":true}', 'utf8');
+
+    let code = 0;
+    try { run(NODE + ' "' + path.join(ROOT, 'scripts/init.js') + '" --demo "' + demoDir + '"'); }
+    catch (e) { code = e.status || 1; }
+    assert(code === 1, 'second --demo must exit 1, got ' + code);
+    assert(fs.readFileSync(colFile, 'utf8') === '{"edited":true}', 'the existing demo was overwritten');
+
+    run(NODE + ' "' + path.join(ROOT, 'scripts/init.js') + '" --demo "' + demoDir + '" --force');
+    assert(fs.readFileSync(colFile, 'utf8') !== '{"edited":true}', '--force did not overwrite');
+});
+
 const MOCK = path.join(ROOT, 'scripts/mock.js');
 
 const MOCK_COLLECTION = {

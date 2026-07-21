@@ -14,7 +14,9 @@ import { t } from './i18n.js';
 // config. Custom/third-party plugins allowlist their OWN keys at runtime via the
 // `extraKeys` config array, so this list need not know about them. Keep it in step
 // with the override config schema when adding a first-party key.
-const KNOWN_KEYS = [
+// Exported so tooling (and the test suite) can validate generated overrides
+// against the same list the engine enforces. esbuild tree-shakes it out.
+export const KNOWN_KEYS = [
     '$schema', '_comment', 'strictMode', 'extraKeys',
     'baseUrl', 'defaultProtocol', 'auth', 'dateFormat', 'dates',
     'maxResponseTime', 'maxBytes', 'expectedStatus', 'expectEmpty', 'contentType',

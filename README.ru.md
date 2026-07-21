@@ -50,6 +50,23 @@ Hephaestus — это модульный фреймворк API-тестиров
 
 ## Быстрый старт
 
+**Сначала посмотреть, как это работает — 60 секунд, без аккаунта и без сети:**
+
+```bash
+npx hephaestus init --demo
+hephaestus mock hephaestus-demo/demo-collection.json -p 4010   # терминал 1
+newman run hephaestus-demo/demo-collection.json \
+  -e hephaestus-demo/demo-environment.json                     # терминал 2
+```
+
+Пять запросов, 35 проверок, всё зелёное — ответы отдаются из снапшотов, лежащих
+в самой коллекции. Каждый запрос показывает одну возможность (`expectedStatus`,
+`assertShape` + `assertEach` + `assertOrder`, `assertions` + `varsToSave`,
+`snapshot` и 404, который *должен* быть 404). Откройте любой в Postman: весь
+тест — это блок `override` наверху вкладки Tests.
+
+Дальше — настройка под свой API.
+
 В одном репозитории поставляются две среды выполнения: **движок**, работающий
 внутри Postman, и **Node CLI без зависимостей** для Newman и CI. Начните с
 движка.
