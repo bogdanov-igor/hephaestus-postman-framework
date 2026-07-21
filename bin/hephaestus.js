@@ -40,7 +40,7 @@ const COMMANDS = {
     doctor:  { script: 'doctor.js',          usage: 'doctor [-e <env.json>] [--json]',                   about: 'Pre-flight health check: engine integrity, versions, drift' },
     bench:   { script: 'bench.js',           usage: 'bench [--requests N] [--runs K] [--json] [--max-ms M]', about: 'Measure engine overhead per request (A/B vs a no-op)' },
     generate:{ script: 'generate-test.js',   usage: 'generate',                                          about: 'Interactive wizard → a ready-to-paste override block' },
-    panel:   { script: 'panel.js',           usage: 'panel [-c <collection.json>] [--port N]',           about: 'Local dev panel: run history, snapshots, defaults editor' }
+    panel:   { script: 'panel.js',           usage: 'panel [-c <collection.json>] [--port N]',           about: 'Local dev panel: trends, snapshot diff, validated defaults editor, override builder' }
 };
 
 const pkgVersion = require(path.join(ROOT, 'package.json')).version;
