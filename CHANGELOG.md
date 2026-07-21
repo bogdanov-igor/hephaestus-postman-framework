@@ -6,7 +6,7 @@
 
 ---
 
-## [4.0.0] — 2026-07-20
+## [4.0.0] — 2026-07-21
 
 A major release: the engine gained five new capabilities, the CLI grew from a
 reporting helper into a set of CI gates plus local tooling, and the project now
@@ -24,7 +24,10 @@ previously hardcoded English even in `ru`.
   historical strings byte-for-byte. Covers both the pre-request and post-request
   planes across all modules.
 - **English test-engine fixtures** — the golden baseline now locks both `ru` and
-  `en` output (192 assertions / 16 requests).
+  `en` output, including the failure messages (464 assertions / 48 requests). The
+  earlier pass only exercised the success half of each catalog entry; a broken
+  English *error* string is invisible until something fails, so the negative
+  fixtures lock those too.
 - **Override typo-guard** — an unrecognised top-level `override` key now warns with
   a "did you mean" suggestion (suppressed at `logLevel: "silent"`); set
   `"strictMode": true` to fail the run so CI blocks on a typo (e.g. `snapshsot` was
@@ -58,13 +61,36 @@ previously hardcoded English even in `ru`.
   ready-to-paste `override` block plus the engine `eval(...)` line, so you scaffold a
   request's config without memorising the schema.
 - **`hephaestus panel`** — a local dev panel: a zero-dependency `node:http` server on
-  `127.0.0.1` serving one self-contained page with local run history, saved snapshots,
-  an editable `defaults.json`, and the local docs. Nothing is hosted and nothing leaves
-  the machine. Because it can write, it is locked down deliberately: loopback bind, a
+  `127.0.0.1` serving one self-contained page. It shows run history with pass-rate /
+  p95 **trend sparklines**, a **snapshot diff viewer** (structural / non-strict /
+  strict), an editable `defaults.json` with **live JSON-Schema validation** (Save is
+  blocked while the schema is violated), an **override builder** that produces a
+  paste-able block, and the local docs. Nothing is hosted and nothing leaves the
+  machine. Because it can write, it is locked down deliberately: loopback bind, a
   loopback-only `Host` check (anti DNS-rebinding) against the actually-bound port, no
   request input ever joined into a path (so no directory traversal), `X-Frame-Options`
   + CSP `frame-ancestors 'none'`, and writes that require `Content-Type: application/json`
   with a same-origin `Origin` and no CORS headers — a foreign page cannot POST to it.
+- **`hephaestus init --demo`** — scaffolds a runnable offline demo in one command: a
+  collection that carries its own snapshots, so `hephaestus mock` serves it and Newman
+  runs green with no account, no API key and no network (five requests, one headline
+  feature each).
+- **`hephaestus openapi --negative`** — alongside the happy-path import, generates
+  error-path tests for the cases the spec actually lets you trigger: withheld auth, a
+  substituted id, an emptied required body, a dropped required query parameter. It does
+  not invent a test for a declared status it cannot provoke.
+- **Run-history trends in the HTML report** — `hephaestus report results.json out.html
+  --history` overlays pass-rate and p95 sparklines with the change since the previous
+  run. The sparkline rendering is shared with `trends` and the panel.
+- **Plugin gallery** — `gallery/plugins/`: four ready-to-use, zero-dependency plugins
+  (response budget, timing histogram, PII redactor, CSV metrics) plus a commented
+  template. Also corrects the three shipped example plugins (`slack-notifier`,
+  `teams-notifier`, `custom-assertions`), which read `ctx.api` members the extractor
+  does not expose and registered with a `code:` descriptor the engine ignores — so they
+  never ran.
+- **Copy-paste CI templates** — `docs/ci/` with ready-to-use GitHub Actions, GitLab CI
+  and Jenkins pipelines that run the collection and gate on the Hephaestus CLI's exit
+  codes.
 - **`hephaestus bench`** — measures what the engine actually costs per request by
   running an identical request set through Newman twice (full engine vs a no-op) so
   the delta isolates engine work: ~1.6 ms/request here. `--json` for CI and
@@ -80,6 +106,12 @@ previously hardcoded English even in `ru`.
   locale (which is what makes it selectable). See CONTRIBUTING for the locale guide.
 
 ### Changed
+- **The npm package no longer ships the test suite or engine sources.** The published
+  tarball dropped the golden fixtures, the test/build scripts and `engine/src/` (the
+  bundles it produces are what runs), narrowing it from 52 files to 38. The typed config
+  contract `docs/override.schema.json` is now shipped so the panel can validate against
+  it, and it was brought back in step with the engine's known-key list (32 → 43 keys, so
+  a valid config is no longer reported as unknown).
 - **Any locale the catalog carries is now selectable.** `locOf()` was hardcoded to
   `'en' : 'ru'`, so a fully translated third locale could never be used. It now picks
   any locale present in the catalog and still falls back to `ru`; `ru` / `en` / absent
