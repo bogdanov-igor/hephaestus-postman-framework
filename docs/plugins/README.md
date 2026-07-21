@@ -121,9 +121,11 @@ Microsoft Teams Adaptive Card при провале.
 Пример минимального плагина:
 ```javascript
 (function myPlugin(ctx) {
-    if (ctx.api.status === 429) {
+    // Status and timing live on ctx.response — ctx.api is the extractor
+    // ({ get, find, all, count, save }) and has no .status/.code.
+    if (ctx.response.code === 429) {
         pm.test('⚠️ Rate limit hit — retry later', function() {
-            pm.expect(ctx.api.status).to.not.equal(429);
+            pm.expect(ctx.response.code).to.not.equal(429);
         });
     }
 }(ctx));

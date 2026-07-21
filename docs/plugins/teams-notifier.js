@@ -12,7 +12,7 @@
  *   3. Добавь этот код в hephaestus.plugins:
  *
  *      pm.collectionVariables.set('hephaestus.plugins', JSON.stringify([
- *          { name: 'teams-notifier', code: pm.collectionVariables.get('hephaestus.plugin.teams') }
+ *          { name: 'teams-notifier', post: 'hephaestus.plugin.teams' }
  *      ]));
  *
  *   4. Сохрани текст этого файла в collectionVariable: hephaestus.plugin.teams

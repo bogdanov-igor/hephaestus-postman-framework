@@ -70,11 +70,16 @@
     }
 
     function classify(value) {
-        var i, d;
+        var i, d, m;
         for (i = 0; i < active.length; i++) {
             d = active[i];
-            if (!d.re.test(value)) continue;
-            if (d.kind === 'card' && !luhnOk(value.replace(/[^0-9]/g, ''))) continue;
+            m = d.re.exec(value);
+            if (!m) continue;
+            // Luhn over the MATCHED card digits, not every digit in the field. A
+            // card sitting next to other numbers ("order 4111111111111111 x3")
+            // would otherwise fold the trailing 3 into the checksum, fail Luhn,
+            // and the real card would leak un-redacted.
+            if (d.kind === 'card' && !luhnOk(m[0].replace(/[^0-9]/g, ''))) continue;
             return d.kind;
         }
         return null;

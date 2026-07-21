@@ -1202,6 +1202,22 @@ function pluginFiles() {
     return out;
 }
 
+function pluginReadmes() {
+    return [path.join(ROOT, 'docs/plugins/README.md'), path.join(ROOT, 'gallery/plugins/README.md')]
+        .filter(function(p) { return fs.existsSync(p); });
+}
+
+// The fenced code blocks inside a README — where a copy-paste example lives, and
+// where a wrong ctx.* member is as harmful as in a shipped .js file.
+function readmeCodeBlocks(file) {
+    const src = fs.readFileSync(file, 'utf8');
+    const blocks = [];
+    const re = /```[a-z]*\n([\s\S]*?)```/g;
+    let m;
+    while ((m = re.exec(src)) !== null) blocks.push(m[1]);
+    return blocks;
+}
+
 test('plugins only touch ctx.api members the extractor actually provides', function() {
     // The shipped slack-notifier read ctx.api.status and ctx.api.responseTime. The
     // extractor REPLACES ctx.api wholesale with { get, find, all, count, save }, so
@@ -1210,14 +1226,22 @@ test('plugins only touch ctx.api members the extractor actually provides', funct
     // on ctx.response.
     const allowed = ['get', 'find', 'all', 'count', 'save'];
     const bad = [];
-    pluginFiles().forEach(function(f) {
-        const src = fs.readFileSync(f, 'utf8');
+    const scan = function(label, src) {
         (src.match(/ctx\.api\.(\w+)/g) || []).forEach(function(m) {
             const prop = m.split('.')[2];
-            if (allowed.indexOf(prop) === -1) bad.push(path.basename(f) + ' → ' + m);
+            if (allowed.indexOf(prop) === -1) bad.push(label + ' → ' + m);
         });
+    };
+    // The shipped .js plugins…
+    pluginFiles().forEach(function(f) { scan(path.basename(f), fs.readFileSync(f, 'utf8')); });
+    // …and every copy-paste example inside the READMEs. The 'write your own'
+    // example read ctx.api.status (which does not exist); only scanning .js files
+    // let it through. The prose table describing ctx.api itself is not a code
+    // block, so it is not scanned.
+    pluginReadmes().forEach(function(r) {
+        readmeCodeBlocks(r).forEach(function(b) { scan(path.basename(path.dirname(r)) + '/README', b); });
     });
-    assert(bad.length === 0, 'plugin uses a ctx.api member that does not exist: ' + bad.join(', '));
+    assert(bad.length === 0, 'a plugin or a doc example uses a ctx.api member that does not exist: ' + bad.join(', '));
 });
 
 test('plugins read assertion results by the field the engine writes', function() {
@@ -1234,14 +1258,29 @@ test('plugins read assertion results by the field the engine writes', function()
 test('plugin registration examples use the descriptor key the engine reads', function() {
     // The engine does `if (!p.post) return;` then `pm.collectionVariables.get(p.post)`.
     // The docs showed `{ name, code: <the code itself> }`, which registers a plugin
-    // that silently never runs.
-    const docs = [path.join(ROOT, 'docs/plugins/README.md'), path.join(ROOT, 'gallery/plugins/README.md')];
-    docs.forEach(function(d) {
-        if (!fs.existsSync(d)) return;
-        const src = fs.readFileSync(d, 'utf8');
-        assert(!/\bcode:\s*pm\.collectionVariables/.test(src),
-            path.basename(path.dirname(d)) + '/README.md registers a plugin with `code:` — the engine reads `post:`');
+    // that silently never runs. This lived in TWO places — the README examples and
+    // the install snippet in each plugin file's own header comment — so both are
+    // scanned; fixing only the READMEs left the headers broken.
+    const bad = [];
+    pluginReadmes().concat(pluginFiles()).forEach(function(f) {
+        const src = fs.readFileSync(f, 'utf8');
+        if (/\bcode:\s*pm\.collectionVariables/.test(src)) {
+            bad.push(path.relative(ROOT, f));
+        }
     });
+    assert(bad.length === 0, 'registers a plugin with `code:` (engine reads `post:`): ' + bad.join(', '));
+});
+
+test('pii-redactor Luhn-checks the matched card, not every digit in the field', function() {
+    // A card next to another number ("order 4111111111111111 x3") must still be
+    // caught: the checksum runs over the matched substring, not value-wide digits,
+    // which would fold the trailing 3 in, fail Luhn, and leak the card.
+    const src = fs.readFileSync(path.join(ROOT, 'gallery/plugins/pii-redactor.js'), 'utf8');
+    // Static guard: classify() must Luhn the match (m[0]/matched), never the raw value.
+    assert(!/luhnOk\(value\.replace/.test(src),
+        'classify() still Luhn-checks the whole field value, not the matched card');
+    assert(/luhnOk\(m\[0\]\.replace/.test(src),
+        'classify() should Luhn-check the matched substring m[0]');
 });
 
 test('the gallery README lists exactly the config keys its plugins read', function() {

@@ -20,7 +20,7 @@
  *   Добавь в hephaestus.plugins:
  *
  *   pm.collectionVariables.set('hephaestus.plugins', JSON.stringify([
- *       { name: 'custom-assertions', code: pm.collectionVariables.get('hephaestus.plugin.custom') }
+ *       { name: 'custom-assertions', post: 'hephaestus.plugin.custom' }
  *   ]));
  */
 

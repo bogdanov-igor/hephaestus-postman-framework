@@ -11,7 +11,7 @@
  *   3. Добавь этот код в hephaestus.plugins:
  *
  *      pm.collectionVariables.set('hephaestus.plugins', JSON.stringify([
- *          { name: 'slack-notifier', code: pm.collectionVariables.get('hephaestus.plugin.slack') }
+ *          { name: 'slack-notifier', post: 'hephaestus.plugin.slack' }
  *      ]));
  *
  *   4. Сохрани текст этого файла в collectionVariable: hephaestus.plugin.slack
