@@ -1995,6 +1995,16 @@ fs.writeFileSync(panelProbe, [
     "    if (noct.code !== 415) fail('non-json diff should 415, got ' + noct.code);",
     "    const build = await jpost('/api/build', {plane:'post',expectedStatus:200,assertShape:{'data.items':'array'}});",
     "    { const b = JSON.parse(build.body); if (build.code !== 200 || !/const override/.test(b.script) || !/assertShape/.test(b.script)) fail('build -> ' + build.body); }",
+    // a JSON `null` (or array/primitive) body must 400, never crash the process:
+    // body.mode on null throws inside the body reader, outside the handler's catch.
+    "    for (const ep of ['/api/diff','/api/build','/api/validate']) {",
+    "      const nb = await req({method:'POST',path:ep,headers:JH}, 'null');",
+    "      if (nb.code !== 400) fail('null body to ' + ep + ' should 400, got ' + nb.code);",
+    "      const ab = await req({method:'POST',path:ep,headers:JH}, '[1,2]');",
+    "      if (ab.code !== 400) fail('array body to ' + ep + ' should 400, got ' + ab.code);",
+    "    }",
+    "    const alive = await req({method:'GET',path:'/'});",
+    "    if (alive.code !== 200) fail('server died after null-body posts, got ' + alive.code);",
     "    srv.close(function(){ console.log('ok'); process.exit(0); });",
     "  })();",
     "});"
@@ -2003,6 +2013,29 @@ fs.writeFileSync(panelProbe, [
 test('panel server: serves the page, reads history, and enforces host/CSRF/JSON guards', function() {
     const out = run(NODE + ' ' + JSON.stringify(panelProbe));
     assertContains(out, 'ok', 'panel probe did not pass');
+});
+
+// /api/trends must treat a null/missing metric as a GAP, not a phantom 0 —
+// Number(null) is 0, which would plot a fake 0% run and skew the delta.
+const trendsProbe = path.join(TMP, 'panel-trends-probe.js');
+fs.writeFileSync(trendsProbe, [
+    "const p = require(" + JSON.stringify(path.join(ROOT, 'scripts/panel.js')) + ");",
+    "const http = require('http'), fs = require('fs'), os = require('os'), pathm = require('path');",
+    "const hfile = pathm.join(os.tmpdir(), 'hephaestus-panel-trends.jsonl');",
+    "fs.writeFileSync(hfile, [JSON.stringify({passRate:100,p95:300}),JSON.stringify({passRate:90,p95:280}),JSON.stringify({passRate:null,p95:250}),JSON.stringify({passRate:95,p95:240})].join('\\n') + '\\n');",
+    "const srv = p.createPanelServer({ port: 0, history: hfile, collection: null, defaultsFile: pathm.join(os.tmpdir(),'hephaestus-trends-defaults.json') });",
+    "srv.listen(0,'127.0.0.1',function(){ const pt=srv.address().port;",
+    "  http.get({host:'127.0.0.1',port:pt,path:'/api/trends'},function(rs){let d='';rs.on('data',c=>d+=c);rs.on('end',function(){srv.close();",
+    "    const o=JSON.parse(d);",
+    "    if(o.passRate.spark.indexOf('\\u00b7')===-1){console.error('FAIL no gap glyph in '+o.passRate.spark);process.exit(2);}",
+    "    if(o.passRate.delta!==5){console.error('FAIL delta should be +5 (90->95, null skipped), got '+o.passRate.delta);process.exit(2);}",
+    "    if(o.passRate.last!==95){console.error('FAIL last should be 95, got '+o.passRate.last);process.exit(2);}",
+    "    console.log('ok');process.exit(0);});});});",
+].join('\n'));
+
+test('panel /api/trends renders a null metric as a gap, not a phantom zero', function() {
+    const out = run(NODE + ' ' + JSON.stringify(trendsProbe));
+    assertContains(out, 'ok', 'trends probe did not pass');
 });
 
 // ─── panel libraries: json-diff and schema-validate ──────────────────────────

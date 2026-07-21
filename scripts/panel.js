@@ -274,7 +274,16 @@ function createPanelServer(opts) {
             try { text = fs.readFileSync(historyFile, 'utf8'); } catch (e) { text = ''; }
             const runs = parseHistory(text).slice(-HISTORY_LIMIT);
             const nums = function(k) {
-                return runs.map(function(r) { const n = Number(r[k]); return isFinite(n) ? n : null; });
+                return runs.map(function(r) {
+                    const v = r[k];
+                    // null / undefined / '' / boolean are gaps, not zeros — Number(null)
+                    // is 0, which would plot a phantom 0% point. Only a real number or a
+                    // numeric string counts; everything else renders as a gap glyph,
+                    // consistent with how the string/undefined cases are already treated.
+                    if (v === null || v === undefined || v === '' || typeof v === 'boolean') return null;
+                    const n = Number(v);
+                    return isFinite(n) ? n : null;
+                });
             };
             const series = function(values, unit, goodIsUp) {
                 const finite = values.filter(function(v) { return typeof v === 'number' && isFinite(v); });
@@ -357,6 +366,14 @@ function readJsonBody(req, res, done) {
         let parsed;
         try { parsed = JSON.parse(Buffer.concat(chunks).toString('utf8')); }
         catch (e) { return sendJson(400, { error: 'invalid JSON: ' + e.message }); }
+        // Every caller expects an object wrapper (a defaults object, or {mode,…}).
+        // Reject a top-level null / array / primitive HERE, before the handler
+        // dereferences it: `JSON.parse("null")` is null, and body.mode on null
+        // throws inside this callback — outside the handler's try/catch — which
+        // would take the whole panel process down.
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+            return sendJson(400, { error: 'expected a JSON object' });
+        }
         done(parsed);
     });
 }
