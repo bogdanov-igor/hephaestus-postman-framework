@@ -268,6 +268,7 @@ npm run <command> -- [args]
 | [newman и CI](docs/newman-ci.md) | Настройки GitHub Actions, GitLab CI, Jenkins |
 | [CI-шаблоны](docs/ci/) | Готовые пайплайны: GitHub Actions, GitLab CI, Jenkins |
 | [просмотр снапшотов](docs/snapshot-viewer.html) | Визуальный браузер для `hephaestus.snapshots` |
+| [галерея плагинов](gallery/plugins/) | Четыре готовых плагина + шаблон для своего |
 | [главная документации](docs/index.html) | Локальный индекс сайта документации |
 
 Полное руководство двуязычно: этот файл (Русский) и

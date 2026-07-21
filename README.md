@@ -255,6 +255,7 @@ Zero runtime dependencies. Dev-only: `esbuild` (pinned), `newman`, `eslint`.
 | [newman & CI](docs/newman-ci.md) | GitHub Actions, GitLab CI, Jenkins setups |
 | [CI templates](docs/ci/) | Copy-paste pipelines: GitHub Actions, GitLab CI, Jenkins |
 | [snapshot viewer](docs/snapshot-viewer.html) | Visual browser for `hephaestus.snapshots` |
+| [plugin gallery](gallery/plugins/) | Four ready-to-use plugins + a starter template |
 | [docs home](docs/index.html) | Local documentation site index |
 
 The full guide is bilingual: this file (English) and
