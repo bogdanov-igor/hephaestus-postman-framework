@@ -1383,6 +1383,37 @@ test('CLI exposes doctor: --help lists it and the subcommand delegates (exit 0)'
 console.log('\n⑲ bench.js');
 
 const bench = require(path.join(ROOT, 'scripts/bench.js'));
+
+test('bench module loads without the newman package (lazy require)', function() {
+    // bench requires the newman MODULE, which is a devDependency a consumer may
+    // not have. Requiring bench.js for its exports must not need newman — it is
+    // loaded lazily at first run, with a friendly message on failure.
+    const src = fs.readFileSync(path.join(ROOT, 'scripts/bench.js'), 'utf8');
+    assert(!/^const newman = require\('newman'\)/m.test(src), 'newman is still required at module top level');
+    assert(/needs the newman package/.test(src), 'no friendly message for a missing newman');
+    assert(typeof bench.parseArgs === 'function', 'exports must be reachable without newman');
+});
+
+test('doctor adapts its rebuild hint to whether engine/src is present', function() {
+    // In the published package engine/src is absent, so `npm run build:emit`
+    // cannot work — the hint must say reinstall instead. Static guard: the
+    // conditional exists and both branches are worded.
+    const src = fs.readFileSync(path.join(ROOT, 'scripts/doctor.js'), 'utf8');
+    assert(/CAN_REBUILD\s*=\s*fs\.existsSync/.test(src), 'doctor no longer gates the hint on engine/src presence');
+    assert(/reinstall Hephaestus/.test(src), 'no reinstall hint for the no-source case');
+    // Every remaining build:emit reference must be routed through REBUILD_HINT,
+    // i.e. it appears on a line that also references REBUILD_HINT or its
+    // definition — never as a bare hint string handed to fail()/warn().
+    const offending = src.split('\n').filter(function(line) {
+        if (line.indexOf('build:emit') === -1) return false;
+        if (line.indexOf('REBUILD_HINT') !== -1) return false;        // the definition + all uses
+        if (line.indexOf('rebuild from engine/src') !== -1) return false; // the ?-branch of the definition
+        if (line.trim().indexOf('//') === 0) return false;            // comments
+        if (line.indexOf(' * ') !== -1) return false;                 // docblock
+        return /fail\(|warn\(|'[^']*build:emit/.test(line);           // a hint string in a call
+    });
+    assert(offending.length === 0, 'a bare build:emit hint remains: ' + offending.join(' | '));
+});
 const BENCH = path.join(ROOT, 'scripts/bench.js');
 
 test('bench parseArgs: defaults and flag parsing', function() {
@@ -1429,6 +1460,23 @@ test('bench --max-ms fails loud on a non-numeric budget (never silently disables
 console.log('\n㉑ panel.js');
 
 const panel = require(path.join(ROOT, 'scripts/panel.js'));
+
+test('panel docsLinks lists only docs that exist, else points online', function() {
+    // The published package does not ship docs/, so the panel must not advertise
+    // five links that all 404. docsLinks() filters to files on disk.
+    const links = panel.docsLinks();
+    const have  = panel.availableDocs();
+    if (have.length === 0) {
+        assert(links.indexOf(panel.ONLINE_DOCS) !== -1, 'no local docs but no online fallback link');
+    } else {
+        // Every advertised /docs/<x> must be a page that exists on disk.
+        const advertised = (links.match(/\/docs\/([\w.-]+)/g) || []).map(function(m) { return m.slice('/docs/'.length); });
+        advertised.forEach(function(k) {
+            assert(have.indexOf(k) !== -1, 'panel advertises /docs/' + k + ' which is not on disk');
+        });
+        assert(advertised.length === have.length, 'advertised link count != on-disk doc count');
+    }
+});
 
 test('panel parseHistory skips malformed lines instead of blanking the view', function() {
     const runs = panel.parseHistory('{"ts":"t1","passRate":90}\nBROKEN\n\n{"ts":"t2"}\n');
