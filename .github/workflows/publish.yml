@@ -1,0 +1,70 @@
+# npm publish — MANUAL trigger only.
+#
+# The npm token is not on disk (it lives as a GitHub Actions secret, the same way
+# the author's other projects publish). To publish:
+#
+#   1. Add the secret once:  Settings → Secrets and variables → Actions →
+#      New repository secret → name NPM_TOKEN, value = an npm **Automation** token
+#      (npmjs.com → Access Tokens → Generate New Token → Automation).
+#   2. Actions → "npm publish" → Run workflow. Leave dry_run = true for a rehearsal
+#      (no publish), or set it to false to publish for real.
+#
+# Publishing is one-shot: the same version cannot be re-published. The job runs
+# the full gate first and refuses to publish if the package version is already on
+# npm, so a mis-click cannot double-publish.
+
+name: npm publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Rehearse without publishing (npm publish --dry-run)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dev dependencies
+        run: npm install
+
+      - name: Gate — build + tests must pass before publishing
+        run: |
+          npm run build
+          npm test
+
+      - name: Refuse to re-publish an existing version
+        run: |
+          NAME=$(node -p "require('./package.json').name")
+          VER=$(node -p "require('./package.json').version")
+          echo "Package: $NAME@$VER"
+          if npm view "$NAME@$VER" version >/dev/null 2>&1; then
+            echo "❌ $NAME@$VER is already on npm — bump the version first."
+            exit 1
+          fi
+          echo "✅ $NAME@$VER is not yet published."
+
+      - name: Publish (dry-run)
+        if: ${{ inputs.dry_run }}
+        run: npm publish --access public --dry-run
+
+      - name: Publish (real)
+        if: ${{ !inputs.dry_run }}
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
