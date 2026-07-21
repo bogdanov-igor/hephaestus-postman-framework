@@ -29,7 +29,19 @@
 const fs     = require('fs');
 const path   = require('path');
 const http   = require('http');
-const newman = require('newman');
+
+// newman is a devDependency. The other commands drive the `newman` CLI; bench is
+// the one place that needs the newman MODULE, and a user who installed hephaestus
+// may not have it resolvable. Load it lazily so bench exits with a clear message
+// instead of a raw MODULE_NOT_FOUND stack at process start.
+function loadNewman() {
+    try { return require('newman'); }
+    catch (e) {
+        console.error('`bench` needs the newman package, which is not installed here.');
+        console.error('  npm install newman     (or run bench from a project that has it)');
+        process.exit(1);
+    }
+}
 
 const ROOT = path.resolve(__dirname, '..');
 
@@ -137,10 +149,15 @@ function buildCollection(mode, requests, baseUrl, preSrc, postSrc) {
 
 // ── timing ────────────────────────────────────────────────────────────────────
 
+// Loaded on first run, not at require() — so the module's exports (parseArgs,
+// buildCollection, median) stay require-able for the test suite without newman.
+let _newman = null;
+
 function runOnce(collection) {
+    if (!_newman) _newman = loadNewman();
     return new Promise(function (resolve, reject) {
         const t0 = process.hrtime.bigint();
-        newman.run({ collection: collection, reporters: [] }, function (err) {
+        _newman.run({ collection: collection, reporters: [] }, function (err) {
             if (err) return reject(err);
             resolve(Number(process.hrtime.bigint() - t0) / 1e6); // ms
         });

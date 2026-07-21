@@ -45,6 +45,15 @@ const COLLECTION_PATH = 'collection/hephaestus-template.postman_collection.json'
 const DEFAULTS_PATH   = 'setup/defaults.json';
 const ENGINE_FILES    = ['engine/pre-request.js', 'engine/post-request.js'];
 
+// `npm run build:emit` rebuilds the bundles from engine/src, but the published
+// package does not ship engine/src (it is dev-only). Telling a consumer to run
+// build:emit would send them down a path that cannot work, so the recovery hint
+// adapts: rebuild when the source is present, reinstall when it is not.
+const CAN_REBUILD  = fs.existsSync(path.join(ROOT, 'engine/src'));
+const REBUILD_HINT = CAN_REBUILD
+    ? 'run `npm run build:emit` to rebuild from engine/src'
+    : 'reinstall Hephaestus (engine/src is not present in this install, so it cannot be rebuilt here)';
+
 // Files whose EVERY semver reference must equal the current package version.
 // Kept byte-identical to scripts/build.js Check 3 so the two never disagree.
 // (Missing files — e.g. Dockerfile in an installed package — are simply skipped.)
@@ -162,11 +171,11 @@ function checkEngineIntegrity() {
     const name = 'Engine integrity';
     const raw = safeRead(CHECKSUMS_PATH);
     if (raw === null) {
-        return fail(name, CHECKSUMS_PATH + ' is missing', 'Reinstall Hephaestus or run `npm run build:emit`');
+        return fail(name, CHECKSUMS_PATH + ' is missing', 'Reinstall Hephaestus or ' + REBUILD_HINT);
     }
     let checksums;
     try { checksums = JSON.parse(raw); } catch (e) {
-        return fail(name, CHECKSUMS_PATH + ' is invalid JSON: ' + e.message, 'Run `npm run build:emit` to regenerate it');
+        return fail(name, CHECKSUMS_PATH + ' is invalid JSON: ' + e.message, REBUILD_HINT + ' (regenerates it)');
     }
     const files = checksums.files || {};
     const bad = [];
@@ -182,7 +191,7 @@ function checkEngineIntegrity() {
     });
     if (bad.length) {
         return fail(name, 'checksum mismatch: ' + bad.join('; '),
-            'Engine bundle is stale or tampered — run `npm run build:emit` to rebuild from engine/src');
+            'Engine bundle is stale or tampered — ' + REBUILD_HINT);
     }
     return ok(name, 'both engine files match ' + CHECKSUMS_PATH + ' (sha256)');
 }
@@ -248,7 +257,7 @@ function checkVersions() {
 
     if (drifts.length) {
         return fail(name, 'version drift vs package.json ' + pkgVersion + ': ' + drifts.join(', '),
-            'Align every version to ' + pkgVersion + ' (run `npm run build:emit`; fix any banner)');
+            'Align every version to ' + pkgVersion + ' (' + REBUILD_HINT + '; fix any banner)');
     }
     return ok(name, 'all version references pinned to ' + pkgVersion);
 }
@@ -268,10 +277,10 @@ function checkDefaultsDrift() {
     const varMap = collectionVarMap(col);
     const embeddedVar = varMap['hephaestus.defaults'];
     if (!embeddedVar) {
-        return fail(name, 'collection has no hephaestus.defaults variable', 'Run `npm run build:emit`');
+        return fail(name, 'collection has no hephaestus.defaults variable', REBUILD_HINT);
     }
     try { JSON.parse(embeddedVar.value); } catch (e) {
-        return fail(name, 'embedded hephaestus.defaults is not valid JSON', 'Run `npm run build:emit`');
+        return fail(name, 'embedded hephaestus.defaults is not valid JSON', REBUILD_HINT);
     }
     // Same transform as build.js Check 6: strip the _comment / $schema editor
     // hints and blank baseUrl (the template intentionally ships an empty baseUrl).
@@ -285,7 +294,7 @@ function checkDefaultsDrift() {
         return ok(name, 'embedded hephaestus.defaults matches ' + DEFAULTS_PATH);
     }
     return fail(name, 'embedded hephaestus.defaults has drifted from ' + DEFAULTS_PATH,
-        'Run `npm run build:emit` to re-embed defaults into the collection');
+        REBUILD_HINT + ' (re-embeds defaults into the collection)');
 }
 
 // ─── Check 5: defaults.json valid JSON ────────────────────────────────────────
