@@ -31,3 +31,8 @@ package-lock.json
 gallery/
 BANNER-TODO.md
 hephaestus_vision.md
+
+# Generated run artifacts (never commit — they are outputs)
+hephaestus-report.html
+results.json
+.hephaestus/
