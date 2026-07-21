@@ -35,7 +35,7 @@ previously hardcoded English even in `ru`.
   keys are allowlisted via `"extraKeys": [...]`. The golden harness gained a `neg-*`
   "expected-fail" convention so negative fixtures don't muddy the pass count.
 - **`maxBytes`** — a response-size budget in `override` (bytes); the run fails if the
-  response body is larger. The `maxResponseTime` for payload size.
+  response body is larger. The `maxResponseTime` analogue for payload size.
 - **securityAudit v2** — three opt-in response checks: `cookieFlags` (Set-Cookie must
   carry Secure / HttpOnly / SameSite), `checkJwt` (reject `alg:none` and expired
   `exp` on JWTs in the body/cookies), and `requireNoStore` (auth responses must send
