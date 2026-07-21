@@ -253,6 +253,7 @@ Zero runtime dependencies. Dev-only: `esbuild` (pinned), `newman`, `eslint`.
 | [recipes](docs/recipes.md) | 10 common tasks → 10 ready-to-paste `override` blocks |
 | [features](docs/features.html) | Module-by-module guide with examples |
 | [newman & CI](docs/newman-ci.md) | GitHub Actions, GitLab CI, Jenkins setups |
+| [CI templates](docs/ci/) | Copy-paste pipelines: GitHub Actions, GitLab CI, Jenkins |
 | [snapshot viewer](docs/snapshot-viewer.html) | Visual browser for `hephaestus.snapshots` |
 | [docs home](docs/index.html) | Local documentation site index |
 

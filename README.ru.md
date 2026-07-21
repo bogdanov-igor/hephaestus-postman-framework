@@ -266,6 +266,7 @@ npm run <command> -- [args]
 | [рецепты](docs/recipes.md) | 10 частых задач → 10 готовых `override`-блоков |
 | [возможности](docs/features.html) | Модуль за модулем с примерами |
 | [newman и CI](docs/newman-ci.md) | Настройки GitHub Actions, GitLab CI, Jenkins |
+| [CI-шаблоны](docs/ci/) | Готовые пайплайны: GitHub Actions, GitLab CI, Jenkins |
 | [просмотр снапшотов](docs/snapshot-viewer.html) | Визуальный браузер для `hephaestus.snapshots` |
 | [главная документации](docs/index.html) | Локальный индекс сайта документации |
 

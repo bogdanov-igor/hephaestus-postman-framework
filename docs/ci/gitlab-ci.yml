@@ -1,0 +1,84 @@
+# Hephaestus — GitLab CI pipeline (copy into .gitlab-ci.yml)
+#
+# Runs a Postman collection through Newman, then gates the build on the things
+# that actually matter. Every Hephaestus command below exits 1 when its gate
+# trips, so no shell plumbing is needed.
+#
+# Adjust: COLLECTION / ENVIRONMENT paths, the SLA budget, the coverage floor.
+
+stages: [test, report]
+
+variables:
+  COLLECTION: "collection/api-tests.postman_collection.json"
+  ENVIRONMENT: "env/staging.postman_environment.json"
+  SLA_MS: "500"          # p95 budget
+  COVERAGE_MIN: "80"     # % of the OpenAPI spec the collection must cover
+
+default:
+  image: node:20
+  before_script:
+    - npm install -g newman
+    # From a clone of the framework. Once published: npx hephaestus <cmd>.
+    # Idempotent: report-stage jobs restore the api-tests artifacts, which
+    # recreate the .hephaestus/ directory — a bare `git clone` into it would then
+    # fail "destination path already exists", aborting the job in before_script.
+    - '[ -d .hephaestus/.git ] || git clone --depth 1 https://github.com/bogdanov-igor/hephaestus-postman-framework.git .hephaestus'
+
+api-tests:
+  stage: test
+  script:
+    # 1. Pre-flight: engine integrity, version drift, config sanity.
+    - node .hephaestus/bin/hephaestus.js doctor -e "$ENVIRONMENT"
+    # 2. The run itself. `|| true` so the gates below still get to report;
+    #    the assertion failure is re-raised by the summary gate.
+    - newman run "$COLLECTION" -e "$ENVIRONMENT" -r cli,json
+        --reporter-json-export results.json || true
+    # 3. Latency gate — fails the build when p95 is over budget.
+    - node .hephaestus/bin/hephaestus.js summary results.json --sla=$SLA_MS --history
+  artifacts:
+    when: always
+    paths: [results.json, .hephaestus/history.jsonl]
+    expire_in: 30 days
+
+regression-gate:
+  stage: report
+  needs: [api-tests]
+  # The baseline is cached per default branch, NOT re-seeded from this run's own
+  # results — seeding then comparing would compare results.json against itself and
+  # the gate could never trip. First run establishes the baseline without
+  # comparing; later runs compare against it; only the default branch refreshes it,
+  # so feature branches are measured against main and don't overwrite it.
+  cache:
+    key: "hephaestus-baseline-$CI_DEFAULT_BRANCH"
+    paths: [baseline.json]
+  script:
+    - |
+      if [ -f baseline.json ]; then
+        node .hephaestus/bin/hephaestus.js compare baseline.json results.json --md | tee regression.md
+      else
+        echo "No baseline cached yet — this run establishes it; no comparison this time." | tee regression.md
+      fi
+    - if [ "$CI_COMMIT_REF_NAME" = "$CI_DEFAULT_BRANCH" ]; then cp results.json baseline.json; fi
+  artifacts:
+    when: always
+    paths: [regression.md]
+
+spec-coverage:
+  stage: report
+  needs: [api-tests]
+  # Only meaningful if you keep an OpenAPI spec next to the collection.
+  rules:
+    - exists: [openapi.yaml]
+  script:
+    - node .hephaestus/bin/hephaestus.js coverage --spec openapi.yaml "$COLLECTION" --min $COVERAGE_MIN
+
+html-report:
+  stage: report
+  needs: [api-tests]
+  when: always
+  script:
+    - node .hephaestus/bin/hephaestus.js report results.json report.html
+  artifacts:
+    when: always
+    paths: [report.html]
+    expire_in: 30 days

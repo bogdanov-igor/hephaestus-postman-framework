@@ -1,0 +1,84 @@
+// Hephaestus — Jenkins declarative pipeline (copy into your Jenkinsfile)
+//
+// Runs a Postman collection through Newman, then gates the build. Every
+// Hephaestus command exits 1 when its gate trips, so a plain `sh` step is
+// enough — no parsing, no plumbing.
+//
+// Adjust: COLLECTION / ENVIRONMENT paths, the SLA budget, the coverage floor.
+
+pipeline {
+    // -u root: Jenkins runs docker agents as the host Jenkins uid by default, and
+    // that uid cannot write node:20's root-owned global npm prefix, so
+    // `npm install -g newman` below would fail EACCES. If your Jenkins forbids
+    // root containers, drop this and install newman locally instead
+    // (npm install newman && use ./node_modules/.bin/newman).
+    agent { docker { image 'node:20'; args '-u root' } }
+
+    environment {
+        COLLECTION   = 'collection/api-tests.postman_collection.json'
+        ENVIRONMENT  = 'env/staging.postman_environment.json'
+        SLA_MS       = '500'   // p95 budget
+        COVERAGE_MIN = '80'    // % of the OpenAPI spec the collection must cover
+        HEPH         = 'node .hephaestus/bin/hephaestus.js'
+    }
+
+    stages {
+        stage('Setup') {
+            steps {
+                sh 'npm install -g newman'
+                // From a clone of the framework. Once published: npx hephaestus <cmd>.
+                // Idempotent: Jenkins reuses the workspace between builds, so a bare
+                // clone into an existing .hephaestus/ would fail "already exists".
+                sh '[ -d .hephaestus/.git ] || git clone --depth 1 https://github.com/bogdanov-igor/hephaestus-postman-framework.git .hephaestus'
+            }
+        }
+
+        stage('Pre-flight') {
+            // Engine integrity + version consistency (and your -e file is well-formed)
+            // before spending time on the run. See ci/README.md on envRequired in CI.
+            steps { sh "${HEPH} doctor -e ${ENVIRONMENT}" }
+        }
+
+        stage('Run collection') {
+            steps {
+                // Do not fail here: let the gates below report first. The assertion
+                // failure is re-raised by the summary gate.
+                sh """
+                   newman run ${COLLECTION} -e ${ENVIRONMENT} -r cli,json \
+                        --reporter-json-export results.json || true
+                """
+            }
+        }
+
+        stage('Gates') {
+            parallel {
+                stage('Latency + assertions') {
+                    steps { sh "${HEPH} summary results.json --sla=${SLA_MS} --history" }
+                }
+                stage('Regression') {
+                    when { expression { fileExists('baseline.json') } }
+                    steps { sh "${HEPH} compare baseline.json results.json" }
+                }
+                stage('Spec coverage') {
+                    when { expression { fileExists('openapi.yaml') } }
+                    steps { sh "${HEPH} coverage --spec openapi.yaml ${COLLECTION} --min ${COVERAGE_MIN}" }
+                }
+            }
+        }
+
+        stage('Report') {
+            steps { sh "${HEPH} report results.json report.html" }
+        }
+    }
+
+    post {
+        always {
+            sh "${HEPH} junit results.json junit.xml || true"
+            junit allowEmptyResults: true, testResults: 'junit.xml'
+            archiveArtifacts artifacts: 'results.json,report.html', allowEmptyArchive: true
+            publishHTML(target: [reportDir: '.', reportFiles: 'report.html',
+                                 reportName: 'Hephaestus Report', keepAll: true,
+                                 alwaysLinkToLastBuild: true, allowMissing: true])
+        }
+    }
+}
