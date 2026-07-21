@@ -7,7 +7,12 @@
 // Adjust: COLLECTION / ENVIRONMENT paths, the SLA budget, the coverage floor.
 
 pipeline {
-    agent { docker { image 'node:20' } }
+    // -u root: Jenkins runs docker agents as the host Jenkins uid by default, and
+    // that uid cannot write node:20's root-owned global npm prefix, so
+    // `npm install -g newman` below would fail EACCES. If your Jenkins forbids
+    // root containers, drop this and install newman locally instead
+    // (npm install newman && use ./node_modules/.bin/newman).
+    agent { docker { image 'node:20'; args '-u root' } }
 
     environment {
         COLLECTION   = 'collection/api-tests.postman_collection.json'
@@ -21,14 +26,16 @@ pipeline {
         stage('Setup') {
             steps {
                 sh 'npm install -g newman'
-                // From a clone of the framework. Once published: npx hephaestus <cmd>
-                sh 'git clone --depth 1 https://github.com/bogdanov-igor/hephaestus-postman-framework.git .hephaestus'
+                // From a clone of the framework. Once published: npx hephaestus <cmd>.
+                // Idempotent: Jenkins reuses the workspace between builds, so a bare
+                // clone into an existing .hephaestus/ would fail "already exists".
+                sh '[ -d .hephaestus/.git ] || git clone --depth 1 https://github.com/bogdanov-igor/hephaestus-postman-framework.git .hephaestus'
             }
         }
 
         stage('Pre-flight') {
-            // Engine integrity, version drift, required env vars — before spending
-            // time on the run itself.
+            // Engine integrity + version consistency (and your -e file is well-formed)
+            // before spending time on the run. See ci/README.md on envRequired in CI.
             steps { sh "${HEPH} doctor -e ${ENVIRONMENT}" }
         }
 

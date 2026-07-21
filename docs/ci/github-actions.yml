@@ -36,8 +36,20 @@ jobs:
           # From a clone of the framework. Once published: npx hephaestus <cmd>
           git clone --depth 1 https://github.com/bogdanov-igor/hephaestus-postman-framework.git .hephaestus
 
-      # Engine integrity, version drift, required env vars — before spending time
-      # on the run itself.
+      # Runners are ephemeral: without this, --history below starts empty every run
+      # and no trend ever accumulates. The cache carries the history JSONL between
+      # runs on the same branch (restore-keys falls back to other branches' history).
+      - name: Restore run history
+        uses: actions/cache@v4
+        with:
+          path: .hephaestus/history.jsonl
+          key: hephaestus-history-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            hephaestus-history-${{ github.ref_name }}-
+            hephaestus-history-
+
+      # Engine integrity + version consistency (and your -e file is well-formed)
+      # before spending time on the run itself. See ci/README.md on envRequired in CI.
       - name: Pre-flight
         run: node .hephaestus/bin/hephaestus.js doctor -e "$ENVIRONMENT"
 
@@ -76,4 +88,5 @@ jobs:
             results.json
             report.html
             junit.xml
+            .hephaestus/history.jsonl
           retention-days: 30

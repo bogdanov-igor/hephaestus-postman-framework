@@ -190,7 +190,9 @@ A pipeline that uses all of them:
   run: node bin/hephaestus.js summary results.json --sla=500 --history
 
 - name: Regression gate
-  if: always()
+  # Guard on the baseline existing — on the first run there is none, and an
+  # unguarded `compare baseline.json …` would crash on the missing file.
+  if: hashFiles('baseline.json') != ''
   run: node bin/hephaestus.js compare baseline.json results.json
 
 - name: Spec coverage gate

@@ -18,9 +18,11 @@ default:
   image: node:20
   before_script:
     - npm install -g newman
-    # From a clone of the framework. Once published: npx hephaestus <cmd>
-    - git clone --depth 1 https://github.com/bogdanov-igor/hephaestus-postman-framework.git .hephaestus
-    - alias hephaestus="node .hephaestus/bin/hephaestus.js"
+    # From a clone of the framework. Once published: npx hephaestus <cmd>.
+    # Idempotent: report-stage jobs restore the api-tests artifacts, which
+    # recreate the .hephaestus/ directory — a bare `git clone` into it would then
+    # fail "destination path already exists", aborting the job in before_script.
+    - '[ -d .hephaestus/.git ] || git clone --depth 1 https://github.com/bogdanov-igor/hephaestus-postman-framework.git .hephaestus'
 
 api-tests:
   stage: test
@@ -41,11 +43,22 @@ api-tests:
 regression-gate:
   stage: report
   needs: [api-tests]
-  # Compares against the baseline you keep for the target branch.
+  # The baseline is cached per default branch, NOT re-seeded from this run's own
+  # results — seeding then comparing would compare results.json against itself and
+  # the gate could never trip. First run establishes the baseline without
+  # comparing; later runs compare against it; only the default branch refreshes it,
+  # so feature branches are measured against main and don't overwrite it.
+  cache:
+    key: "hephaestus-baseline-$CI_DEFAULT_BRANCH"
+    paths: [baseline.json]
   script:
-    - test -f baseline.json || (echo "no baseline yet — seeding" && cp results.json baseline.json)
-    - node .hephaestus/bin/hephaestus.js compare baseline.json results.json --md > regression.md
-    - cat regression.md
+    - |
+      if [ -f baseline.json ]; then
+        node .hephaestus/bin/hephaestus.js compare baseline.json results.json --md | tee regression.md
+      else
+        echo "No baseline cached yet — this run establishes it; no comparison this time." | tee regression.md
+      fi
+    - if [ "$CI_COMMIT_REF_NAME" = "$CI_DEFAULT_BRANCH" ]; then cp results.json baseline.json; fi
   artifacts:
     when: always
     paths: [regression.md]

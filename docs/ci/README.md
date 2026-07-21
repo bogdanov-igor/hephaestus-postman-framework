@@ -11,8 +11,12 @@ variables at the top, commit it.
 
 All three do the same thing, in the same order:
 
-1. **Pre-flight** — `doctor` checks engine integrity, version drift and required
-   environment variables *before* the run burns time.
+1. **Pre-flight** — `doctor` checks the engine bundle's integrity and version
+   consistency *before* the run burns time, and validates that your `-e`
+   environment file is well-formed. (The `envRequired` cross-check reads the
+   framework's own `setup/defaults.json`, so in CI — where Hephaestus is a clone —
+   it does not know your project's required variables; it never FAILs the build
+   on them. Assert required vars in your collection instead.)
 2. **Run** — Newman, exporting `results.json`. Deliberately non-fatal so the
    gates below still report; the assertion failure is re-raised in step 3.
 3. **Gates** — each exits `1` on its own terms:
