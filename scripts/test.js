@@ -792,6 +792,132 @@ fs.writeFileSync(openapiYamlFile, [
     '          type: integer'
 ].join('\n'));
 
+// A spec with everything the negative generator keys off: global security, an
+// operation that opts out of it, a path parameter, a required body, a required
+// query parameter, and a mix of declared and undeclared error statuses.
+const openapiNegFile = path.join(TMP, 'api-neg.json');
+const openapiNegOut  = path.join(TMP, 'api-neg-collection.json');
+fs.writeFileSync(openapiNegFile, JSON.stringify({
+    openapi: '3.0.0',
+    info: { title: 'Neg API', version: '1.0.0' },
+    servers: [{ url: 'https://api.example.com' }],
+    security: [{ bearerAuth: [] }],
+    paths: {
+        '/products': {
+            get: {
+                tags: ['products'], summary: 'List',
+                parameters: [
+                    { name: 'page', in: 'query', required: true },
+                    { name: 'q',    in: 'query', required: false },
+                ],
+                responses: { 200: {}, 400: {}, 401: {} },
+            },
+            post: {
+                tags: ['products'], summary: 'Create',
+                requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+                responses: { 201: {}, 422: {} },
+            },
+        },
+        '/products/{id}': {
+            get: { tags: ['products'], summary: 'Get', responses: { 200: {}, 404: {} } },
+        },
+        '/health': {
+            get: { tags: ['ops'], summary: 'Health', security: [], responses: { 200: {} } },
+        },
+    },
+}), 'utf8');
+
+function negItems() {
+    const col = JSON.parse(fs.readFileSync(openapiNegOut, 'utf8'));
+    const out = [];
+    col.item.filter(function(f) { return /negative/.test(f.name); })
+           .forEach(function(f) { f.item.forEach(function(i) { out.push(i); }); });
+    return out;
+}
+function expectedOf(item) {
+    const src = item.event.filter(function(e) { return e.listen === 'test'; })[0].script.exec.join('\n');
+    return JSON.parse(src.match(/const override = ([\s\S]*?);\n/)[1]).expectedStatus;
+}
+
+test('openapi without --negative generates no negative folder', function() {
+    run(NODE + ' "' + path.join(ROOT, 'scripts/openapi-import.js') + '" "' + openapiNegFile + '" -o "' + openapiNegOut + '"');
+    assert(negItems().length === 0, 'negative tests appeared without the flag');
+});
+
+test('openapi --negative handles optional auth, path-level params and Swagger 2 body', function() {
+    // Three edge cases a second review round found:
+    //  1. security [{}, {scheme}] means auth is OPTIONAL — a no-auth test would
+    //     fail against a correct API, so none should be generated.
+    //  2. parameters declared once on the path item apply to every method.
+    //  3. Swagger 2.0 declares a required body as a param with in:'body'.
+    const spec = path.join(TMP, 'openapi-edge.json');
+    fs.writeFileSync(spec, JSON.stringify({
+        openapi: '3.0.0', info: { title: 'Edge', version: '1' }, servers: [{ url: 'https://api.x' }],
+        paths: {
+            '/opt': { get: { tags: ['o'], summary: 'OptAuth', security: [{}, { bearer: [] }], responses: { 200: {}, 401: {} } } },
+            '/items': { parameters: [{ name: 'tenant', in: 'query', required: true }],
+                        get: { tags: ['i'], summary: 'PathQuery', responses: { 200: {}, 400: {} } } },
+        },
+    }), 'utf8');
+    const out = path.join(TMP, 'openapi-edge-col.json');
+    run(NODE + ' "' + path.join(ROOT, 'scripts/openapi-import.js') + '" "' + spec + '" -o "' + out + '" --negative');
+    const dump = fs.readFileSync(out, 'utf8');
+    assert(dump.indexOf('OptAuth — no auth') === -1, 'optional auth wrongly produced a no-auth test');
+    assert(dump.indexOf('missing tenant') !== -1, 'path-level required query param produced no missing-param test');
+
+    const sw2 = path.join(TMP, 'swagger2.json');
+    fs.writeFileSync(sw2, JSON.stringify({
+        swagger: '2.0', info: { title: 'S2', version: '1' }, host: 'api.x', basePath: '/',
+        paths: { '/create': { post: { tags: ['c'], summary: 'Make',
+            parameters: [{ name: 'body', in: 'body', required: true, schema: { type: 'object' } }],
+            responses: { 201: {}, 400: {} } } } },
+    }), 'utf8');
+    const sw2out = path.join(TMP, 'swagger2-col.json');
+    run(NODE + ' "' + path.join(ROOT, 'scripts/openapi-import.js') + '" "' + sw2 + '" -o "' + sw2out + '" --negative');
+    assert(fs.readFileSync(sw2out, 'utf8').indexOf('empty body') !== -1, 'Swagger 2.0 required body produced no empty-body test');
+});
+
+test('openapi --negative generates only triggerable cases, using declared statuses', function() {
+    run(NODE + ' "' + path.join(ROOT, 'scripts/openapi-import.js') + '" "' + openapiNegFile + '" -o "' + openapiNegOut + '" --negative');
+    const items = negItems();
+    const names = items.map(function(i) { return i.name; });
+
+    // /health opts out of security with `security: []` — no auth test for it.
+    assert(!names.some(function(n) { return /^Health/.test(n); }), '/health got a negative test despite security: []');
+
+    const byName = {};
+    items.forEach(function(i) { byName[i.name] = i; });
+
+    assert(byName['List — no auth'],        'missing no-auth case');
+    assert(byName['List — missing page'],   'missing required-query case');
+    assert(byName['Create — empty body'],   'missing empty-body case');
+    assert(byName['Get — unknown id'],      'missing unknown-id case');
+
+    // Declared statuses win; undeclared falls back to the conventional pair.
+    assert(JSON.stringify(expectedOf(byName['List — no auth']))      === '[401]',      'declared 401 not used');
+    assert(JSON.stringify(expectedOf(byName['Create — no auth']))    === '[401,403]',  'undeclared case should fall back');
+    assert(JSON.stringify(expectedOf(byName['Create — empty body'])) === '[422]',      'declared 422 not used');
+    assert(JSON.stringify(expectedOf(byName['Get — unknown id']))    === '[404]',      'declared 404 not used');
+});
+
+test('a negative test differs from the happy path by exactly one mutation', function() {
+    run(NODE + ' "' + path.join(ROOT, 'scripts/openapi-import.js') + '" "' + openapiNegFile + '" -o "' + openapiNegOut + '" --negative');
+    const byName = {};
+    negItems().forEach(function(i) { byName[i.name] = i; });
+
+    // Withholding auth must not ALSO drop the required query parameter, or the
+    // server can answer 400 and the test proves nothing about auth.
+    const noAuth = byName['List — no auth'];
+    assert(/page=/.test(noAuth.request.url.raw), 'no-auth case lost the required query parameter: ' + noAuth.request.url.raw);
+    const pre = noAuth.event.filter(function(e) { return e.listen === 'prerequest'; })[0].script.exec.join('\n');
+    assert(/"enabled":\s*false/.test(pre), 'no-auth case does not actually disable auth');
+
+    // The missing-parameter case drops only the one it names.
+    const miss = byName['List — missing page'];
+    assert(!/page=/.test(miss.request.url.raw), 'missing-page case still sends page');
+    assert(/q=/.test(miss.request.url.raw),     'missing-page case dropped an unrelated optional parameter');
+});
+
 test('openapi imports YAML into a collection', function() {
     run(NODE + ' "' + path.join(ROOT, 'scripts/openapi-import.js') + '" "' + openapiYamlFile + '" -o "' + openapiOutFile + '"');
     const col = JSON.parse(fs.readFileSync(openapiOutFile, 'utf8'));

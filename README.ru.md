@@ -233,7 +233,7 @@ npm run <command> -- [args]
 | `migrate <collection.json>` | Классифицирует состояние миграции коллекции |
 | `docs <collection.json>` | API-документация из тест-скриптов коллекции |
 | `sync-examples <collection.json>` | Снапшоты → Postman Example Responses |
-| `openapi <spec>` | OpenAPI / Swagger → коллекция Hephaestus |
+| `openapi <spec>` | OpenAPI / Swagger → коллекция Hephaestus (`--negative` добавляет тесты ошибок) |
 | `init` | Интерактивный мастер конфига / окружения |
 | `generate` | Интерактивный мастер → готовый к вставке блок `override` |
 | `panel [-c <collection.json>]` | Локальная панель: история прогонов, снапшоты, редактор defaults |
