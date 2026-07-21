@@ -466,6 +466,196 @@
       "ok": true
     },
     {
+      "item": "maxtime-ok-en",
+      "name": "⏱ Time < <ms>: <ms> ✅",
+      "ok": true
+    },
+    {
+      "item": "maxtime-ok-en",
+      "name": "⚠️ URL: insecure http protocol",
+      "ok": true
+    },
+    {
+      "item": "maxtime-ok-en",
+      "name": "🌐 URL: base address is set",
+      "ok": true
+    },
+    {
+      "item": "maxtime-ok-en",
+      "name": "📭 Response body: not empty",
+      "ok": true
+    },
+    {
+      "item": "maxtime-ok-en",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "maxtime-ok-en",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "maxtime-ok-en",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "maxtime-ok-en",
+      "name": "🟢 Status: 200 — OK",
+      "ok": true
+    },
+    {
+      "item": "neg-assertions-en",
+      "name": "⚠️ URL: insecure http protocol",
+      "ok": true
+    },
+    {
+      "item": "neg-assertions-en",
+      "name": "🌐 URL: base address is set",
+      "ok": true
+    },
+    {
+      "item": "neg-assertions-en",
+      "name": "📏 Count 'tags': 2 / 99 ❌",
+      "ok": false
+    },
+    {
+      "item": "neg-assertions-en",
+      "name": "📭 Response body: not empty",
+      "ok": true
+    },
+    {
+      "item": "neg-assertions-en",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-assertions-en",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-assertions-en",
+      "name": "🔎 Found: 'data.absent' (data.absent)",
+      "ok": false
+    },
+    {
+      "item": "neg-assertions-en",
+      "name": "🔬 < 0 [data.id]",
+      "ok": false
+    },
+    {
+      "item": "neg-assertions-en",
+      "name": "🔬 >= 9999 [count]",
+      "ok": false
+    },
+    {
+      "item": "neg-assertions-en",
+      "name": "🔬 eq 7 [data.id]",
+      "ok": false
+    },
+    {
+      "item": "neg-assertions-en",
+      "name": "🔬 exists [count]",
+      "ok": true
+    },
+    {
+      "item": "neg-assertions-en",
+      "name": "🔬 exists [data.id]",
+      "ok": true
+    },
+    {
+      "item": "neg-assertions-en",
+      "name": "🔬 exists [data.missing]",
+      "ok": false
+    },
+    {
+      "item": "neg-assertions-en",
+      "name": "🔬 exists [data.name]",
+      "ok": true
+    },
+    {
+      "item": "neg-assertions-en",
+      "name": "🔬 matches ^Z [data.name]",
+      "ok": false
+    },
+    {
+      "item": "neg-assertions-en",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "neg-assertions-en",
+      "name": "🟢 Status: 200 — OK",
+      "ok": true
+    },
+    {
+      "item": "neg-contenttype-en",
+      "name": "⚠️ URL: insecure http protocol",
+      "ok": true
+    },
+    {
+      "item": "neg-contenttype-en",
+      "name": "🌐 URL: base address is set",
+      "ok": true
+    },
+    {
+      "item": "neg-contenttype-en",
+      "name": "📭 Response body: not empty",
+      "ok": true
+    },
+    {
+      "item": "neg-contenttype-en",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-contenttype-en",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-contenttype-en",
+      "name": "🧾 Content-Type: application/json",
+      "ok": false
+    },
+    {
+      "item": "neg-contenttype-en",
+      "name": "🟢 Status: 200 — OK",
+      "ok": true
+    },
+    {
+      "item": "neg-empty-body-en",
+      "name": "⚠️ URL: insecure http protocol",
+      "ok": true
+    },
+    {
+      "item": "neg-empty-body-en",
+      "name": "🌐 URL: base address is set",
+      "ok": true
+    },
+    {
+      "item": "neg-empty-body-en",
+      "name": "📭 Response body: empty ✓",
+      "ok": false
+    },
+    {
+      "item": "neg-empty-body-en",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-empty-body-en",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-empty-body-en",
+      "name": "🟢 Status: 200 — OK",
+      "ok": true
+    },
+    {
       "item": "neg-graphql-errors",
       "name": "⚠️ URL: небезопасный протокол http",
       "ok": true
@@ -503,6 +693,116 @@
     {
       "item": "neg-graphql-errors",
       "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
+      "item": "neg-headers-en",
+      "name": "⚠️ URL: insecure http protocol",
+      "ok": true
+    },
+    {
+      "item": "neg-headers-en",
+      "name": "🌐 URL: base address is set",
+      "ok": true
+    },
+    {
+      "item": "neg-headers-en",
+      "name": "📨 Header \"X-Version\" = \"v99\"",
+      "ok": false
+    },
+    {
+      "item": "neg-headers-en",
+      "name": "📨 Header absent: X-Request-Id",
+      "ok": false
+    },
+    {
+      "item": "neg-headers-en",
+      "name": "📨 Header present: X-Missing",
+      "ok": false
+    },
+    {
+      "item": "neg-headers-en",
+      "name": "📨 Header present: X-Version",
+      "ok": true
+    },
+    {
+      "item": "neg-headers-en",
+      "name": "📭 Response body: not empty",
+      "ok": true
+    },
+    {
+      "item": "neg-headers-en",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-headers-en",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-headers-en",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "neg-headers-en",
+      "name": "🟢 Status: 200 — OK",
+      "ok": true
+    },
+    {
+      "item": "neg-list-asserts-en",
+      "name": "⚠️ URL: insecure http protocol",
+      "ok": true
+    },
+    {
+      "item": "neg-list-asserts-en",
+      "name": "🌐 URL: base address is set",
+      "ok": true
+    },
+    {
+      "item": "neg-list-asserts-en",
+      "name": "📊 assertOrder[items] by \"id\" desc — ❌ 2 violations",
+      "ok": false
+    },
+    {
+      "item": "neg-list-asserts-en",
+      "name": "📭 Response body: not empty",
+      "ok": true
+    },
+    {
+      "item": "neg-list-asserts-en",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-list-asserts-en",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-list-asserts-en",
+      "name": "🔑 assertUnique[items].by(\"nope\") — ❌ 2 duplicates",
+      "ok": false
+    },
+    {
+      "item": "neg-list-asserts-en",
+      "name": "🔢 assertEach: minCount=99 (3 elements) ❌",
+      "ok": false
+    },
+    {
+      "item": "neg-list-asserts-en",
+      "name": "🔢 assertEach[items]: 3 items × 2 rules — ❌ 6 violations",
+      "ok": false
+    },
+    {
+      "item": "neg-list-asserts-en",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "neg-list-asserts-en",
+      "name": "🟢 Status: 200 — OK",
       "ok": true
     },
     {
@@ -546,6 +846,46 @@
       "ok": true
     },
     {
+      "item": "neg-maxbytes-en",
+      "name": "⚠️ URL: insecure http protocol",
+      "ok": true
+    },
+    {
+      "item": "neg-maxbytes-en",
+      "name": "🌐 URL: base address is set",
+      "ok": true
+    },
+    {
+      "item": "neg-maxbytes-en",
+      "name": "📦 Response size ≤ 1 B: 88 B ❌",
+      "ok": false
+    },
+    {
+      "item": "neg-maxbytes-en",
+      "name": "📭 Response body: not empty",
+      "ok": true
+    },
+    {
+      "item": "neg-maxbytes-en",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-maxbytes-en",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-maxbytes-en",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "neg-maxbytes-en",
+      "name": "🟢 Status: 200 — OK",
+      "ok": true
+    },
+    {
       "item": "neg-maxbytes-over",
       "name": "⚠️ URL: небезопасный протокол http",
       "ok": true
@@ -586,6 +926,46 @@
       "ok": true
     },
     {
+      "item": "neg-maxtime-en",
+      "name": "⏱ Time < <ms>: <ms> ❌",
+      "ok": false
+    },
+    {
+      "item": "neg-maxtime-en",
+      "name": "⚠️ URL: insecure http protocol",
+      "ok": true
+    },
+    {
+      "item": "neg-maxtime-en",
+      "name": "🌐 URL: base address is set",
+      "ok": true
+    },
+    {
+      "item": "neg-maxtime-en",
+      "name": "📭 Response body: not empty",
+      "ok": true
+    },
+    {
+      "item": "neg-maxtime-en",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-maxtime-en",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-maxtime-en",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "neg-maxtime-en",
+      "name": "🟢 Status: 200 — OK",
+      "ok": true
+    },
+    {
       "item": "neg-retryafter-exceeds-cap",
       "name": "⚠️ URL: небезопасный протокол http",
       "ok": true
@@ -623,6 +1003,46 @@
     {
       "item": "neg-retryafter-exceeds-cap",
       "name": "🟢 Статус: 503 — Сервис недоступен",
+      "ok": true
+    },
+    {
+      "item": "neg-schema-en",
+      "name": "⚠️ URL: insecure http protocol",
+      "ok": true
+    },
+    {
+      "item": "neg-schema-en",
+      "name": "🌐 URL: base address is set",
+      "ok": true
+    },
+    {
+      "item": "neg-schema-en",
+      "name": "📭 Response body: not empty",
+      "ok": true
+    },
+    {
+      "item": "neg-schema-en",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-schema-en",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-schema-en",
+      "name": "🔬 Schema: ❌ errors (2)",
+      "ok": false
+    },
+    {
+      "item": "neg-schema-en",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "neg-schema-en",
+      "name": "🟢 Status: 200 — OK",
       "ok": true
     },
     {
@@ -823,6 +1243,136 @@
     {
       "item": "neg-secaudit-jwt-none",
       "name": "🟢 Статус: 200 — Успешно",
+      "ok": true
+    },
+    {
+      "item": "neg-shape-en",
+      "name": "⚠️ URL: insecure http protocol",
+      "ok": true
+    },
+    {
+      "item": "neg-shape-en",
+      "name": "🌐 URL: base address is set",
+      "ok": true
+    },
+    {
+      "item": "neg-shape-en",
+      "name": "📭 Response body: not empty",
+      "ok": true
+    },
+    {
+      "item": "neg-shape-en",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-shape-en",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-shape-en",
+      "name": "🧩 shape \"count\": absent",
+      "ok": false
+    },
+    {
+      "item": "neg-shape-en",
+      "name": "🧩 shape \"data.id\": string",
+      "ok": false
+    },
+    {
+      "item": "neg-shape-en",
+      "name": "🧩 shape \"data\": array",
+      "ok": false
+    },
+    {
+      "item": "neg-shape-en",
+      "name": "🧩 shape \"nope\": exists",
+      "ok": false
+    },
+    {
+      "item": "neg-shape-en",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "neg-shape-en",
+      "name": "🟢 Status: 200 — OK",
+      "ok": true
+    },
+    {
+      "item": "neg-status-en",
+      "name": "⚠️ URL: insecure http protocol",
+      "ok": true
+    },
+    {
+      "item": "neg-status-en",
+      "name": "🌐 URL: base address is set",
+      "ok": true
+    },
+    {
+      "item": "neg-status-en",
+      "name": "📭 Response body: not empty",
+      "ok": true
+    },
+    {
+      "item": "neg-status-en",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-status-en",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-status-en",
+      "name": "🔴 Status: 200 — OK",
+      "ok": false
+    },
+    {
+      "item": "neg-status-en",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "neg-strict-unknown-key-en",
+      "name": "⚠️ URL: insecure http protocol",
+      "ok": true
+    },
+    {
+      "item": "neg-strict-unknown-key-en",
+      "name": "🌐 URL: base address is set",
+      "ok": true
+    },
+    {
+      "item": "neg-strict-unknown-key-en",
+      "name": "📭 Response body: not empty",
+      "ok": true
+    },
+    {
+      "item": "neg-strict-unknown-key-en",
+      "name": "🔌 [test-plugin] _override reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-strict-unknown-key-en",
+      "name": "🔌 [test-plugin] ctx reachable",
+      "ok": true
+    },
+    {
+      "item": "neg-strict-unknown-key-en",
+      "name": "🧾 Content-Type: application/json",
+      "ok": true
+    },
+    {
+      "item": "neg-strict-unknown-key-en",
+      "name": "🚫 strictMode: unknown override key(s)",
+      "ok": false
+    },
+    {
+      "item": "neg-strict-unknown-key-en",
+      "name": "🟢 Status: 200 — OK",
       "ok": true
     },
     {
@@ -1930,12 +2480,124 @@
       "security": null,
       "errors": []
     },
+    "maxtime-ok-en": {
+      "request": "maxtime-ok-en",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "neg-assertions-en": {
+      "request": "neg-assertions-en",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [
+        "data.absent",
+        "data.id",
+        "data.name",
+        "data.missing",
+        "count"
+      ],
+      "saved": [],
+      "counts": [
+        {
+          "alias": "tags",
+          "length": 2,
+          "expected": 99,
+          "ok": false
+        }
+      ],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "neg-contenttype-en": {
+      "request": "neg-contenttype-en",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "neg-empty-body-en": {
+      "request": "neg-empty-body-en",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
     "neg-graphql-errors": {
       "request": "neg-graphql-errors",
       "method": "GET",
       "status": 200,
       "format": "json",
       "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "neg-headers-en": {
+      "request": "neg-headers-en",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [
+        {
+          "name": "X-Missing",
+          "ok": false
+        },
+        {
+          "name": "X-Version",
+          "ok": true
+        },
+        {
+          "name": "X-Request-Id",
+          "ok": false
+        }
+      ],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "neg-list-asserts-en": {
+      "request": "neg-list-asserts-en",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [
+        "assertEach:items"
+      ],
       "saved": [],
       "counts": [],
       "headers": [],
@@ -1960,8 +2622,36 @@
         "assertions: ответ не распарсен, проверки пропущены"
       ]
     },
+    "neg-maxbytes-en": {
+      "request": "neg-maxbytes-en",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
     "neg-maxbytes-over": {
       "request": "neg-maxbytes-over",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "neg-maxtime-en": {
+      "request": "neg-maxtime-en",
       "method": "GET",
       "status": 200,
       "format": "json",
@@ -1985,6 +2675,22 @@
       "headers": [],
       "snapshot": null,
       "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "neg-schema-en": {
+      "request": "neg-schema-en",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": {
+        "valid": false
+      },
       "security": null,
       "errors": []
     },
@@ -2073,8 +2779,50 @@
       },
       "errors": []
     },
+    "neg-shape-en": {
+      "request": "neg-shape-en",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "neg-status-en": {
+      "request": "neg-status-en",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
     "neg-strict-unknown-key": {
       "request": "neg-strict-unknown-key",
+      "method": "GET",
+      "status": 200,
+      "format": "json",
+      "found": [],
+      "saved": [],
+      "counts": [],
+      "headers": [],
+      "snapshot": null,
+      "schema": null,
+      "security": null,
+      "errors": []
+    },
+    "neg-strict-unknown-key-en": {
+      "request": "neg-strict-unknown-key-en",
       "method": "GET",
       "status": 200,
       "format": "json",
