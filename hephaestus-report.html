@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hephaestus Report — Test Collection</title>
+<style>
+  :root {
+    --bg:#0c0706; --bg-card:#17100d; --border:#2a1c15; --border-h:#4a9fd8;
+    --text:#e8dcd4; --muted:#9d8175; --accent:#4a9fd8; --green:#5fbf6b;
+    --yellow:#f0a04a; --red:#e0654a; --quench:#4a9fd8; --radius:8px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background-color:var(--bg);background-image:radial-gradient(1100px 560px at 12% -6%,rgba(138,47,26,.16) 0%,rgba(61,24,16,.05) 42%,rgba(12,7,6,0) 72%);background-attachment:fixed;background-repeat:no-repeat;color:var(--text);min-height:100vh;padding:24px 16px 64px;}
+  a{color:var(--accent);text-decoration:none;}
+
+  /* Header */
+  header{max-width:960px;margin:0 auto 28px;}
+  .logo{font-size:1.5rem;font-weight:800;letter-spacing:-.02em;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .logo .mark{font-size:1.3rem;line-height:1;filter:drop-shadow(0 0 9px rgba(224,101,74,.5));}
+  .logo .wordmark{background:linear-gradient(180deg,#fdf2ec 0%,#f6d0ba 40%,#e3966c 72%,#b5502e 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;}
+  .logo .logo-suffix{font-size:.8rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);}
+  .accent-rule{height:3px;width:220px;max-width:55%;border-radius:2px;background:linear-gradient(90deg,#e0523a 0%,#f0a04a 55%,#4a9fd8 100%);margin:2px 0 14px;}
+  .meta-row{font-size:0.78rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:16px;margin-top:6px;}
+  .meta-row span::before{margin-right:4px;}
+
+  /* Summary cards */
+  .summary{max-width:960px;margin:0 auto 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;align-items:center;}
+  .stat{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;text-align:center;}
+  .stat .v{font-size:1.8rem;font-weight:800;line-height:1;}
+  .stat .l{font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:4px;font-weight:600;}
+  .gauge-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;display:flex;align-items:center;justify-content:center;}
+
+  /* Filter */
+  .filter-row{max-width:960px;margin:0 auto 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  #search{flex:1;min-width:200px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.85rem;padding:8px 12px;outline:none;transition:border-color .15s;}
+  #search:focus{border-color:var(--border-h);}
+  .fb{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:.75rem;padding:6px 12px;cursor:pointer;transition:all .15s;}
+  .fb.active,.fb:hover{border-color:var(--border-h);color:var(--accent);}
+  .fb.active{background:rgba(74,159,216,.10);}
+
+  /* Request cards */
+  .cards{max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:8px;}
+  .req-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color .15s;}
+  .req-card.nok{border-color:rgba(224,101,74,.38);}
+  .req-card:hover{border-color:var(--border-h);}
+  .req-header{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;user-select:none;flex-wrap:wrap;}
+  .req-header:hover{background:rgba(240,160,74,.05);}
+  .method-badge{font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:4px;color:#000;white-space:nowrap;flex-shrink:0;}
+  .req-name{font-size:.86rem;font-weight:600;flex:1;word-break:break-word;}
+  .req-meta{display:flex;align-items:center;gap:10px;margin-left:auto;}
+  .status-badge{font-size:.72rem;font-weight:700;padding:2px 7px;border-radius:4px;border:1px solid;background:transparent;white-space:nowrap;}
+  .time-cell{font-size:.78rem;font-weight:600;font-family:'SF Mono',monospace;white-space:nowrap;}
+  .pass-icon{font-size:.82rem;white-space:nowrap;}
+  .chevron{color:var(--muted);font-size:.75rem;transition:transform .2s;flex-shrink:0;}
+  .chevron.open{transform:rotate(90deg);}
+  .time-bar-wrap{height:3px;background:var(--border);}
+  .time-bar{height:3px;border-radius:0;transition:width .3s;}
+
+  /* Assertions */
+  .req-body{border-top:1px solid var(--border);}
+  .assert-list{padding:12px 14px;display:flex;flex-direction:column;gap:5px;}
+  .assertion{font-size:.78rem;padding:5px 10px;border-radius:5px;line-height:1.4;}
+  .assertion.pass{background:rgba(95,191,107,.07);border:1px solid rgba(95,191,107,.18);color:var(--text);}
+  .assertion.fail{background:rgba(224,101,74,.10);border:1px solid rgba(224,101,74,.24);color:var(--text);}
+  .assertion.muted{color:var(--muted);font-style:italic;}
+  .a-err{font-size:.72rem;color:var(--red);margin-top:3px;font-family:'SF Mono',monospace;word-break:break-word;}
+
+  /* Empty */
+  #empty{max-width:960px;margin:32px auto;text-align:center;color:var(--muted);display:none;padding:48px 20px;}
+  #empty .icon{font-size:2.5rem;margin-bottom:12px;}
+  #empty p{font-size:.85rem;}
+
+  /* Footer */
+  footer{text-align:center;margin-top:48px;font-size:.75rem;color:var(--muted);}
+.section h2 .trend-sub{font-size:.7rem;color:var(--muted);font-weight:400;margin-left:8px}
+.trend-row{display:flex;align-items:center;gap:14px;padding:6px 0;font-size:.85rem}
+.trend-label{width:90px;color:var(--muted)}
+.spark{font-family:monospace;font-size:1.1rem;letter-spacing:1px;color:var(--accent)}
+.trend-now{font-weight:700}.trend-delta{font-size:.8rem}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span class="mark">⚒</span><span class="wordmark">hephaestus</span> <span class="logo-suffix">Test Report</span></div>
+  <div class="accent-rule"></div>
+  <div class="meta-row">
+    <span>📋 Test Collection</span>
+    <span>🌍 test</span>
+    <span>📅 2026-07-21 05:14:09 UTC</span>
+    <span>⏱ 5.0s</span>
+  </div>
+</header>
+
+<div class="summary">
+  <div class="gauge-card"><svg viewBox="0 0 100 100" width="120" height="120" style="display:block;margin:0 auto">
+      <circle cx="50" cy="50" r="44" fill="none" stroke="#2a1c15" stroke-width="10"/>
+      <circle cx="50" cy="50" r="44" fill="none" stroke="#e0654a" stroke-width="10"
+        stroke-dasharray="207.35 69.12"
+        stroke-dashoffset="69.12" stroke-linecap="round"/>
+      <text x="50" y="52" text-anchor="middle" dominant-baseline="middle"
+        font-family="-apple-system,sans-serif" font-weight="700" font-size="16" fill="#e0654a">75%</text>
+      <text x="50" y="66" text-anchor="middle" dominant-baseline="middle"
+        font-family="-apple-system,sans-serif" font-weight="400" font-size="7" fill="#9d8175">PASS RATE</text>
+    </svg></div>
+  <div class="stat"><div class="v" style="color:var(--accent)">2</div><div class="l">Requests</div></div>
+  <div class="stat"><div class="v" style="color:var(--red)">1</div><div class="l">Failed</div></div>
+  <div class="stat"><div class="v" style="color:var(--accent)">4</div><div class="l">Assertions</div></div>
+  <div class="stat"><div class="v" style="color:var(--red)">1</div><div class="l">Assert fails</div></div>
+  <div class="stat"><div class="v" style="color:#5fbf6b">123ms</div><div class="l">Avg time</div></div>
+</div>
+
+<div class="section"><h2>Trends <span class="trend-sub">2 run(s) — .test-tmp/report-victim-history.jsonl</span></h2><div class="trend-row"><span class="trend-label">Pass rate</span><span class="spark">▁█</span><span class="trend-now">95%</span><span class="trend-delta" style="color:var(--green)">+5%</span></div><div class="trend-row"><span class="trend-label">p95</span><span class="spark">█▁</span><span class="trend-now">250ms</span><span class="trend-delta" style="color:var(--green)">-50ms</span></div></div>
+
+<div class="filter-row">
+  <input id="search" type="text" placeholder="Search by request name..." oninput="doFilter()">
+  <button class="fb active" data-f="all" onclick="setFilter(this)">All</button>
+  <button class="fb" data-f="fail" onclick="setFilter(this)">Failed only</button>
+  <button class="fb" data-f="pass" onclick="setFilter(this)">Passed only</button>
+  <span style="font-size:.75rem;color:var(--muted);margin-left:auto" id="count-label">2 requests</span>
+</div>
+
+<div class="cards" id="cards">
+
+    <div class="req-card ok" id="req-0">
+      <div class="req-header" onclick="toggle(0)">
+        <span class="method-badge" style="background:#5fbf6b;">GET</span>
+        <span class="req-name">GET User</span>
+        <div class="req-meta">
+          <span class="status-badge" style="color:#5fbf6b;border-color:#5fbf6b;">200</span>
+          <span class="time-cell" style="color:#5fbf6b">100ms</span>
+          <span class="pass-icon">✅</span>
+        </div>
+        <span class="chevron" id="chev-0">▶</span>
+      </div>
+      <div class="time-bar-wrap">
+        <div class="time-bar" style="width:100%;background:#5fbf6b"></div>
+      </div>
+      <div class="req-body" id="body-0" style="display:none">
+        <div class="assert-list"><div class="assertion pass">✅ Status is 200</div><div class="assertion pass">✅ Has user id</div></div>
+      </div>
+    </div>
+    <div class="req-card nok" id="req-1">
+      <div class="req-header" onclick="toggle(1)">
+        <span class="method-badge" style="background:#4a9fd8;">POST</span>
+        <span class="req-name">POST Login</span>
+        <div class="req-meta">
+          <span class="status-badge" style="color:#e0654a;border-color:#e0654a;">401</span>
+          <span class="time-cell" style="color:#5fbf6b">45ms</span>
+          <span class="pass-icon">❌ 1</span>
+        </div>
+        <span class="chevron" id="chev-1">▶</span>
+      </div>
+      <div class="time-bar-wrap">
+        <div class="time-bar" style="width:45%;background:#5fbf6b"></div>
+      </div>
+      <div class="req-body" id="body-1" style="display:none">
+        <div class="assert-list"><div class="assertion fail">❌ Status is 200<div class="a-err">expected 401 to equal 200</div></div><div class="assertion pass">✅ Has token</div></div>
+      </div>
+    </div>
+</div>
+
+<div id="empty">
+  <div class="icon">📭</div>
+  <p>No requests match your filter.</p>
+</div>
+
+<footer>
+  Generated by <strong>Hephaestus v4.0.0</strong> &nbsp;·&nbsp;
+  <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework">github.com/bogdanov-igor/hephaestus-postman-framework</a>
+  &nbsp;·&nbsp; 2026-07-21 05:14:09 UTC
+</footer>
+
+<script>
+var filter = 'all';
+
+function toggle(i) {
+  var body  = document.getElementById('body-'+i);
+  var chev  = document.getElementById('chev-'+i);
+  var open  = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  chev.classList.toggle('open', !open);
+}
+
+function setFilter(btn) {
+  document.querySelectorAll('.fb').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  filter = btn.dataset.f;
+  doFilter();
+}
+
+function doFilter() {
+  var q = (document.getElementById('search').value || '').toLowerCase();
+  var cards = document.querySelectorAll('.req-card');
+  var visible = 0;
+  cards.forEach(function(c) {
+    var name = c.querySelector('.req-name');
+    var text = name ? name.textContent.toLowerCase() : '';
+    var isOk = c.classList.contains('ok');
+    var matchF = filter === 'all' || (filter === 'fail' && !isOk) || (filter === 'pass' && isOk);
+    var matchQ = !q || text.indexOf(q) !== -1;
+    var show = matchF && matchQ;
+    c.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  document.getElementById('count-label').textContent = visible + ' requests';
+  document.getElementById('empty').style.display = visible === 0 ? 'block' : 'none';
+}
+
+// Auto-expand failed requests on load
+document.querySelectorAll('.req-card.nok').forEach(function(c){
+  var id = c.id.replace('req-','');
+  toggle(parseInt(id));
+});
+</script>
+</body>
+</html>

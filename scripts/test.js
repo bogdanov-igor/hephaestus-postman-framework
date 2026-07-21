@@ -1243,6 +1243,21 @@ test('every override key the demo uses is a key the engine knows', function() {
                 '"' + item.name + '" uses override key "' + k + '", which the engine does not know');
         });
     });
+
+    // The generated README's feature table must not name a key the engine does not
+    // know either: the table still said `metrics` after the override was fixed to
+    // `maxResponseTime`, teaching users a key that is silently ignored. Every
+    // backtick-quoted identifier in the "What each request shows" table must be a
+    // real KNOWN_KEY.
+    const readme = demo.readme('demo-collection.json', 'demo-environment.json');
+    const tableRows = readme.split('\n').filter(function(l) { return /^\| \d /.test(l); });
+    tableRows.forEach(function(row) {
+        (row.match(/`([A-Za-z][A-Za-z0-9]*)`/g) || []).forEach(function(tok) {
+            const key = tok.replace(/`/g, '');
+            assert(known.indexOf(key) !== -1,
+                'demo README feature table names `' + key + '`, which is not a known override key');
+        });
+    });
 });
 
 test('init --demo refuses to overwrite an existing demo without --force', function() {

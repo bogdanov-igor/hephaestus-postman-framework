@@ -283,7 +283,7 @@ function readme(collectionFile, environmentFile) {
         '| # | Request | Feature |',
         '|---|---|---|',
         '| 1 | Health check | `expectedStatus` |',
-        '| 2 | List products | `assertShape`, `assertEach`, `assertOrder`, `metrics` |',
+        '| 2 | List products | `assertShape`, `assertEach`, `assertOrder`, `maxResponseTime` |',
         '| 3 | Create product | `assertions`, `varsToSave` |',
         '| 4 | Get product | `snapshot` (structural) |',
         '| 5 | Missing product | a negative test that keeps the run green |',
