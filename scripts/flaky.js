@@ -216,7 +216,7 @@ const W  = 70;
 const HR = c.dim('─'.repeat(W));
 
 console.log('');
-console.log(c.bold('  🔥 HEPHAESTUS  Flaky-Test Detector'));
+console.log(c.bold('  ⚒️  Hephaestus — Flaky-Test Detector'));
 console.log(HR);
 console.log(c.dim('  Runs analyzed: ') + runs.length);
 console.log('');

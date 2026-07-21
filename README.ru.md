@@ -250,7 +250,7 @@ npm run <command> -- [args]
 | `migrate <collection.json>` | Классифицирует состояние миграции коллекции |
 | `docs <collection.json>` | API-документация из тест-скриптов коллекции |
 | `sync-examples <collection.json>` | Снапшоты → Postman Example Responses |
-| `openapi <spec>` | OpenAPI / Swagger → коллекция Hephaestus |
+| `openapi <spec>` | OpenAPI / Swagger → коллекция Hephaestus (`--negative` добавляет тесты ошибок) |
 | `init` | Интерактивный мастер конфига / окружения |
 | `generate` | Интерактивный мастер → готовый к вставке блок `override` |
 | `panel [-c <collection.json>]` | Локальная панель: история прогонов, снапшоты, редактор defaults |
@@ -283,7 +283,9 @@ npm run <command> -- [args]
 | [рецепты](docs/recipes.md) | 10 частых задач → 10 готовых `override`-блоков |
 | [возможности](docs/features.html) | Модуль за модулем с примерами |
 | [newman и CI](docs/newman-ci.md) | Настройки GitHub Actions, GitLab CI, Jenkins |
+| [CI-шаблоны](docs/ci/) | Готовые пайплайны: GitHub Actions, GitLab CI, Jenkins |
 | [просмотр снапшотов](docs/snapshot-viewer.html) | Визуальный браузер для `hephaestus.snapshots` |
+| [галерея плагинов](gallery/plugins/) | Четыре готовых плагина + шаблон для своего |
 | [главная документации](docs/index.html) | Локальный индекс сайта документации |
 
 Полное руководство двуязычно: этот файл (Русский) и

@@ -69,7 +69,7 @@ function clearLine() { process.stdout.write('\r\x1b[K'); }
 function header(msg) {
     const line = '─'.repeat(60);
     console.log(c('dim', line));
-    console.log(c('bold', '  🔥 ' + msg));
+    console.log(c('bold', '  ⚒️  ' + msg));
     console.log(c('dim', line));
 }
 
@@ -184,7 +184,7 @@ function onChange(filename) {
 }
 
 console.log('');
-console.log(c('bold', '  🔥 Hephaestus Watch Mode  v4.0.0'));
+console.log(c('bold', '  ⚒️  Hephaestus — Watch Mode  v4.0.0'));
 console.log(c('dim', '  Collection: ') + path.basename(collection));
 if (envFiles.length) console.log(c('dim', '  Environments: ') + envFiles.map(function(e) { return path.basename(e); }).join(', '));
 console.log(c('dim', '  Debounce: ' + delay + 'ms'));

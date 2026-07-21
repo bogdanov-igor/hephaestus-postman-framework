@@ -306,7 +306,7 @@ const HR  = '─'.repeat(W);
 const DIM = c.dim(HR);
 
 console.log('');
-console.log(c.bold('  🔥 HEPHAESTUS  Newman Run Summary'));
+console.log(c.bold('  ⚒️  Hephaestus — Newman Run Summary'));
 console.log(c.dim('  ' + HR));
 console.log(c.dim('  Collection: ') + c.bold(collectionName));
 console.log(c.dim('  Environment: ') + envName);

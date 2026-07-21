@@ -110,7 +110,7 @@ function yesNo(question, defaultYes) {
 
 async function main() {
     console.log('\n╔══════════════════════════════════════════════════════════════╗');
-    console.log('║  🔥 Hephaestus Init Wizard  v4.0.0                         ║');
+    console.log('║  ⚒️  Hephaestus — Init Wizard  v4.0.0                       ║');
     console.log('╚══════════════════════════════════════════════════════════════╝\n');
 
     // ─── Project basics ────────────────────────────────────────────────────────

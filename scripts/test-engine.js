@@ -41,6 +41,11 @@ function startMockServer() {
         if (url === '/obj') {
             return json({ data: { id: 42, name: 'Alice', status: 'active', score: 7, tags: ['a', 'b'] }, count: 2 });
         }
+        // Deliberately slow so a 1 ms budget fails on every machine. 60 ms is far
+        // enough above scheduler noise that the verdict never flips.
+        if (url === '/slow') {
+            return setTimeout(function () { json({ ok: true }); }, 60);
+        }
         if (url === '/list') {
             return json({ items: [
                 { id: 1, kind: 'x', price: 10 },
@@ -330,6 +335,106 @@ function buildCollection(preSrc, postSrc, baseUrl) {
                 snapshot: { enabled: true, storage: 'postman-api', mode: 'non-strict', autoSaveMissing: true }
             })
         },
+        // ── i18n EN error paths ──────────────────────────────────────────────
+        //    The EN fixtures above all PASS, which means they only ever exercise
+        //    the success half of each catalog entry. A missing or malformed English
+        //    failure message is invisible until something actually fails, so these
+        //    negative clones lock the English text of the failure messages too.
+        {
+            name: 'neg-status-en',
+            request: { method: 'GET', url: baseUrl + '/obj' },
+            event: methodScripts({ locale: 'en' }, { locale: 'en', expectedStatus: 599 })
+        },
+        {
+            name: 'neg-contenttype-en',
+            request: { method: 'GET', url: baseUrl + '/obj' },
+            event: methodScripts({ locale: 'en' }, { locale: 'en', contentType: 'xml' })
+        },
+        {
+            name: 'neg-empty-body-en',
+            request: { method: 'GET', url: baseUrl + '/obj' },
+            event: methodScripts({ locale: 'en' }, { locale: 'en', expectEmpty: true })
+        },
+        {
+            name: 'neg-assertions-en',
+            request: { method: 'GET', url: baseUrl + '/obj' },
+            event: methodScripts({ locale: 'en' }, {
+                locale: 'en',
+                keysToFind: [{ path: 'data.absent' }],
+                assertions: {
+                    'data.id':      { eq: 7, lt: 0 },
+                    'data.name':    { matches: '^Z' },
+                    'data.missing': { exists: true },
+                    'count':        { gte: 9999 }
+                },
+                keysToCount: { tags: { path: 'data.tags', expected: 99 } }
+            })
+        },
+        {
+            name: 'neg-shape-en',
+            request: { method: 'GET', url: baseUrl + '/obj' },
+            event: methodScripts({ locale: 'en' }, {
+                locale: 'en',
+                assertShape: { 'data': 'array', 'data.id': 'string', 'count': 'absent', 'nope': 'any' }
+            })
+        },
+        {
+            name: 'neg-list-asserts-en',
+            request: { method: 'GET', url: baseUrl + '/list' },
+            event: methodScripts({ locale: 'en' }, {
+                locale: 'en',
+                assertEach: { path: 'items', minCount: 99, rules: { id: { lt: 0 }, kind: { eq: 'nope' } } },
+                assertOrder: { path: 'items', by: 'id', direction: 'desc' },
+                assertUnique: { path: 'items', by: 'nope' }
+            })
+        },
+        {
+            name: 'neg-headers-en',
+            request: { method: 'GET', url: baseUrl + '/headers' },
+            event: methodScripts({ locale: 'en' }, {
+                locale: 'en',
+                assertHeaders: [
+                    { name: 'X-Missing' },
+                    { name: 'X-Version', equals: 'v99' },
+                    { name: 'X-Request-Id', absent: true }
+                ]
+            })
+        },
+        {
+            name: 'neg-schema-en',
+            request: { method: 'GET', url: baseUrl + '/obj' },
+            event: methodScripts({ locale: 'en' }, {
+                locale: 'en',
+                schema: { enabled: true, definition: {
+                    type: 'object',
+                    properties: { data: { type: 'string' }, missing: { type: 'number' } },
+                    required: ['data', 'missing']
+                } }
+            })
+        },
+        {
+            // maxResponseTime is a TOP-LEVEL key. There is no `metrics` block — an
+            // override that nests it there is silently ignored, which is exactly the
+            // kind of mistake a locked failure message makes visible.
+            name: 'maxtime-ok-en',
+            request: { method: 'GET', url: baseUrl + '/obj' },
+            event: methodScripts({ locale: 'en' }, { locale: 'en', maxResponseTime: 60000 })
+        },
+        {
+            name: 'neg-maxtime-en',
+            request: { method: 'GET', url: baseUrl + '/slow' },
+            event: methodScripts({ locale: 'en' }, { locale: 'en', maxResponseTime: 1 })
+        },
+        {
+            name: 'neg-maxbytes-en',
+            request: { method: 'GET', url: baseUrl + '/obj' },
+            event: methodScripts({ locale: 'en' }, { locale: 'en', maxBytes: 1 })
+        },
+        {
+            name: 'neg-strict-unknown-key-en',
+            request: { method: 'GET', url: baseUrl + '/obj' },
+            event: methodScripts({ locale: 'en' }, { locale: 'en', strictMode: true, snapshsot: { enabled: true } })
+        },
         {
             // typo-guard: strictMode makes an unknown override key ('snapshsot') fail
             // the run. A NEGATIVE fixture — its failing assertion is EXPECTED (the
@@ -508,7 +613,11 @@ function runEngine(preSrc, postSrc) {
             newman.run({ collection: collection, reporters: [] })
                 .on('beforeItem', function (err, ev) { if (!err && ev.item) currentItem = ev.item.name; })
                 .on('assertion', function (err, ev) {
-                    tests.push({ item: currentItem, name: ev.assertion, ok: !err });
+                    // Timing assertions embed the measured duration in their name, which
+                    // would make the fingerprint flap run to run. No existing golden entry
+                    // contains a millisecond value, so this normalization is additive.
+                    const name = String(ev.assertion).replace(/\b\d+ms\b/g, '<ms>');
+                    tests.push({ item: currentItem, name: name, ok: !err });
                 })
                 .on('console', function (err, ev) {
                     if (err || !ev.messages) return;

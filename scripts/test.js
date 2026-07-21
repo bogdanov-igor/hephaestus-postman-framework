@@ -674,6 +674,103 @@ test('HTML contains key elements', function() {
     assertContains(html, 'PASS RATE',     'missing SVG pass-rate chart');
 });
 
+test('report --history <file> does not overwrite the history file with HTML', function() {
+    // REGRESSION (data loss): the value after --history is not dash-prefixed, so a
+    // naive positional filter treated it as the output path and wrote the report
+    // over the history JSONL. Same class as the docs/-o bug.
+    const hist = path.join(TMP, 'report-victim-history.jsonl');
+    fs.writeFileSync(hist,
+        JSON.stringify({ passRate: 90, p95: 300 }) + '\n' +
+        JSON.stringify({ passRate: 95, p95: 250 }) + '\n', 'utf8');
+    const before = fs.readFileSync(hist, 'utf8');
+    // No explicit output path: the report must go to the default file, not the history.
+    run(NODE + ' "' + path.join(ROOT, 'scripts/generate-report.js') + '" "' + newmanFixtureFile + '" --history "' + hist + '"');
+    assert(fs.readFileSync(hist, 'utf8') === before, 'the history file was overwritten');
+    JSON.parse(fs.readFileSync(hist, 'utf8').split('\n')[0]); // still JSONL
+});
+
+test('report refuses to write the report over its own inputs', function() {
+    const hist = path.join(TMP, 'report-selftarget.jsonl');
+    fs.writeFileSync(hist, JSON.stringify({ passRate: 90, p95: 300 }) + '\n', 'utf8');
+    let code = 0;
+    try { run(NODE + ' "' + path.join(ROOT, 'scripts/generate-report.js') + '" "' + newmanFixtureFile + '" "' + hist + '" --history "' + hist + '"'); }
+    catch (e) { code = e.status || 1; }
+    assert(code === 1, 'writing the report over the history file must exit 1, got ' + code);
+});
+
+test('report --history=<file> equals form is honoured', function() {
+    const hist = path.join(TMP, 'report-eq-history.jsonl');
+    fs.writeFileSync(hist,
+        JSON.stringify({ passRate: 88, p95: 300 }) + '\n' +
+        JSON.stringify({ passRate: 91, p95: 280 }) + '\n', 'utf8');
+    const out = path.join(TMP, 'report-eq.html');
+    run(NODE + ' "' + path.join(ROOT, 'scripts/generate-report.js') + '" "' + newmanFixtureFile + '" "' + out + '" --history=' + hist);
+    assertContains(fs.readFileSync(out, 'utf8'), 'Trends', '--history=<file> did not produce a Trends section');
+});
+
+test('report Trends section renders outside the summary grid', function() {
+    const hist = path.join(TMP, 'report-grid-history.jsonl');
+    fs.writeFileSync(hist,
+        JSON.stringify({ passRate: 90, p95: 300 }) + '\n' +
+        JSON.stringify({ passRate: 95, p95: 250 }) + '\n', 'utf8');
+    const out = path.join(TMP, 'report-grid.html');
+    run(NODE + ' "' + path.join(ROOT, 'scripts/generate-report.js') + '" "' + newmanFixtureFile + '" "' + out + '" --history "' + hist + '"');
+    const html = fs.readFileSync(out, 'utf8');
+    // Between <div class="summary"> and the filter row, the div count must be
+    // balanced before Trends appears — i.e. the summary grid is already closed.
+    const block = html.slice(html.indexOf('<div class="summary">'), html.indexOf('<div class="filter-row">'));
+    const upTo  = block.slice(0, block.indexOf('>Trends<'));
+    const opens = (upTo.match(/<div/g) || []).length;
+    const closes = (upTo.match(/<\/div>/g) || []).length;
+    assert(opens - closes <= 0, 'Trends is still nested inside the summary grid (depth ' + (opens - closes) + ')');
+});
+
+test('report does not leak an absolute history path into the HTML', function() {
+    const dir = path.join(TMP, '.hephaestus');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'history.jsonl'), JSON.stringify({ passRate: 90, p95: 300 }) + '\n', 'utf8');
+    const out = path.join(TMP, 'report-abs.html');
+    // Run with cwd = TMP so the default .hephaestus/history.jsonl resolves there.
+    run(NODE + ' "' + path.join(ROOT, 'scripts/generate-report.js') + '" "' + newmanFixtureFile + '" "' + out + '" --history', { cwd: TMP });
+    const html = fs.readFileSync(out, 'utf8');
+    assert(html.indexOf(TMP) === -1, 'the absolute temp path leaked into the shareable report');
+});
+
+test('report does not mistake a flag for the output filename', function() {
+    // REGRESSION: `outFile = args[1]` made `report results.json --history` write a
+    // file literally named "--history" (same class of bug as docs/-o and watch/-c).
+    const out = path.join(TMP, 'report-flagargs.html');
+    run(NODE + ' "' + path.join(ROOT, 'scripts/generate-report.js') + '" "' + newmanFixtureFile + '" "' + out + '" --history');
+    assert(fs.existsSync(out), 'report not written to the positional path');
+    assert(!fs.existsSync(path.join(process.cwd(), '--history')), 'created a file named "--history"');
+});
+
+test('report renders a Trends section only when --history is given', function() {
+    const hist = path.join(TMP, 'report-history.jsonl');
+    fs.writeFileSync(hist,
+        JSON.stringify({ passRate: 90, p95: 300 }) + '\n' +
+        JSON.stringify({ passRate: 95, p95: 250 }) + '\n', 'utf8');
+
+    const withOut = path.join(TMP, 'report-trends.html');
+    run(NODE + ' "' + path.join(ROOT, 'scripts/generate-report.js') + '" "' + newmanFixtureFile + '" "' + withOut + '" --history "' + hist + '"');
+    const withHtml = fs.readFileSync(withOut, 'utf8');
+    assertContains(withHtml, 'Trends',      'missing Trends section');
+    assertContains(withHtml, 'class="spark"', 'missing sparkline');
+    assertContains(withHtml, '95%',         'missing latest pass rate');
+
+    // Without the flag the report must be unchanged from before this feature.
+    const plain = fs.readFileSync(reportOut, 'utf8');
+    assert(plain.indexOf('class="spark"') === -1, 'Trends leaked into a report without --history');
+});
+
+test('report survives a malformed history file', function() {
+    const bad = path.join(TMP, 'report-bad-history.jsonl');
+    fs.writeFileSync(bad, '{not json\n' + JSON.stringify({ passRate: 100, p95: 10 }) + '\n', 'utf8');
+    const out = path.join(TMP, 'report-badhist.html');
+    run(NODE + ' "' + path.join(ROOT, 'scripts/generate-report.js') + '" "' + newmanFixtureFile + '" "' + out + '" --history "' + bad + '"');
+    assertContains(fs.readFileSync(out, 'utf8'), 'Trends', 'good lines should still render');
+});
+
 test('HTML has no external <script> or <link rel=stylesheet>', function() {
     const html = fs.readFileSync(reportOut, 'utf8');
     // Allow anchor hrefs to GitHub, forbid external JS/CSS asset loads
@@ -791,6 +888,132 @@ fs.writeFileSync(openapiYamlFile, [
     '        id:',
     '          type: integer'
 ].join('\n'));
+
+// A spec with everything the negative generator keys off: global security, an
+// operation that opts out of it, a path parameter, a required body, a required
+// query parameter, and a mix of declared and undeclared error statuses.
+const openapiNegFile = path.join(TMP, 'api-neg.json');
+const openapiNegOut  = path.join(TMP, 'api-neg-collection.json');
+fs.writeFileSync(openapiNegFile, JSON.stringify({
+    openapi: '3.0.0',
+    info: { title: 'Neg API', version: '1.0.0' },
+    servers: [{ url: 'https://api.example.com' }],
+    security: [{ bearerAuth: [] }],
+    paths: {
+        '/products': {
+            get: {
+                tags: ['products'], summary: 'List',
+                parameters: [
+                    { name: 'page', in: 'query', required: true },
+                    { name: 'q',    in: 'query', required: false },
+                ],
+                responses: { 200: {}, 400: {}, 401: {} },
+            },
+            post: {
+                tags: ['products'], summary: 'Create',
+                requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+                responses: { 201: {}, 422: {} },
+            },
+        },
+        '/products/{id}': {
+            get: { tags: ['products'], summary: 'Get', responses: { 200: {}, 404: {} } },
+        },
+        '/health': {
+            get: { tags: ['ops'], summary: 'Health', security: [], responses: { 200: {} } },
+        },
+    },
+}), 'utf8');
+
+function negItems() {
+    const col = JSON.parse(fs.readFileSync(openapiNegOut, 'utf8'));
+    const out = [];
+    col.item.filter(function(f) { return /negative/.test(f.name); })
+           .forEach(function(f) { f.item.forEach(function(i) { out.push(i); }); });
+    return out;
+}
+function expectedOf(item) {
+    const src = item.event.filter(function(e) { return e.listen === 'test'; })[0].script.exec.join('\n');
+    return JSON.parse(src.match(/const override = ([\s\S]*?);\n/)[1]).expectedStatus;
+}
+
+test('openapi without --negative generates no negative folder', function() {
+    run(NODE + ' "' + path.join(ROOT, 'scripts/openapi-import.js') + '" "' + openapiNegFile + '" -o "' + openapiNegOut + '"');
+    assert(negItems().length === 0, 'negative tests appeared without the flag');
+});
+
+test('openapi --negative handles optional auth, path-level params and Swagger 2 body', function() {
+    // Three edge cases a second review round found:
+    //  1. security [{}, {scheme}] means auth is OPTIONAL — a no-auth test would
+    //     fail against a correct API, so none should be generated.
+    //  2. parameters declared once on the path item apply to every method.
+    //  3. Swagger 2.0 declares a required body as a param with in:'body'.
+    const spec = path.join(TMP, 'openapi-edge.json');
+    fs.writeFileSync(spec, JSON.stringify({
+        openapi: '3.0.0', info: { title: 'Edge', version: '1' }, servers: [{ url: 'https://api.x' }],
+        paths: {
+            '/opt': { get: { tags: ['o'], summary: 'OptAuth', security: [{}, { bearer: [] }], responses: { 200: {}, 401: {} } } },
+            '/items': { parameters: [{ name: 'tenant', in: 'query', required: true }],
+                        get: { tags: ['i'], summary: 'PathQuery', responses: { 200: {}, 400: {} } } },
+        },
+    }), 'utf8');
+    const out = path.join(TMP, 'openapi-edge-col.json');
+    run(NODE + ' "' + path.join(ROOT, 'scripts/openapi-import.js') + '" "' + spec + '" -o "' + out + '" --negative');
+    const dump = fs.readFileSync(out, 'utf8');
+    assert(dump.indexOf('OptAuth — no auth') === -1, 'optional auth wrongly produced a no-auth test');
+    assert(dump.indexOf('missing tenant') !== -1, 'path-level required query param produced no missing-param test');
+
+    const sw2 = path.join(TMP, 'swagger2.json');
+    fs.writeFileSync(sw2, JSON.stringify({
+        swagger: '2.0', info: { title: 'S2', version: '1' }, host: 'api.x', basePath: '/',
+        paths: { '/create': { post: { tags: ['c'], summary: 'Make',
+            parameters: [{ name: 'body', in: 'body', required: true, schema: { type: 'object' } }],
+            responses: { 201: {}, 400: {} } } } },
+    }), 'utf8');
+    const sw2out = path.join(TMP, 'swagger2-col.json');
+    run(NODE + ' "' + path.join(ROOT, 'scripts/openapi-import.js') + '" "' + sw2 + '" -o "' + sw2out + '" --negative');
+    assert(fs.readFileSync(sw2out, 'utf8').indexOf('empty body') !== -1, 'Swagger 2.0 required body produced no empty-body test');
+});
+
+test('openapi --negative generates only triggerable cases, using declared statuses', function() {
+    run(NODE + ' "' + path.join(ROOT, 'scripts/openapi-import.js') + '" "' + openapiNegFile + '" -o "' + openapiNegOut + '" --negative');
+    const items = negItems();
+    const names = items.map(function(i) { return i.name; });
+
+    // /health opts out of security with `security: []` — no auth test for it.
+    assert(!names.some(function(n) { return /^Health/.test(n); }), '/health got a negative test despite security: []');
+
+    const byName = {};
+    items.forEach(function(i) { byName[i.name] = i; });
+
+    assert(byName['List — no auth'],        'missing no-auth case');
+    assert(byName['List — missing page'],   'missing required-query case');
+    assert(byName['Create — empty body'],   'missing empty-body case');
+    assert(byName['Get — unknown id'],      'missing unknown-id case');
+
+    // Declared statuses win; undeclared falls back to the conventional pair.
+    assert(JSON.stringify(expectedOf(byName['List — no auth']))      === '[401]',      'declared 401 not used');
+    assert(JSON.stringify(expectedOf(byName['Create — no auth']))    === '[401,403]',  'undeclared case should fall back');
+    assert(JSON.stringify(expectedOf(byName['Create — empty body'])) === '[422]',      'declared 422 not used');
+    assert(JSON.stringify(expectedOf(byName['Get — unknown id']))    === '[404]',      'declared 404 not used');
+});
+
+test('a negative test differs from the happy path by exactly one mutation', function() {
+    run(NODE + ' "' + path.join(ROOT, 'scripts/openapi-import.js') + '" "' + openapiNegFile + '" -o "' + openapiNegOut + '" --negative');
+    const byName = {};
+    negItems().forEach(function(i) { byName[i.name] = i; });
+
+    // Withholding auth must not ALSO drop the required query parameter, or the
+    // server can answer 400 and the test proves nothing about auth.
+    const noAuth = byName['List — no auth'];
+    assert(/page=/.test(noAuth.request.url.raw), 'no-auth case lost the required query parameter: ' + noAuth.request.url.raw);
+    const pre = noAuth.event.filter(function(e) { return e.listen === 'prerequest'; })[0].script.exec.join('\n');
+    assert(/"enabled":\s*false/.test(pre), 'no-auth case does not actually disable auth');
+
+    // The missing-parameter case drops only the one it names.
+    const miss = byName['List — missing page'];
+    assert(!/page=/.test(miss.request.url.raw), 'missing-page case still sends page');
+    assert(/q=/.test(miss.request.url.raw),     'missing-page case dropped an unrelated optional parameter');
+});
 
 test('openapi imports YAML into a collection', function() {
     run(NODE + ' "' + path.join(ROOT, 'scripts/openapi-import.js') + '" "' + openapiYamlFile + '" -o "' + openapiOutFile + '"');
@@ -1189,6 +1412,118 @@ console.log('\n⑰ mock.js');
 
 const mock = require(path.join(ROOT, 'scripts/mock.js'));
 
+// ─── Plugins: docs and gallery ────────────────────────────────────────────────
+
+function pluginFiles() {
+    const dirs = [path.join(ROOT, 'docs/plugins'), path.join(ROOT, 'gallery/plugins')];
+    const out  = [];
+    dirs.forEach(function(d) {
+        if (!fs.existsSync(d)) return;
+        fs.readdirSync(d).filter(function(f) { return f.endsWith('.js'); })
+          .forEach(function(f) { out.push(path.join(d, f)); });
+    });
+    return out;
+}
+
+function pluginReadmes() {
+    return [path.join(ROOT, 'docs/plugins/README.md'), path.join(ROOT, 'gallery/plugins/README.md')]
+        .filter(function(p) { return fs.existsSync(p); });
+}
+
+// The fenced code blocks inside a README — where a copy-paste example lives, and
+// where a wrong ctx.* member is as harmful as in a shipped .js file.
+function readmeCodeBlocks(file) {
+    const src = fs.readFileSync(file, 'utf8');
+    const blocks = [];
+    const re = /```[a-z]*\n([\s\S]*?)```/g;
+    let m;
+    while ((m = re.exec(src)) !== null) blocks.push(m[1]);
+    return blocks;
+}
+
+test('plugins only touch ctx.api members the extractor actually provides', function() {
+    // The shipped slack-notifier read ctx.api.status and ctx.api.responseTime. The
+    // extractor REPLACES ctx.api wholesale with { get, find, all, count, save }, so
+    // both were undefined — and because the notifier only fires when it thinks
+    // something failed, it never sent a single notification. Status and timing live
+    // on ctx.response.
+    const allowed = ['get', 'find', 'all', 'count', 'save'];
+    const bad = [];
+    const scan = function(label, src) {
+        (src.match(/ctx\.api\.(\w+)/g) || []).forEach(function(m) {
+            const prop = m.split('.')[2];
+            if (allowed.indexOf(prop) === -1) bad.push(label + ' → ' + m);
+        });
+    };
+    // The shipped .js plugins…
+    pluginFiles().forEach(function(f) { scan(path.basename(f), fs.readFileSync(f, 'utf8')); });
+    // …and every copy-paste example inside the READMEs. The 'write your own'
+    // example read ctx.api.status (which does not exist); only scanning .js files
+    // let it through. The prose table describing ctx.api itself is not a code
+    // block, so it is not scanned.
+    pluginReadmes().forEach(function(r) {
+        readmeCodeBlocks(r).forEach(function(b) { scan(path.basename(path.dirname(r)) + '/README', b); });
+    });
+    assert(bad.length === 0, 'a plugin or a doc example uses a ctx.api member that does not exist: ' + bad.join(', '));
+});
+
+test('plugins read assertion results by the field the engine writes', function() {
+    // Result entries carry `ok`, never `passed`. Filtering on `passed === false`
+    // silently yields an empty list rather than an error.
+    const bad = [];
+    pluginFiles().forEach(function(f) {
+        const src = fs.readFileSync(f, 'utf8');
+        if (/\.passed\b/.test(src)) bad.push(path.basename(f));
+    });
+    assert(bad.length === 0, 'plugin reads r.passed, but result entries use r.ok: ' + bad.join(', '));
+});
+
+test('plugin registration examples use the descriptor key the engine reads', function() {
+    // The engine does `if (!p.post) return;` then `pm.collectionVariables.get(p.post)`.
+    // The docs showed `{ name, code: <the code itself> }`, which registers a plugin
+    // that silently never runs. This lived in TWO places — the README examples and
+    // the install snippet in each plugin file's own header comment — so both are
+    // scanned; fixing only the READMEs left the headers broken.
+    const bad = [];
+    pluginReadmes().concat(pluginFiles()).forEach(function(f) {
+        const src = fs.readFileSync(f, 'utf8');
+        if (/\bcode:\s*pm\.collectionVariables/.test(src)) {
+            bad.push(path.relative(ROOT, f));
+        }
+    });
+    assert(bad.length === 0, 'registers a plugin with `code:` (engine reads `post:`): ' + bad.join(', '));
+});
+
+test('pii-redactor Luhn-checks the matched card, not every digit in the field', function() {
+    // A card next to another number ("order 4111111111111111 x3") must still be
+    // caught: the checksum runs over the matched substring, not value-wide digits,
+    // which would fold the trailing 3 in, fail Luhn, and leak the card.
+    const src = fs.readFileSync(path.join(ROOT, 'gallery/plugins/pii-redactor.js'), 'utf8');
+    // Static guard: classify() must Luhn the match (m[0]/matched), never the raw value.
+    assert(!/luhnOk\(value\.replace/.test(src),
+        'classify() still Luhn-checks the whole field value, not the matched card');
+    assert(/luhnOk\(m\[0\]\.replace/.test(src),
+        'classify() should Luhn-check the matched substring m[0]');
+});
+
+test('the gallery README lists exactly the config keys its plugins read', function() {
+    const readme = path.join(ROOT, 'gallery/plugins/README.md');
+    if (!fs.existsSync(readme)) return;
+    const doc = fs.readFileSync(readme, 'utf8');
+    fs.readdirSync(path.join(ROOT, 'gallery/plugins'))
+      .filter(function(f) { return f.endsWith('.js') && f !== '_template.js'; })
+      .forEach(function(f) {
+          const src  = fs.readFileSync(path.join(ROOT, 'gallery/plugins', f), 'utf8');
+          const keys = Array.from(new Set((src.match(/cfg\.(\w+)/g) || []).map(function(m) { return m.slice(4); })));
+          keys.forEach(function(k) {
+              assert(doc.indexOf('`' + k + '`') !== -1,
+                  f + ' reads cfg.' + k + ' but the README does not list it — a user with strictMode will fail the run');
+          });
+      });
+});
+
+
+
 // ─── init --demo ──────────────────────────────────────────────────────────────
 
 test('init --demo scaffolds a demo that mock can actually serve', function() {
@@ -1471,6 +1806,37 @@ test('CLI exposes doctor: --help lists it and the subcommand delegates (exit 0)'
 console.log('\n⑲ bench.js');
 
 const bench = require(path.join(ROOT, 'scripts/bench.js'));
+
+test('bench module loads without the newman package (lazy require)', function() {
+    // bench requires the newman MODULE, which is a devDependency a consumer may
+    // not have. Requiring bench.js for its exports must not need newman — it is
+    // loaded lazily at first run, with a friendly message on failure.
+    const src = fs.readFileSync(path.join(ROOT, 'scripts/bench.js'), 'utf8');
+    assert(!/^const newman = require\('newman'\)/m.test(src), 'newman is still required at module top level');
+    assert(/needs the newman package/.test(src), 'no friendly message for a missing newman');
+    assert(typeof bench.parseArgs === 'function', 'exports must be reachable without newman');
+});
+
+test('doctor adapts its rebuild hint to whether engine/src is present', function() {
+    // In the published package engine/src is absent, so `npm run build:emit`
+    // cannot work — the hint must say reinstall instead. Static guard: the
+    // conditional exists and both branches are worded.
+    const src = fs.readFileSync(path.join(ROOT, 'scripts/doctor.js'), 'utf8');
+    assert(/CAN_REBUILD\s*=\s*fs\.existsSync/.test(src), 'doctor no longer gates the hint on engine/src presence');
+    assert(/reinstall Hephaestus/.test(src), 'no reinstall hint for the no-source case');
+    // Every remaining build:emit reference must be routed through REBUILD_HINT,
+    // i.e. it appears on a line that also references REBUILD_HINT or its
+    // definition — never as a bare hint string handed to fail()/warn().
+    const offending = src.split('\n').filter(function(line) {
+        if (line.indexOf('build:emit') === -1) return false;
+        if (line.indexOf('REBUILD_HINT') !== -1) return false;        // the definition + all uses
+        if (line.indexOf('rebuild from engine/src') !== -1) return false; // the ?-branch of the definition
+        if (line.trim().indexOf('//') === 0) return false;            // comments
+        if (line.indexOf(' * ') !== -1) return false;                 // docblock
+        return /fail\(|warn\(|'[^']*build:emit/.test(line);           // a hint string in a call
+    });
+    assert(offending.length === 0, 'a bare build:emit hint remains: ' + offending.join(' | '));
+});
 const BENCH = path.join(ROOT, 'scripts/bench.js');
 
 test('bench parseArgs: defaults and flag parsing', function() {
@@ -1517,6 +1883,23 @@ test('bench --max-ms fails loud on a non-numeric budget (never silently disables
 console.log('\n㉑ panel.js');
 
 const panel = require(path.join(ROOT, 'scripts/panel.js'));
+
+test('panel docsLinks lists only docs that exist, else points online', function() {
+    // The published package does not ship docs/, so the panel must not advertise
+    // five links that all 404. docsLinks() filters to files on disk.
+    const links = panel.docsLinks();
+    const have  = panel.availableDocs();
+    if (have.length === 0) {
+        assert(links.indexOf(panel.ONLINE_DOCS) !== -1, 'no local docs but no online fallback link');
+    } else {
+        // Every advertised /docs/<x> must be a page that exists on disk.
+        const advertised = (links.match(/\/docs\/([\w.-]+)/g) || []).map(function(m) { return m.slice('/docs/'.length); });
+        advertised.forEach(function(k) {
+            assert(have.indexOf(k) !== -1, 'panel advertises /docs/' + k + ' which is not on disk');
+        });
+        assert(advertised.length === have.length, 'advertised link count != on-disk doc count');
+    }
+});
 
 test('panel parseHistory skips malformed lines instead of blanking the view', function() {
     const runs = panel.parseHistory('{"ts":"t1","passRate":90}\nBROKEN\n\n{"ts":"t2"}\n');
