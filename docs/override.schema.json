@@ -14,7 +14,6 @@
       "type": "string",
       "description": "Non-engine annotation used in the shipped setup/defaults.json template. Delete before copying into collectionVariables['hephaestus.defaults']."
     },
-
     "baseUrl": {
       "type": "string",
       "description": "API base address; protocol is prepended from defaultProtocol if omitted. Exposed as {{baseUrl}}."
@@ -22,9 +21,11 @@
     "defaultProtocol": {
       "type": "string",
       "description": "Protocol prepended to baseUrl when none is given (default: https).",
-      "examples": ["https", "http"]
+      "examples": [
+        "https",
+        "http"
+      ]
     },
-
     "auth": {
       "type": "object",
       "description": "Authentication plugin. Disabled unless enabled:true.",
@@ -37,7 +38,14 @@
         "type": {
           "type": "string",
           "description": "Authentication strategy.",
-          "enum": ["none", "basic", "bearer", "headers", "variables", "oauth2cc"]
+          "enum": [
+            "none",
+            "basic",
+            "bearer",
+            "headers",
+            "variables",
+            "oauth2cc"
+          ]
         },
         "user": {
           "type": "string",
@@ -54,27 +62,42 @@
         "fields": {
           "type": "object",
           "description": "For type headers: header name -> value. For type variables: pm.variable name -> value.",
-          "additionalProperties": { "type": "string" }
+          "additionalProperties": {
+            "type": "string"
+          }
         },
         "oauth2cc": {
           "type": "object",
           "description": "OAuth2 client_credentials grant (type: oauth2cc). Token cached in collection vars and auto-refreshed.",
           "additionalProperties": true,
           "properties": {
-            "tokenUrl": { "type": "string", "description": "Authorization server token endpoint." },
-            "clientId": { "type": "string", "description": "OAuth2 client_id." },
-            "clientSecret": { "type": "string", "description": "OAuth2 client_secret. If omitted, falls back to the OAUTH_CLIENT_SECRET environment variable." },
-            "scope": { "type": "string", "description": "Requested scope (optional)." },
+            "tokenUrl": {
+              "type": "string",
+              "description": "Authorization server token endpoint."
+            },
+            "clientId": {
+              "type": "string",
+              "description": "OAuth2 client_id."
+            },
+            "clientSecret": {
+              "type": "string",
+              "description": "OAuth2 client_secret. If omitted, falls back to the OAUTH_CLIENT_SECRET environment variable."
+            },
+            "scope": {
+              "type": "string",
+              "description": "Requested scope (optional)."
+            },
             "extraParams": {
               "type": "object",
               "description": "Extra form-body parameters added to the token request.",
-              "additionalProperties": { "type": "string" }
+              "additionalProperties": {
+                "type": "string"
+              }
             }
           }
         }
       }
     },
-
     "dateFormat": {
       "type": "string",
       "description": "Format for the built-in date variables and dates expressions (tokens: yyyy MM dd hh mm ss nnn tt00). Default: yyyy-MM-dd."
@@ -82,17 +105,23 @@
     "dates": {
       "type": "object",
       "description": "Custom date variables: variable name -> expression (today, yesterday, tomorrow, startOfMonth, endOfMonth, startOfNextMonth, endOfNextMonth, startOfPrevMonth, endOfPrevMonth, startOfYear, endOfYear, today+7d / today-1m / today+1y ...).",
-      "additionalProperties": { "type": "string" }
+      "additionalProperties": {
+        "type": "string"
+      }
     },
-
     "maxResponseTime": {
       "type": "number",
       "description": "Maximum allowed response time in milliseconds; fails the test if slower."
     },
     "expectedStatus": {
-      "type": ["integer", "array"],
+      "type": [
+        "integer",
+        "array"
+      ],
       "description": "Expected HTTP status code(s). A number or a list; response passes if its code is included. Drives negative testing. Default: [200, 201, 202].",
-      "items": { "type": "integer" }
+      "items": {
+        "type": "integer"
+      }
     },
     "expectEmpty": {
       "type": "boolean",
@@ -101,24 +130,38 @@
     "contentType": {
       "type": "string",
       "description": "Expected response content type; asserted as a substring of the response Content-Type, so 'json' or a full MIME like 'application/json' both work.",
-      "examples": ["json", "xml", "text", "application/json"]
+      "examples": [
+        "json",
+        "xml",
+        "text",
+        "application/json"
+      ]
     },
-
     "snapshot": {
       "type": "object",
       "description": "Response snapshot regression. Disabled unless enabled:true (or record:true).",
       "additionalProperties": true,
       "properties": {
-        "enabled": { "type": "boolean", "description": "Enable snapshot comparison." },
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable snapshot comparison."
+        },
         "storage": {
           "type": "string",
           "description": "Snapshot backend. postman-api is unavailable offline and falls back to collection-vars.",
-          "enum": ["collection-vars", "postman-api"]
+          "enum": [
+            "collection-vars",
+            "postman-api"
+          ]
         },
         "mode": {
           "type": "string",
           "description": "strict = full deep-equal; non-strict = every baseline key must be present in the current response; structural = compare shape only (leaf path -> type), ignoring values. Default: non-strict.",
-          "enum": ["strict", "non-strict", "structural"]
+          "enum": [
+            "strict",
+            "non-strict",
+            "structural"
+          ]
         },
         "autoSaveMissing": {
           "type": "boolean",
@@ -127,12 +170,16 @@
         "checkPaths": {
           "type": "array",
           "description": "Only these JSONPath-lite paths are compared (shrinks stored snapshot).",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "ignorePaths": {
           "type": "array",
           "description": "Paths excluded from comparison (e.g. volatile timestamps/ids).",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "record": {
           "type": "boolean",
@@ -144,40 +191,53 @@
       "type": "boolean",
       "description": "Top-level alias for snapshot.record: force-overwrite the snapshot baseline on the next run."
     },
-
     "schema": {
       "type": "object",
       "description": "JSON Schema validation of the parsed response via tv4 (draft-04/07). Disabled unless enabled:true.",
       "additionalProperties": true,
       "properties": {
-        "enabled": { "type": "boolean", "description": "Enable schema validation." },
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable schema validation."
+        },
         "definition": {
-          "type": ["object", "null"],
+          "type": [
+            "object",
+            "null"
+          ],
           "description": "The JSON Schema to validate the response against."
         }
       }
     },
-
     "securityAudit": {
       "type": "object",
       "description": "Passive response security audit. Disabled unless enabled:true. Providing a list replaces the corresponding built-in default.",
       "additionalProperties": true,
       "properties": {
-        "enabled": { "type": "boolean", "description": "Enable the security audit." },
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable the security audit."
+        },
         "requireHeaders": {
           "type": "array",
           "description": "Protective headers that must be present (default: HSTS, CSP, X-Frame-Options, X-Content-Type-Options).",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "forbidHeaders": {
           "type": "array",
           "description": "Server-disclosure headers that must be absent (default: server, x-powered-by, x-aspnet-version).",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "forbidBodyPatterns": {
           "type": "array",
           "description": "Substrings that must NOT appear in the body (leaked errors / stack traces).",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "checkCors": {
           "type": "boolean",
@@ -189,16 +249,19 @@
         }
       }
     },
-
     "secrets": {
       "type": "array",
       "description": "Key-name fragments whose values are masked in logs (substring, case-insensitive).",
-      "items": { "type": "string" }
+      "items": {
+        "type": "string"
+      }
     },
     "envRequired": {
       "type": "array",
       "description": "Environment variables that must be set (non-empty) before the request is sent.",
-      "items": { "type": "string" }
+      "items": {
+        "type": "string"
+      }
     },
     "ci": {
       "type": "boolean",
@@ -207,43 +270,76 @@
     "locale": {
       "type": "string",
       "description": "Engine output language. Default: ru.",
-      "enum": ["ru", "en"]
+      "enum": [
+        "ru",
+        "en"
+      ]
     },
     "logLevel": {
       "type": "string",
       "description": "Console verbosity. Default: normal.",
-      "enum": ["silent", "minimal", "normal", "verbose"]
+      "enum": [
+        "silent",
+        "minimal",
+        "normal",
+        "verbose"
+      ]
     },
     "softFail": {
       "type": "boolean",
       "description": "Global soft mode: functional assertion failures are logged as warnings instead of failing the run."
     },
-
     "randomData": {
       "type": "object",
       "description": "Generate pm.variables before the request: variable name -> generator (random.uuid, random.email, random.bool, random.str, random.str:N, random.int:min:max, random.float:min:max:dec, random.date) or a literal string.",
-      "additionalProperties": { "type": "string" }
+      "additionalProperties": {
+        "type": "string"
+      }
     },
-
     "keysToFind": {
       "type": "array",
       "description": "Assert fields exist (and optionally match a value) at the given JSONPath-lite paths.",
       "items": {
         "anyOf": [
-          { "type": "string", "description": "Shorthand: a path that must exist (name = path)." },
+          {
+            "type": "string",
+            "description": "Shorthand: a path that must exist (name = path)."
+          },
           {
             "type": "object",
             "additionalProperties": true,
-            "required": ["path"],
+            "required": [
+              "path"
+            ],
             "properties": {
-              "path": { "type": "string", "description": "JSONPath-lite path to the field." },
-              "name": { "type": "string", "description": "Label for the test (defaults to path)." },
-              "expect": { "description": "Expected value (deep-equal) or a JS predicate function (override only)." },
-              "transform": { "description": "JS function(s) applied to the value before checking (override only)." },
-              "filter": { "description": "JS function(s) filtering an array value (override only)." },
-              "ignoreCase": { "type": "boolean", "description": "Lowercase strings deeply before comparing." },
-              "soft": { "type": "boolean", "description": "Do not fail if the field is missing; warn only." },
-              "when": { "description": "Guard: run the assertion only when this is truthy (JS expression string or function)." }
+              "path": {
+                "type": "string",
+                "description": "JSONPath-lite path to the field."
+              },
+              "name": {
+                "type": "string",
+                "description": "Label for the test (defaults to path)."
+              },
+              "expect": {
+                "description": "Expected value (deep-equal) or a JS predicate function (override only)."
+              },
+              "transform": {
+                "description": "JS function(s) applied to the value before checking (override only)."
+              },
+              "filter": {
+                "description": "JS function(s) filtering an array value (override only)."
+              },
+              "ignoreCase": {
+                "type": "boolean",
+                "description": "Lowercase strings deeply before comparing."
+              },
+              "soft": {
+                "type": "boolean",
+                "description": "Do not fail if the field is missing; warn only."
+              },
+              "when": {
+                "description": "Guard: run the assertion only when this is truthy (JS expression string or function)."
+              }
             }
           }
         ]
@@ -256,16 +352,33 @@
         "type": "object",
         "additionalProperties": true,
         "properties": {
-          "path": { "type": "string", "description": "JSONPath-lite path to the value." },
-          "name": { "type": "string", "description": "Variable name to write." },
+          "path": {
+            "type": "string",
+            "description": "JSONPath-lite path to the value."
+          },
+          "name": {
+            "type": "string",
+            "description": "Variable name to write."
+          },
           "scope": {
             "type": "string",
             "description": "Variable scope. Default: collection.",
-            "enum": ["collection", "environment", "local"]
+            "enum": [
+              "collection",
+              "environment",
+              "local"
+            ]
           },
-          "transform": { "description": "JS function(s) applied before saving (override only)." },
-          "filter": { "description": "JS function(s) filtering an array value (override only)." },
-          "ignoreCase": { "type": "boolean", "description": "Lowercase strings deeply before saving." }
+          "transform": {
+            "description": "JS function(s) applied before saving (override only)."
+          },
+          "filter": {
+            "description": "JS function(s) filtering an array value (override only)."
+          },
+          "ignoreCase": {
+            "type": "boolean",
+            "description": "Lowercase strings deeply before saving."
+          }
         }
       }
     },
@@ -276,37 +389,68 @@
         "type": "object",
         "additionalProperties": true,
         "properties": {
-          "path": { "type": "string", "description": "JSONPath-lite path to the array (or object)." },
-          "expected": { "type": "integer", "description": "Exact expected count (omit to just report the number)." },
+          "path": {
+            "type": "string",
+            "description": "JSONPath-lite path to the array (or object)."
+          },
+          "expected": {
+            "type": "integer",
+            "description": "Exact expected count (omit to just report the number)."
+          },
           "type": {
             "type": "string",
             "description": "Count array elements or object entries. Default: array.",
-            "enum": ["array", "object"]
+            "enum": [
+              "array",
+              "object"
+            ]
           },
-          "filter": { "description": "JS predicate to filter items before counting (override only)." },
-          "transformBefore": { "description": "JS map applied to each item before filtering (override only)." },
-          "transformAfter": { "description": "JS function applied to the array after filtering (override only)." },
-          "ignoreCase": { "type": "boolean", "description": "Lowercase strings deeply before filtering." }
+          "filter": {
+            "description": "JS predicate to filter items before counting (override only)."
+          },
+          "transformBefore": {
+            "description": "JS map applied to each item before filtering (override only)."
+          },
+          "transformAfter": {
+            "description": "JS function applied to the array after filtering (override only)."
+          },
+          "ignoreCase": {
+            "type": "boolean",
+            "description": "Lowercase strings deeply before filtering."
+          }
         }
       }
     },
     "assertions": {
       "type": "object",
       "description": "Shorthand assertion map: field path -> operators. All operators combine.",
-      "additionalProperties": { "$ref": "#/definitions/fieldRule" }
+      "additionalProperties": {
+        "$ref": "#/definitions/fieldRule"
+      }
     },
     "assertEach": {
       "type": "object",
       "description": "Validate every element of an array against a set of per-field rules.",
       "additionalProperties": true,
       "properties": {
-        "path": { "type": "string", "description": "JSONPath-lite path to the array." },
-        "minCount": { "type": "integer", "description": "Minimum number of elements (optional)." },
-        "maxCount": { "type": "integer", "description": "Maximum number of elements (optional)." },
+        "path": {
+          "type": "string",
+          "description": "JSONPath-lite path to the array."
+        },
+        "minCount": {
+          "type": "integer",
+          "description": "Minimum number of elements (optional)."
+        },
+        "maxCount": {
+          "type": "integer",
+          "description": "Maximum number of elements (optional)."
+        },
         "rules": {
           "type": "object",
           "description": "Per-element rules: field name -> operators (same operators as assertions).",
-          "additionalProperties": { "$ref": "#/definitions/fieldRule" }
+          "additionalProperties": {
+            "$ref": "#/definitions/fieldRule"
+          }
         }
       }
     },
@@ -315,7 +459,16 @@
       "description": "One-line structural type checks: field path -> expected type.",
       "additionalProperties": {
         "type": "string",
-        "enum": ["string", "number", "boolean", "object", "array", "null", "any", "absent"]
+        "enum": [
+          "string",
+          "number",
+          "boolean",
+          "object",
+          "array",
+          "null",
+          "any",
+          "absent"
+        ]
       }
     },
     "assertOrder": {
@@ -323,17 +476,30 @@
       "description": "Assert an array is sorted by a field.",
       "additionalProperties": true,
       "properties": {
-        "path": { "type": "string", "description": "JSONPath-lite path to the array." },
-        "by": { "type": "string", "description": "Field to compare by (dot path within each element)." },
+        "path": {
+          "type": "string",
+          "description": "JSONPath-lite path to the array."
+        },
+        "by": {
+          "type": "string",
+          "description": "Field to compare by (dot path within each element)."
+        },
         "direction": {
           "type": "string",
           "description": "Sort direction. Default: asc.",
-          "enum": ["asc", "desc"]
+          "enum": [
+            "asc",
+            "desc"
+          ]
         },
         "type": {
           "type": "string",
           "description": "Comparison type. Default: string.",
-          "enum": ["string", "number", "date"]
+          "enum": [
+            "string",
+            "number",
+            "date"
+          ]
         }
       }
     },
@@ -342,9 +508,18 @@
       "description": "Assert all array elements are unique (by value, or by a field).",
       "additionalProperties": true,
       "properties": {
-        "path": { "type": "string", "description": "JSONPath-lite path to the array." },
-        "by": { "type": "string", "description": "Field to dedupe by (optional; whole element if omitted)." },
-        "label": { "type": "string", "description": "Label for the test (optional)." }
+        "path": {
+          "type": "string",
+          "description": "JSONPath-lite path to the array."
+        },
+        "by": {
+          "type": "string",
+          "description": "Field to dedupe by (optional; whole element if omitted)."
+        },
+        "label": {
+          "type": "string",
+          "description": "Label for the test (optional)."
+        }
       }
     },
     "assertHeaders": {
@@ -353,13 +528,29 @@
       "items": {
         "type": "object",
         "additionalProperties": true,
-        "required": ["name"],
+        "required": [
+          "name"
+        ],
         "properties": {
-          "name": { "type": "string", "description": "Header name (also the default label)." },
-          "label": { "type": "string", "description": "Label for the test (optional)." },
-          "expect": { "description": "Expected value: a substring the header must contain, or a JS predicate (override only)." },
-          "equals": { "type": "string", "description": "Exact header value match." },
-          "absent": { "type": "boolean", "description": "Assert the header is absent." }
+          "name": {
+            "type": "string",
+            "description": "Header name (also the default label)."
+          },
+          "label": {
+            "type": "string",
+            "description": "Label for the test (optional)."
+          },
+          "expect": {
+            "description": "Expected value: a substring the header must contain, or a JS predicate (override only)."
+          },
+          "equals": {
+            "type": "string",
+            "description": "Exact header value match."
+          },
+          "absent": {
+            "type": "boolean",
+            "description": "Assert the header is absent."
+          }
         }
       }
     },
@@ -369,40 +560,165 @@
       "additionalProperties": true,
       "properties": {
         "statuses": {
-          "type": ["integer", "array"],
+          "type": [
+            "integer",
+            "array"
+          ],
           "description": "Status code(s) that trigger a retry.",
-          "items": { "type": "integer" }
+          "items": {
+            "type": "integer"
+          }
         },
-        "maxRetries": { "type": "integer", "description": "Maximum retries. Default: 3." }
+        "maxRetries": {
+          "type": "integer",
+          "description": "Maximum retries. Default: 3."
+        }
       }
+    },
+    "strictMode": {
+      "type": "boolean",
+      "description": "Fail the run when an override contains a key the engine does not know. Off by default: unknown keys only warn."
+    },
+    "extraKeys": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Key names to treat as known even under strictMode. This is how a third-party plugin allowlists its own config, e.g. the gallery plugins in gallery/plugins/."
+    },
+    "maxBytes": {
+      "type": "number",
+      "description": "Response size budget in bytes. Values <= 0 disable the check."
+    },
+    "graphql": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "noErrors": {
+              "type": "boolean",
+              "description": "errors[] must be absent or empty"
+            },
+            "errorCount": {
+              "type": "number",
+              "description": "exactly N errors — for negative tests"
+            },
+            "errorContains": {
+              "type": "string",
+              "description": "at least one error message contains this substring"
+            },
+            "dataShape": {
+              "type": "object",
+              "description": "path -> type checks applied under data.*"
+            }
+          },
+          "additionalProperties": false
+        }
+      ],
+      "description": "GraphQL contract checks. GraphQL answers 200 even when the body carries errors[], so status alone proves nothing. `true` is shorthand for { noErrors: true }."
+    },
+    "slackUrl": {
+      "type": "string",
+      "description": "Incoming-webhook URL for docs/plugins/slack-notifier.js. Read off ctx.config by that plugin, not by the engine."
+    },
+    "slackOnlyFailures": {
+      "type": "boolean",
+      "description": "slack-notifier: notify only when something failed (default true)."
+    },
+    "teamsUrl": {
+      "type": "string",
+      "description": "Incoming-webhook URL for docs/plugins/teams-notifier.js."
+    },
+    "teamsOnlyFailures": {
+      "type": "boolean",
+      "description": "teams-notifier: notify only when something failed (default true)."
+    },
+    "slaMsLimit": {
+      "type": "number",
+      "description": "Latency ceiling asserted by docs/plugins/custom-assertions.js (default 3000)."
+    },
+    "checkCors": {
+      "type": "boolean",
+      "description": "custom-assertions: assert an Access-Control-Allow-Origin header is present."
+    },
+    "assertJsonApi": {
+      "type": "boolean",
+      "description": "custom-assertions: assert the body follows the JSON:API envelope."
     }
   },
-
   "definitions": {
     "fieldRule": {
       "type": "object",
       "description": "Assertion operators for a single field. All present operators must pass.",
       "additionalProperties": true,
       "properties": {
-        "exists": { "type": "boolean", "description": "true: field must exist; false: field must be absent/null." },
-        "absent": { "type": "boolean", "description": "Field must be absent (undefined/null)." },
-        "eq": { "description": "Deep-equal to this value." },
-        "ne": { "description": "Not deep-equal to this value." },
-        "gt": { "type": "number", "description": "Strictly greater than." },
-        "gte": { "type": "number", "description": "Greater than or equal." },
-        "lt": { "type": "number", "description": "Strictly less than." },
-        "lte": { "type": "number", "description": "Less than or equal." },
+        "exists": {
+          "type": "boolean",
+          "description": "true: field must exist; false: field must be absent/null."
+        },
+        "absent": {
+          "type": "boolean",
+          "description": "Field must be absent (undefined/null)."
+        },
+        "eq": {
+          "description": "Deep-equal to this value."
+        },
+        "ne": {
+          "description": "Not deep-equal to this value."
+        },
+        "gt": {
+          "type": "number",
+          "description": "Strictly greater than."
+        },
+        "gte": {
+          "type": "number",
+          "description": "Greater than or equal."
+        },
+        "lt": {
+          "type": "number",
+          "description": "Strictly less than."
+        },
+        "lte": {
+          "type": "number",
+          "description": "Less than or equal."
+        },
         "type": {
           "type": "string",
           "description": "typeof / structural type of the value.",
-          "enum": ["string", "number", "boolean", "object", "array", "null"]
+          "enum": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
         },
-        "minLen": { "type": "integer", "description": "Minimum length (string or array)." },
-        "maxLen": { "type": "integer", "description": "Maximum length (string or array)." },
-        "includes": { "description": "Array includes this element, or string contains this substring." },
-        "matches": { "type": "string", "description": "Value (stringified) matches this regular expression." },
-        "soft": { "type": "boolean", "description": "Log as a warning instead of failing." },
-        "when": { "description": "Guard: run only when this is truthy (JS expression string or function)." }
+        "minLen": {
+          "type": "integer",
+          "description": "Minimum length (string or array)."
+        },
+        "maxLen": {
+          "type": "integer",
+          "description": "Maximum length (string or array)."
+        },
+        "includes": {
+          "description": "Array includes this element, or string contains this substring."
+        },
+        "matches": {
+          "type": "string",
+          "description": "Value (stringified) matches this regular expression."
+        },
+        "soft": {
+          "type": "boolean",
+          "description": "Log as a warning instead of failing."
+        },
+        "when": {
+          "description": "Guard: run only when this is truthy (JS expression string or function)."
+        }
       }
     }
   }

@@ -1979,6 +1979,32 @@ fs.writeFileSync(panelProbe, [
     "    await new Promise(function(done){ const q = http.request({host:'127.0.0.1',port:pt,method:'POST',path:'/api/defaults',headers:{'Content-Type':'application/json','Content-Length':buf.length}}, function(s){ s.resume(); s.on('end', done); });",
     "      q.write(buf.slice(0,cut)); setTimeout(function(){ q.write(buf.slice(cut)); q.end(); }, 20); });",
     "    if (fs.readFileSync(dfile,'utf8').indexOf('\\u00e9.example/\\u03c0') === -1) fail('multibyte body corrupted across chunks');",
+    // ── §8 endpoints: trends, diff, validate, build ──
+    "    const JH = { 'Content-Type': 'application/json' };",
+    "    const jpost = function(p, o){ return req({ method:'POST', path:p, headers:JH }, JSON.stringify(o)); };",
+    "    const trends = await req({method:'GET',path:'/api/trends'});",
+    "    if (trends.code !== 200 || JSON.parse(trends.body).passRate === undefined) fail('trends -> ' + trends.code);",
+    "    const diff = await jpost('/api/diff', {baseline:{id:1,name:'a'},current:{id:'1',extra:true},mode:'structural'});",
+    "    { const kinds = (JSON.parse(diff.body).entries||[]).map(function(e){return e.path+':'+e.kind;}).sort().join(',');",
+    "      if (diff.code !== 200 || kinds !== 'extra:added,id:type,name:removed') fail('diff -> ' + diff.code + ' ' + kinds); }",
+    "    const vgood = await jpost('/api/validate', {contentType:'json',maxResponseTime:1000});",
+    "    if (vgood.code !== 200 || JSON.parse(vgood.body).valid !== true) fail('validate(good) -> ' + vgood.body);",
+    "    const vbad = await jpost('/api/validate', {maxResponseTime:'slow'});",
+    "    { const v = JSON.parse(vbad.body); if (v.valid !== false || !v.errors.some(function(e){return e.path.indexOf('maxResponseTime')!==-1;})) fail('validate(bad) did not flag maxResponseTime: ' + vbad.body); }",
+    "    const noct = await req({method:'POST',path:'/api/diff',headers:{'Content-Type':'text/plain'}}, 'x');",
+    "    if (noct.code !== 415) fail('non-json diff should 415, got ' + noct.code);",
+    "    const build = await jpost('/api/build', {plane:'post',expectedStatus:200,assertShape:{'data.items':'array'}});",
+    "    { const b = JSON.parse(build.body); if (build.code !== 200 || !/const override/.test(b.script) || !/assertShape/.test(b.script)) fail('build -> ' + build.body); }",
+    // a JSON `null` (or array/primitive) body must 400, never crash the process:
+    // body.mode on null throws inside the body reader, outside the handler's catch.
+    "    for (const ep of ['/api/diff','/api/build','/api/validate']) {",
+    "      const nb = await req({method:'POST',path:ep,headers:JH}, 'null');",
+    "      if (nb.code !== 400) fail('null body to ' + ep + ' should 400, got ' + nb.code);",
+    "      const ab = await req({method:'POST',path:ep,headers:JH}, '[1,2]');",
+    "      if (ab.code !== 400) fail('array body to ' + ep + ' should 400, got ' + ab.code);",
+    "    }",
+    "    const alive = await req({method:'GET',path:'/'});",
+    "    if (alive.code !== 200) fail('server died after null-body posts, got ' + alive.code);",
     "    srv.close(function(){ console.log('ok'); process.exit(0); });",
     "  })();",
     "});"
@@ -1987,6 +2013,79 @@ fs.writeFileSync(panelProbe, [
 test('panel server: serves the page, reads history, and enforces host/CSRF/JSON guards', function() {
     const out = run(NODE + ' ' + JSON.stringify(panelProbe));
     assertContains(out, 'ok', 'panel probe did not pass');
+});
+
+// /api/trends must treat a null/missing metric as a GAP, not a phantom 0 —
+// Number(null) is 0, which would plot a fake 0% run and skew the delta.
+const trendsProbe = path.join(TMP, 'panel-trends-probe.js');
+fs.writeFileSync(trendsProbe, [
+    "const p = require(" + JSON.stringify(path.join(ROOT, 'scripts/panel.js')) + ");",
+    "const http = require('http'), fs = require('fs'), os = require('os'), pathm = require('path');",
+    "const hfile = pathm.join(os.tmpdir(), 'hephaestus-panel-trends.jsonl');",
+    "fs.writeFileSync(hfile, [JSON.stringify({passRate:100,p95:300}),JSON.stringify({passRate:90,p95:280}),JSON.stringify({passRate:null,p95:250}),JSON.stringify({passRate:95,p95:240})].join('\\n') + '\\n');",
+    "const srv = p.createPanelServer({ port: 0, history: hfile, collection: null, defaultsFile: pathm.join(os.tmpdir(),'hephaestus-trends-defaults.json') });",
+    "srv.listen(0,'127.0.0.1',function(){ const pt=srv.address().port;",
+    "  http.get({host:'127.0.0.1',port:pt,path:'/api/trends'},function(rs){let d='';rs.on('data',c=>d+=c);rs.on('end',function(){srv.close();",
+    "    const o=JSON.parse(d);",
+    "    if(o.passRate.spark.indexOf('\\u00b7')===-1){console.error('FAIL no gap glyph in '+o.passRate.spark);process.exit(2);}",
+    "    if(o.passRate.delta!==5){console.error('FAIL delta should be +5 (90->95, null skipped), got '+o.passRate.delta);process.exit(2);}",
+    "    if(o.passRate.last!==95){console.error('FAIL last should be 95, got '+o.passRate.last);process.exit(2);}",
+    "    console.log('ok');process.exit(0);});});});",
+].join('\n'));
+
+test('panel /api/trends renders a null metric as a gap, not a phantom zero', function() {
+    const out = run(NODE + ' ' + JSON.stringify(trendsProbe));
+    assertContains(out, 'ok', 'trends probe did not pass');
+});
+
+// ─── panel libraries: json-diff and schema-validate ──────────────────────────
+
+const jdiff = require(path.join(ROOT, 'scripts/lib/json-diff.js'));
+const svalidate = require(path.join(ROOT, 'scripts/lib/schema-validate.js'));
+
+test('json-diff strict/non-strict/structural modes differ as documented', function() {
+    const base = { id: 1, name: 'a', tags: ['x'] };
+    const cur  = { id: 1, name: 'b', tags: ['x', 'y'], extra: true };
+
+    const strict = jdiff.diff(base, cur, 'strict');
+    const sk = strict.map(function(e) { return e.path + ':' + e.kind; }).sort();
+    // value change on name, array length grew, and the added key
+    assert(sk.indexOf('name:changed') !== -1, 'strict missed name change: ' + sk);
+    assert(sk.indexOf('extra:added') !== -1, 'strict missed added key: ' + sk);
+    assert(sk.some(function(x) { return x.indexOf('tags:length') !== -1; }), 'strict missed array length: ' + sk);
+
+    // non-strict ignores keys present only in current (extra)
+    const nonStrict = jdiff.diff(base, cur, 'non-strict');
+    assert(!nonStrict.some(function(e) { return e.kind === 'added'; }), 'non-strict should not report added keys');
+
+    // structural compares shape only: same shape (values + array length differ) → no diff
+    const struct = jdiff.diff({ id: 1, name: 'a', tags: ['x'] }, { id: 9, name: 'zz', tags: ['p', 'q', 'r'] }, 'structural');
+    assert(struct.length === 0, 'structural should ignore value/length changes: ' + JSON.stringify(struct));
+    // structural DOES catch a type change
+    const structType = jdiff.diff({ id: 1 }, { id: '1' }, 'structural');
+    assert(structType.some(function(e) { return e.kind === 'type'; }), 'structural missed a type change');
+});
+
+test('schema-validate reports unsupported keywords as unchecked, never silently valid', function() {
+    const schema = { type: 'object', properties: {
+        n: { type: 'number' },
+        s: { type: 'string', minLength: 3 },   // minLength is NOT implemented
+    } };
+    const r = svalidate.validate({ n: 5, s: 'ok' }, schema);
+    assert(r.unchecked.length >= 1, 'minLength should surface as unchecked, not pass silently');
+    assert(r.unchecked.some(function(u) { return /minLength/.test(u.message); }), 'unchecked should name the keyword: ' + JSON.stringify(r.unchecked));
+
+    // a real type error is an error, not unchecked
+    const bad = svalidate.validate({ n: 'x' }, schema);
+    assert(!bad.valid && bad.errors.some(function(e) { return e.path === '/n'; }), 'type error should be reported: ' + JSON.stringify(bad.errors));
+});
+
+test('schema-validate accepts the real defaults against the shipped schema', function() {
+    const schema = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs/override.schema.json'), 'utf8'));
+    const defaults = JSON.parse(fs.readFileSync(path.join(ROOT, 'setup/defaults.json'), 'utf8'));
+    const r = svalidate.validate(defaults, schema);
+    assert(r.valid, 'shipped defaults.json fails its own schema: ' + JSON.stringify(r.errors));
+    assert(r.unchecked.length === 0, 'schema uses a keyword the validator cannot check: ' + JSON.stringify(r.unchecked));
 });
 
 // ─── 20. generate-test.js (override wizard) ───────────────────────────────────

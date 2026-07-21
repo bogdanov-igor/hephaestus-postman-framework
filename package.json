@@ -19,6 +19,7 @@
     "setup/",
     "templates/",
     "collection/",
+    "docs/override.schema.json",
     "!scripts/test.js",
     "!scripts/test-engine.js",
     "!scripts/build.js",
