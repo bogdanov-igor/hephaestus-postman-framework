@@ -302,26 +302,48 @@ function declaredOr(responses, wanted, fallback) {
     return declared.length ? { statuses: declared, declared: true } : { statuses: fallback, declared: false };
 }
 
+// OpenAPI/Swagger allow parameters common to every method to be declared once on
+// the path item; an operation's own list overrides by (name, in). Merge them so
+// the negative cases see path-level required params too, not only op-level ones.
+function effectiveParams(pathItem, op) {
+    const byKey = {};
+    const add = function(pr) { if (pr && pr.name) byKey[pr.in + ':' + pr.name] = pr; };
+    ((pathItem && pathItem.parameters) || []).forEach(add);
+    ((op && op.parameters) || []).forEach(add);   // op wins on conflict
+    return Object.keys(byKey).map(function(k) { return byKey[k]; });
+}
+
 function requiredQueryParams(params) {
     return (params || []).filter(function(pr) { return pr && pr.in === 'query' && pr.required; });
 }
 
-function requiredBodySchema(op) {
+// A required request body — OpenAPI 3 (requestBody.required) OR Swagger 2.0
+// (a parameter with in:'body' and required:true). The empty-body negative sends
+// {} regardless of the schema, so detecting that one exists is all we need.
+function requiredBodySchema(op, params) {
     if (op.requestBody && op.requestBody.required) {
         const content = op.requestBody.content || {};
         const jsonKey = Object.keys(content).find(function(m) { return /json/i.test(m); });
-        return jsonKey ? (content[jsonKey].schema || {}) : null;   // Swagger 2 body params are not covered
+        return jsonKey ? (content[jsonKey].schema || {}) : {};
     }
+    const swaggerBody = (params || []).find(function(pr) { return pr && pr.in === 'body' && pr.required; });
+    if (swaggerBody) return swaggerBody.schema || {};
     return null;
 }
 
 function hasSecurity(op, spec) {
     const sec = op.security !== undefined ? op.security : spec.security;
-    return Array.isArray(sec) && sec.length > 0 && !(sec.length === 1 && Object.keys(sec[0] || {}).length === 0);
+    if (!Array.isArray(sec) || sec.length === 0) return false;
+    // An empty {} among the alternatives means "no credentials is also acceptable"
+    // — auth is OPTIONAL, so a no-auth request is not expected to fail, and a
+    // "no auth → 401" test would fail against a correct API. `[{}, {scheme}]` and
+    // the fully-optional `[{}]` both count.
+    const anyOptional = sec.some(function(alt) { return !alt || Object.keys(alt).length === 0; });
+    return !anyOptional;
 }
 
 // Returns [{ suffix, why, expect, declared, mutate(url, req, pre) }]
-function negativeCases(op, p, spec) {
+function negativeCases(op, p, spec, params) {
     const responses = op.responses || {};
     const cases     = [];
 
@@ -343,7 +365,7 @@ function negativeCases(op, p, spec) {
         });
     }
 
-    if (requiredBodySchema(op)) {
+    if (requiredBodySchema(op, params)) {
         const e = declaredOr(responses, [400, 422], [400, 422]);
         cases.push({
             suffix: 'empty body', why: 'Required request body sent as {}.',
@@ -352,7 +374,7 @@ function negativeCases(op, p, spec) {
         });
     }
 
-    const reqQ = requiredQueryParams(op.parameters);
+    const reqQ = requiredQueryParams(params);
     if (reqQ.length) {
         const e = declaredOr(responses, [400, 422], [400, 422]);
         cases.push({
@@ -429,8 +451,9 @@ function buildCollection(spec, name, opts) {
             const schema = responseSchema(op.responses || {});
             if (schema) override.schema = { enabled: true, definition: schema };
 
+            const params = effectiveParams(pathItem, op);   // path-level + op-level
             const url = { raw: '{{baseUrl}}' + toPostmanPath(p), host: ['{{baseUrl}}'], path: toPostmanPath(p).replace(/^\//, '').split('/') };
-            const q = queryParams(op.parameters);
+            const q = queryParams(params);
             if (q.length) { url.query = q; url.raw += '?' + q.map(function(x) { return x.key + '='; }).join('&'); }
 
             (folders[tag] = folders[tag] || []).push({
@@ -444,7 +467,7 @@ function buildCollection(spec, name, opts) {
             total++;
 
             if (negative) {
-                negativeCases(op, p, spec).forEach(function(c) {
+                negativeCases(op, p, spec, params).forEach(function(c) {
                     // Kept in their own folder so a run can be filtered to either
                     // half (newman --folder) without renaming anything.
                     const negTag = tag + ' — negative';

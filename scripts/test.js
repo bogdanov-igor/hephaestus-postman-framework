@@ -844,6 +844,39 @@ test('openapi without --negative generates no negative folder', function() {
     assert(negItems().length === 0, 'negative tests appeared without the flag');
 });
 
+test('openapi --negative handles optional auth, path-level params and Swagger 2 body', function() {
+    // Three edge cases a second review round found:
+    //  1. security [{}, {scheme}] means auth is OPTIONAL — a no-auth test would
+    //     fail against a correct API, so none should be generated.
+    //  2. parameters declared once on the path item apply to every method.
+    //  3. Swagger 2.0 declares a required body as a param with in:'body'.
+    const spec = path.join(TMP, 'openapi-edge.json');
+    fs.writeFileSync(spec, JSON.stringify({
+        openapi: '3.0.0', info: { title: 'Edge', version: '1' }, servers: [{ url: 'https://api.x' }],
+        paths: {
+            '/opt': { get: { tags: ['o'], summary: 'OptAuth', security: [{}, { bearer: [] }], responses: { 200: {}, 401: {} } } },
+            '/items': { parameters: [{ name: 'tenant', in: 'query', required: true }],
+                        get: { tags: ['i'], summary: 'PathQuery', responses: { 200: {}, 400: {} } } },
+        },
+    }), 'utf8');
+    const out = path.join(TMP, 'openapi-edge-col.json');
+    run(NODE + ' "' + path.join(ROOT, 'scripts/openapi-import.js') + '" "' + spec + '" -o "' + out + '" --negative');
+    const dump = fs.readFileSync(out, 'utf8');
+    assert(dump.indexOf('OptAuth — no auth') === -1, 'optional auth wrongly produced a no-auth test');
+    assert(dump.indexOf('missing tenant') !== -1, 'path-level required query param produced no missing-param test');
+
+    const sw2 = path.join(TMP, 'swagger2.json');
+    fs.writeFileSync(sw2, JSON.stringify({
+        swagger: '2.0', info: { title: 'S2', version: '1' }, host: 'api.x', basePath: '/',
+        paths: { '/create': { post: { tags: ['c'], summary: 'Make',
+            parameters: [{ name: 'body', in: 'body', required: true, schema: { type: 'object' } }],
+            responses: { 201: {}, 400: {} } } } },
+    }), 'utf8');
+    const sw2out = path.join(TMP, 'swagger2-col.json');
+    run(NODE + ' "' + path.join(ROOT, 'scripts/openapi-import.js') + '" "' + sw2 + '" -o "' + sw2out + '" --negative');
+    assert(fs.readFileSync(sw2out, 'utf8').indexOf('empty body') !== -1, 'Swagger 2.0 required body produced no empty-body test');
+});
+
 test('openapi --negative generates only triggerable cases, using declared statuses', function() {
     run(NODE + ' "' + path.join(ROOT, 'scripts/openapi-import.js') + '" "' + openapiNegFile + '" -o "' + openapiNegOut + '" --negative');
     const items = negItems();
