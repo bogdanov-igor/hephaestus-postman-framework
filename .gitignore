@@ -28,6 +28,12 @@ package-lock.json
 
 # Local tooling / author working files (not part of the published project)
 .serena/
-gallery/
+gallery/*
+!gallery/plugins/
 BANNER-TODO.md
 hephaestus_vision.md
+
+# Generated run artifacts (never commit — they are outputs)
+hephaestus-report.html
+results.json
+.hephaestus/

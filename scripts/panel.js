@@ -45,12 +45,22 @@ const HISTORY_LIMIT   = 200;        // the page shows the tail; don't ship the w
 // Doc pages the panel may serve, as a FIXED map: the request string is only ever a
 // lookup key, never used to build a filesystem path — so there is still no traversal.
 const DOC_PAGES = {
-    'index.html':            path.join(ROOT, 'docs/index.html'),
-    'config-reference.html': path.join(ROOT, 'docs/config-reference.html'),
-    'features.html':         path.join(ROOT, 'docs/features.html'),
-    'quickstart.html':       path.join(ROOT, 'docs/quickstart.html'),
-    'snapshot-viewer.html':  path.join(ROOT, 'docs/snapshot-viewer.html')
+    'index.html':            { file: path.join(ROOT, 'docs/index.html'),            label: 'docs home' },
+    'config-reference.html': { file: path.join(ROOT, 'docs/config-reference.html'), label: 'config reference' },
+    'features.html':         { file: path.join(ROOT, 'docs/features.html'),         label: 'features' },
+    'quickstart.html':       { file: path.join(ROOT, 'docs/quickstart.html'),       label: 'quickstart' },
+    'snapshot-viewer.html':  { file: path.join(ROOT, 'docs/snapshot-viewer.html'),  label: 'snapshot viewer' }
 };
+
+// The published package does not ship docs/ (it is 200KB+ of HTML), so the panel
+// links to whichever pages actually exist on disk and, when none do, points at
+// the online docs instead of advertising five links that all 404.
+const ONLINE_DOCS = 'https://github.com/bogdanov-igor/hephaestus-postman-framework/tree/main/docs';
+function availableDocs() {
+    return Object.keys(DOC_PAGES).filter(function (k) {
+        try { return fs.existsSync(DOC_PAGES[k].file); } catch (e) { return false; }
+    });
+}
 
 // ── Pure helpers (unit-tested) ────────────────────────────────────────────────
 
@@ -166,10 +176,10 @@ function createPanelServer(opts) {
         // Local docs: the request string is only a key into the fixed DOC_PAGES map,
         // never joined into a path — so this adds no traversal surface.
         if (req.method === 'GET' && url.indexOf('/docs/') === 0) {
-            const file = DOC_PAGES[url.slice('/docs/'.length)];
-            if (!file) return sendJson(res, 404, { error: 'unknown doc page' });
+            const entry = DOC_PAGES[url.slice('/docs/'.length)];
+            if (!entry) return sendJson(res, 404, { error: 'unknown doc page' });
             let html;
-            try { html = fs.readFileSync(file, 'utf8'); } catch (e) {
+            try { html = fs.readFileSync(entry.file, 'utf8'); } catch (e) {
                 return sendJson(res, 404, { error: 'doc page not found on disk' });
             }
             res.writeHead(200, {
@@ -251,6 +261,22 @@ function createPanelServer(opts) {
 
 // ── The page (self-contained: no CDN, no external asset) ──────────────────────
 
+// Only list docs that are present. On a full checkout that is all five; on an
+// installed package (no docs/ shipped) it is none, and we point at the online
+// copy rather than render links that 404.
+function docsLinks() {
+    const have = availableDocs();
+    if (!have.length) {
+        return '<div class="empty">Documentation is not bundled with this install. ' +
+            'Read it online: <a href="' + ONLINE_DOCS + '" target="_blank" rel="noopener">github.com/…/docs</a></div>';
+    }
+    const items = have.map(function (k) {
+        return '<li><a href="/docs/' + k + '">' + DOC_PAGES[k].label + '</a></li>';
+    }).join('');
+    return '<ul style="padding-left:18px;font-size:.86rem">' + items + '</ul>' +
+        '<div class="empty">Served read-only from this repo\'s docs/ folder.</div>';
+}
+
 function renderPage() {
     return '<!doctype html><html lang="en"><head><meta charset="utf-8">' +
 '<meta name="viewport" content="width=device-width,initial-scale=1">' +
@@ -289,13 +315,7 @@ function renderPage() {
 '<div id="defaults" class="panel"><div class="card"><div class="k" id="dfile"></div>' +
 '<textarea id="dtext" spellcheck="false"></textarea>' +
 '<div><button id="dsave">Save defaults</button><span class="msg" id="dmsg"></span></div></div></div>' +
-'<div id="docs" class="panel"><div class="card"><ul style="padding-left:18px;font-size:.86rem">' +
-'<li><a href="/docs/index.html">docs/index.html</a> — local docs home</li>' +
-'<li><a href="/docs/config-reference.html">config reference</a></li>' +
-'<li><a href="/docs/features.html">features</a></li>' +
-'<li><a href="/docs/quickstart.html">quickstart</a></li>' +
-'<li><a href="/docs/snapshot-viewer.html">snapshot viewer</a></li>' +
-'</ul><div class="empty">Served read-only from this repo\'s docs/ folder.</div>' +
+'<div id="docs" class="panel"><div class="card">' + docsLinks() +
 '</div></div>' +
 '<script>' +
 'function esc(s){return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];});}' +
@@ -353,4 +373,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { parseArgs, parseHistory, extractSnapshots, isLoopbackHost, isWriteAllowed, createPanelServer };
+module.exports = { parseArgs, parseHistory, extractSnapshots, isLoopbackHost, isWriteAllowed, createPanelServer, availableDocs, docsLinks, DOC_PAGES, ONLINE_DOCS };

@@ -15,15 +15,15 @@ hephaestus.plugin.<name>  →  <содержимое .js файла>
 Один плагин:
 ```javascript
 pm.collectionVariables.set('hephaestus.plugins', JSON.stringify([
-    { name: 'slack-notifier', code: pm.collectionVariables.get('hephaestus.plugin.slack') }
+    { name: 'slack-notifier', post: 'hephaestus.plugin.slack' }
 ]));
 ```
 
 Несколько плагинов:
 ```javascript
 pm.collectionVariables.set('hephaestus.plugins', JSON.stringify([
-    { name: 'slack-notifier',    code: pm.collectionVariables.get('hephaestus.plugin.slack') },
-    { name: 'custom-assertions', code: pm.collectionVariables.get('hephaestus.plugin.custom') },
+    { name: 'slack-notifier',    post: 'hephaestus.plugin.slack' },
+    { name: 'custom-assertions', post: 'hephaestus.plugin.custom' },
 ]));
 ```
 
@@ -107,11 +107,12 @@ Microsoft Teams Adaptive Card при провале.
 
 | Объект | Тип | Описание |
 |---|---|---|
-| `ctx.api.body` | `object \| string` | Parsed response body |
-| `ctx.api.status` | `number` | HTTP status code |
-| `ctx.api.headers` | `object` | Response headers (lowercase keys) |
-| `ctx.api.responseTime` | `number` | Response time in ms |
-| `ctx.config` | `object` | Merged hephaestus config |
+| `ctx.api` | `object` | Экстрактор: `{ get, find, all, count, save }` — **только эти методы** |
+| `ctx.response.parsed` | `object \| string` | Разобранное тело ответа |
+| `ctx.response.code` | `number` | HTTP-статус |
+| `ctx.response.time` | `number` | Время ответа, мс |
+| `ctx.response.size` | `number` | Размер тела, байт |
+| `ctx.config` | `object` | Слитый конфиг hephaestus |
 | `ctx.request` | `object` | `{ name, method, url }` |
 | `ctx.iteration` | `object` | `{ index, count, data, get(key) }` |
 | `ctx._meta` | `object` | Internal meta (results, errors, version) |
@@ -120,9 +121,11 @@ Microsoft Teams Adaptive Card при провале.
 Пример минимального плагина:
 ```javascript
 (function myPlugin(ctx) {
-    if (ctx.api.status === 429) {
+    // Status and timing live on ctx.response — ctx.api is the extractor
+    // ({ get, find, all, count, save }) and has no .status/.code.
+    if (ctx.response.code === 429) {
         pm.test('⚠️ Rate limit hit — retry later', function() {
-            pm.expect(ctx.api.status).to.not.equal(429);
+            pm.expect(ctx.response.code).to.not.equal(429);
         });
     }
 }(ctx));

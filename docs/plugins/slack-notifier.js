@@ -11,7 +11,7 @@
  *   3. Добавь этот код в hephaestus.plugins:
  *
  *      pm.collectionVariables.set('hephaestus.plugins', JSON.stringify([
- *          { name: 'slack-notifier', code: pm.collectionVariables.get('hephaestus.plugin.slack') }
+ *          { name: 'slack-notifier', post: 'hephaestus.plugin.slack' }
  *      ]));
  *
  *   4. Сохрани текст этого файла в collectionVariable: hephaestus.plugin.slack
@@ -30,18 +30,33 @@
 
     var onlyFailures = ctx.config.slackOnlyFailures !== false; // default: true
 
-    var code    = ctx.api.status;
-    var isError = code >= 500;
+    // ctx.api is REPLACED by the extractor with { get, find, all, count, save } —
+    // status/timing live on ctx.response.
+    var code     = ctx.response.code;
+    var expected = ctx.config.expectedStatus;
+    var expList  = Array.isArray(expected) ? expected : (typeof expected === 'number' ? [expected] : null);
+    // A 404 where a 200 was expected is a failure even though it is not a 5xx.
+    var isError  = code >= 500 || (expList !== null && expList.indexOf(code) === -1);
     var results = ctx._meta.results || {};
 
+    // What ctx._meta.results can and cannot tell us: it carries found/saved/counts/
+    // headers as arrays, plus snapshot and schema as single objects. It does NOT
+    // carry the status, body or contentType checks — those are only visible through
+    // ctx.response, which is why the 5xx test above exists separately.
     var failedAssertions = [];
     Object.keys(results).forEach(function(key) {
         var bucket = results[key];
         if (Array.isArray(bucket)) {
-            bucket.filter(function(r) { return r && r.passed === false; })
+            bucket.filter(function(r) { return r && r.ok === false; })
                   .forEach(function(r) { failedAssertions.push(r.name || key); });
         }
     });
+    if (results.schema && results.schema.valid === false) {
+        failedAssertions.push('schema (' + ((results.schema.errors || []).length) + ' error(s))');
+    }
+    if (results.snapshot && results.snapshot.status === 'diff') {
+        failedAssertions.push('snapshot diff [' + (results.snapshot.key || '') + ']');
+    }
 
     var hasFailed = isError || failedAssertions.length > 0;
     if (onlyFailures && !hasFailed) return;
@@ -53,7 +68,7 @@
 
     var fields = [
         { title: 'Status Code', value: String(code), short: true },
-        { title: 'Response Time', value: ctx.api.responseTime + 'ms', short: true },
+        { title: 'Response Time', value: ctx.response.time + 'ms', short: true },
         { title: 'Environment', value: pm.environment.name || '—', short: true },
     ];
 

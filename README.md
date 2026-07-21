@@ -48,6 +48,23 @@ same engine in English. The golden harness pins both.
 
 ## Quickstart
 
+**See it run first — 60 seconds, no account, no network:**
+
+```bash
+npx hephaestus init --demo
+hephaestus mock hephaestus-demo/demo-collection.json -p 4010   # terminal 1
+newman run hephaestus-demo/demo-collection.json \
+  -e hephaestus-demo/demo-environment.json                     # terminal 2
+```
+
+Five requests, 35 assertions, all green — served from snapshots stored inside
+the collection itself. Each request is one feature (`expectedStatus`,
+`assertShape` + `assertEach` + `assertOrder`, `assertions` + `varsToSave`,
+`snapshot`, and a 404 that is *supposed* to be a 404). Open any of them in
+Postman: the whole test is the `override` block at the top of the Tests tab.
+
+Then set it up for your own API.
+
 Two runtimes ship in one repo: the **engine** that runs inside Postman, and a
 **zero-dependency Node CLI** for Newman and CI. Start with the engine.
 
@@ -221,7 +238,7 @@ npm run <command> -- [args]
 | `migrate <collection.json>` | Classify a collection's migration state |
 | `docs <collection.json>` | API docs from a collection's test scripts |
 | `sync-examples <collection.json>` | Snapshots → Postman Example Responses |
-| `openapi <spec>` | OpenAPI / Swagger → Hephaestus collection |
+| `openapi <spec>` | OpenAPI / Swagger → Hephaestus collection (`--negative` adds error-path tests) |
 | `init` | Interactive config / environment wizard |
 | `generate` | Interactive wizard → a ready-to-paste `override` block |
 | `panel [-c <collection.json>]` | Local dev panel: run history, snapshots, defaults editor |
@@ -253,7 +270,9 @@ Zero runtime dependencies. Dev-only: `esbuild` (pinned), `newman`, `eslint`.
 | [recipes](docs/recipes.md) | 10 common tasks → 10 ready-to-paste `override` blocks |
 | [features](docs/features.html) | Module-by-module guide with examples |
 | [newman & CI](docs/newman-ci.md) | GitHub Actions, GitLab CI, Jenkins setups |
+| [CI templates](docs/ci/) | Copy-paste pipelines: GitHub Actions, GitLab CI, Jenkins |
 | [snapshot viewer](docs/snapshot-viewer.html) | Visual browser for `hephaestus.snapshots` |
+| [plugin gallery](gallery/plugins/) | Four ready-to-use plugins + a starter template |
 | [docs home](docs/index.html) | Local documentation site index |
 
 The full guide is bilingual: this file (English) and

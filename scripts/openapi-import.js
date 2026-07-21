@@ -11,6 +11,10 @@
  * Usage:
  *   node scripts/openapi-import.js <openapi.yaml|json> [-o collection.json] [--name "..."]
  *
+ * --negative also generates negative tests, but only for the cases the spec lets
+ * us actually trigger: withheld auth, a substituted id, an emptied required body,
+ * a dropped required query parameter. See negativeCases() for why 405 is absent.
+ *
  * YAML support is a pragmatic subset (block mappings/sequences incl. same-indent,
  * block scalars |/>, inline [a,b] / {a:b}); anchors/aliases and multi-doc are not
  * supported — for those, convert to JSON first.
@@ -276,13 +280,162 @@ function scriptExec(overrideObj, evalTarget) {
     ];
 }
 
-function buildCollection(spec, name) {
+// ─── Negative cases ───────────────────────────────────────────────────────────
+//
+// Only cases the spec gives us enough to actually TRIGGER are generated. A spec
+// declaring a 400 does not say what makes the request invalid, so "expect 400"
+// on the happy-path request would be a test that fails against a correct API.
+// The four below are triggered by something we control: withholding auth,
+// substituting an id, emptying a required body, dropping a required parameter.
+//
+// 405 is deliberately absent — plenty of correct APIs answer an undeclared
+// method with 404, so those tests would fail on working servers.
+
+const BOGUS_ID = 'hephaestus-no-such-id';
+
+// Prefer what the spec declares; fall back to the conventional codes. The caller
+// marks fallbacks in the description so nobody mistakes a guess for a contract.
+function declaredOr(responses, wanted, fallback) {
+    const declared = Object.keys(responses || {})
+        .filter(function(c) { return wanted.indexOf(Number(c)) !== -1; })
+        .map(Number);
+    return declared.length ? { statuses: declared, declared: true } : { statuses: fallback, declared: false };
+}
+
+// OpenAPI/Swagger allow parameters common to every method to be declared once on
+// the path item; an operation's own list overrides by (name, in). Merge them so
+// the negative cases see path-level required params too, not only op-level ones.
+function effectiveParams(pathItem, op) {
+    const byKey = {};
+    const add = function(pr) { if (pr && pr.name) byKey[pr.in + ':' + pr.name] = pr; };
+    ((pathItem && pathItem.parameters) || []).forEach(add);
+    ((op && op.parameters) || []).forEach(add);   // op wins on conflict
+    return Object.keys(byKey).map(function(k) { return byKey[k]; });
+}
+
+function requiredQueryParams(params) {
+    return (params || []).filter(function(pr) { return pr && pr.in === 'query' && pr.required; });
+}
+
+// A required request body — OpenAPI 3 (requestBody.required) OR Swagger 2.0
+// (a parameter with in:'body' and required:true). The empty-body negative sends
+// {} regardless of the schema, so detecting that one exists is all we need.
+function requiredBodySchema(op, params) {
+    if (op.requestBody && op.requestBody.required) {
+        const content = op.requestBody.content || {};
+        const jsonKey = Object.keys(content).find(function(m) { return /json/i.test(m); });
+        return jsonKey ? (content[jsonKey].schema || {}) : {};
+    }
+    const swaggerBody = (params || []).find(function(pr) { return pr && pr.in === 'body' && pr.required; });
+    if (swaggerBody) return swaggerBody.schema || {};
+    return null;
+}
+
+function hasSecurity(op, spec) {
+    const sec = op.security !== undefined ? op.security : spec.security;
+    if (!Array.isArray(sec) || sec.length === 0) return false;
+    // An empty {} among the alternatives means "no credentials is also acceptable"
+    // — auth is OPTIONAL, so a no-auth request is not expected to fail, and a
+    // "no auth → 401" test would fail against a correct API. `[{}, {scheme}]` and
+    // the fully-optional `[{}]` both count.
+    const anyOptional = sec.some(function(alt) { return !alt || Object.keys(alt).length === 0; });
+    return !anyOptional;
+}
+
+// Returns [{ suffix, why, expect, declared, mutate(url, req, pre) }]
+function negativeCases(op, p, spec, params) {
+    const responses = op.responses || {};
+    const cases     = [];
+
+    if (hasSecurity(op, spec)) {
+        const e = declaredOr(responses, [401, 403], [401, 403]);
+        cases.push({
+            suffix: 'no auth', why: 'Sent without credentials.',
+            expect: e.statuses, declared: e.declared,
+            pre: { auth: { enabled: false } },
+        });
+    }
+
+    if (/\{[^}]+\}/.test(p)) {
+        const e = declaredOr(responses, [404], [404]);
+        cases.push({
+            suffix: 'unknown id', why: 'Path parameter replaced with an id that does not exist.',
+            expect: e.statuses, declared: e.declared,
+            pathValue: BOGUS_ID,
+        });
+    }
+
+    if (requiredBodySchema(op, params)) {
+        const e = declaredOr(responses, [400, 422], [400, 422]);
+        cases.push({
+            suffix: 'empty body', why: 'Required request body sent as {}.',
+            expect: e.statuses, declared: e.declared,
+            body: '{}',
+        });
+    }
+
+    const reqQ = requiredQueryParams(params);
+    if (reqQ.length) {
+        const e = declaredOr(responses, [400, 422], [400, 422]);
+        cases.push({
+            suffix: 'missing ' + reqQ[0].name, why: 'Required query parameter "' + reqQ[0].name + '" omitted.',
+            expect: e.statuses, declared: e.declared,
+            dropQuery: reqQ[0].name,
+        });
+    }
+
+    return cases;
+}
+
+function buildNegativeItem(base, method, p, c, query) {
+    // A negative test must differ from the happy path by exactly ONE thing, or it
+    // stops testing what it claims to. Withholding auth on an operation whose
+    // required query parameters were also dropped can just as well answer 400.
+    const rawPath = c.pathValue ? p.replace(/\{[^}]+\}/g, c.pathValue) : toPostmanPath(p);
+    const keptQ   = (query || []).filter(function(x) { return x.key !== c.dropQuery; });
+
+    const url = {
+        raw:  '{{baseUrl}}' + rawPath,
+        host: ['{{baseUrl}}'],
+        path: rawPath.replace(/^\//, '').split('/'),
+    };
+    if (keptQ.length) {
+        url.query = keptQ;
+        url.raw  += '?' + keptQ.map(function(x) { return x.key + '='; }).join('&');
+    }
+
+    const override = { expectedStatus: c.expect };
+    const note = c.declared
+        ? 'Expected status is declared in the spec.'
+        : 'The spec does not declare a status for this case — ' + c.expect.join('/') + ' is the conventional answer. Adjust if your API differs.';
+
+    const request = {
+        method: method.toUpperCase(),
+        header: c.body ? [{ key: 'Content-Type', value: 'application/json' }] : [],
+        url: url,
+        description: c.why + '\n\n' + note,
+    };
+    if (c.body) request.body = { mode: 'raw', raw: c.body, options: { raw: { language: 'json' } } };
+
+    return {
+        name: base + ' — ' + c.suffix,
+        request: request,
+        event: [
+            { listen: 'prerequest', script: { type: 'text/javascript', exec: scriptExec(c.pre || {}, 'hephaestus.v3.pre') } },
+            { listen: 'test',       script: { type: 'text/javascript', exec: scriptExec(override, 'hephaestus.v3.post') } },
+        ],
+    };
+}
+
+function buildCollection(spec, name, opts) {
     const info    = spec.info || {};
     const servers = spec.servers || (spec.host ? [{ url: ((spec.schemes && spec.schemes[0]) || 'https') + '://' + spec.host + (spec.basePath || '') }] : []);
     const baseUrl = servers[0] ? expandServerVars(servers[0]) : '';
 
-    const folders = {};
-    let total = 0;
+    const negative = !!(opts && opts.negative);
+    const folders  = {};
+    let total    = 0;
+    let negTotal = 0;
 
     Object.keys(spec.paths || {}).forEach(function(p) {
         const pathItem = spec.paths[p] || {};
@@ -298,8 +451,9 @@ function buildCollection(spec, name) {
             const schema = responseSchema(op.responses || {});
             if (schema) override.schema = { enabled: true, definition: schema };
 
+            const params = effectiveParams(pathItem, op);   // path-level + op-level
             const url = { raw: '{{baseUrl}}' + toPostmanPath(p), host: ['{{baseUrl}}'], path: toPostmanPath(p).replace(/^\//, '').split('/') };
-            const q = queryParams(op.parameters);
+            const q = queryParams(params);
             if (q.length) { url.query = q; url.raw += '?' + q.map(function(x) { return x.key + '='; }).join('&'); }
 
             (folders[tag] = folders[tag] || []).push({
@@ -311,6 +465,16 @@ function buildCollection(spec, name) {
                 ]
             });
             total++;
+
+            if (negative) {
+                negativeCases(op, p, spec, params).forEach(function(c) {
+                    // Kept in their own folder so a run can be filtered to either
+                    // half (newman --folder) without renaming anything.
+                    const negTag = tag + ' — negative';
+                    (folders[negTag] = folders[negTag] || []).push(buildNegativeItem(name_, method, p, c, q));
+                    negTotal++;
+                });
+            }
         });
     });
 
@@ -328,7 +492,7 @@ function buildCollection(spec, name) {
             { key: 'hephaestus.v3.post', value: '// Запустите 🔧 engine-update для загрузки движка' }
         ]
     };
-    return { collection: collection, total: total };
+    return { collection: collection, total: total, negative: negTotal };
 }
 
 // ─── Exports (reused by scripts/coverage.js — zero-dep spec parsing) ────────────
@@ -343,6 +507,7 @@ if (require.main === module) {
     const VALUE_FLAGS = ['-o', '--name'];
     const consumed = {};
     let inputFile = null, outArg = null, nameArg = null;
+    const negative = argv.indexOf('--negative') !== -1;
     for (let i = 0; i < argv.length; i++) {
         const a = argv[i];
         if (a === '-o')      { outArg  = argv[i + 1]; consumed[i] = consumed[i + 1] = true; i++; continue; }
@@ -354,7 +519,7 @@ if (require.main === module) {
     }
 
     if (!inputFile) {
-        console.error('Usage: node scripts/openapi-import.js <openapi.yaml|json> [-o collection.json] [--name "..."]');
+        console.error('Usage: node scripts/openapi-import.js <openapi.yaml|json> [-o collection.json] [--name "..."] [--negative]');
         process.exit(1);
     }
     if (VALUE_FLAGS.some(function(f) { return argv.indexOf(f) !== -1 && argv.indexOf(f) === argv.length - 1; })) {
@@ -379,7 +544,7 @@ if (require.main === module) {
 
     let result;
     try {
-        result = buildCollection(spec, nameArg);
+        result = buildCollection(spec, nameArg, { negative: negative });
     } catch (e) {
         console.error('❌ Failed to build collection: ' + e.message);
         process.exit(1);
@@ -399,6 +564,11 @@ if (require.main === module) {
     console.log('🧬 Imported ' + result.total + ' request(s) in ' + result.collection.item.length + ' folder(s) from ' +
         (spec.openapi ? 'OpenAPI ' + spec.openapi : spec.swagger ? 'Swagger ' + spec.swagger : 'spec') + '.' +
         (refWarnings ? '  (' + refWarnings + ' $ref warning(s))' : ''));
+    if (negative) {
+        console.log(result.negative > 0
+            ? '   + ' + result.negative + ' negative test(s): withheld auth, unknown ids, empty bodies, dropped parameters.'
+            : '   + 0 negative tests — this spec declares no security, path parameters, required bodies or required query parameters.');
+    }
     console.log('→ ' + path.relative(process.cwd(), outFile));
     console.log('   Next: import into Postman, set hephaestus.defaults, run 🔧 engine-update.');
     process.exit(0);

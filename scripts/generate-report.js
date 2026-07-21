@@ -27,14 +27,55 @@ const path = require('path');
 
 // ─── CLI ─────────────────────────────────────────────────────────────────────
 
-const args    = process.argv.slice(2);
-const inFile  = args[0];
-const outFile = args[1] || 'hephaestus-report.html';
+const args = process.argv.slice(2);
+
+// --history takes a value, so its value must NOT fall through into the
+// positional list — otherwise `report results.json --history h.jsonl` treats
+// h.jsonl as the output path and writes the report over the history file.
+// Both `--history <file>`, `--history=<file>`, and a bare `--history` (default
+// path) are accepted; the value-consuming form is the reason a naive
+// args.filter(!startsWith('-')) is wrong here.
+const VALUE_FLAGS = ['--history'];
+const positional  = [];
+let historyGiven  = false;
+let historyValue;
+
+for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (a === '--history' || a.indexOf('--history=') === 0) {
+        historyGiven = true;
+        if (a.indexOf('=') !== -1) {
+            historyValue = a.slice(a.indexOf('=') + 1);
+        } else if (args[i + 1] !== undefined && args[i + 1][0] !== '-') {
+            historyValue = args[i + 1];
+            i++;                         // consume the value so it is not positional
+        }
+        continue;
+    }
+    if (a[0] === '-') continue;          // any other flag: ignore, never positional
+    positional.push(a);
+}
+
+const inFile  = positional[0];
+const outFile = positional[1] || 'hephaestus-report.html';
+const historyFile = !historyGiven ? null
+    : (historyValue || path.resolve('.hephaestus/history.jsonl'));
 
 if (!inFile) {
-    console.error('Usage: node scripts/generate-report.js <results.json> [output.html]');
+    console.error('Usage: node scripts/generate-report.js <results.json> [output.html] [--history[=<file>]]');
     process.exit(1);
 }
+
+// Defence in depth: never write the HTML report over an input we read. The arg
+// fix above prevents the common case; this catches an explicit `report r.json
+// r.json` or `report r.json h.jsonl --history h.jsonl` too.
+[['input results', inFile], ['history file', historyFile]].forEach(function(pair) {
+    if (pair[1] && path.resolve(outFile) === path.resolve(pair[1])) {
+        console.error('Refusing to overwrite the ' + pair[0] + ' (' + pair[1] + ') with the HTML report.');
+        console.error('Pass an explicit output path: report <results.json> <output.html> [--history[=<file>]]');
+        process.exit(1);
+    }
+});
 
 let raw;
 try { raw = fs.readFileSync(inFile, 'utf8'); } catch(e) { console.error('Cannot read: ' + e.message); process.exit(1); }
@@ -161,6 +202,46 @@ executions.forEach(function(ex, i) {
 
 // ─── Build HTML ───────────────────────────────────────────────────────────────
 
+// ─── Run-history trends (optional) ───────────────────────────────────────────
+const { sparkline, deltaOf, parseHistory } = require('./lib/sparkline.js');
+
+// A sparkline is one glyph per run, so an unbounded CI history would render a
+// bar hundreds of characters wide. Show the most recent window only, matching
+// what `trends` does in the terminal.
+const TREND_WINDOW = 60;
+
+function trendsSection() {
+    if (!historyFile) return '';
+    let runs = [];
+    try { runs = parseHistory(fs.readFileSync(historyFile, 'utf8')); } catch (e) { return ''; }
+    if (!runs.length) return '';
+    const total = runs.length;
+    const shown = runs.slice(-TREND_WINDOW);
+    const nums = function(k) { return shown.map(function(r) { const n = Number(r[k]); return isNaN(n) ? 0 : n; }); };
+    const pass = nums('passRate'), p95 = nums('p95');
+    const row = function(label, values, unit, goodIsUp) {
+        const last = values[values.length - 1];
+        const d    = deltaOf(values);
+        const good = goodIsUp ? d >= 0 : d <= 0;
+        const sign = d > 0 ? '+' : '';
+        const col  = d === 0 ? 'var(--muted)' : (good ? 'var(--green)' : 'var(--red)');
+        return '<div class="trend-row"><span class="trend-label">' + label + '</span>' +
+            '<span class="spark">' + esc(sparkline(values)) + '</span>' +
+            '<span class="trend-now">' + esc(String(last)) + unit + '</span>' +
+            '<span class="trend-delta" style="color:' + col + '">' + sign + esc(String(Math.round(d * 100) / 100)) + unit + '</span></div>';
+    };
+    // A shareable report should not leak the author's home directory, so show a
+    // path relative to the cwd, and note the window when the history was clipped.
+    const shownPath = path.isAbsolute(historyFile) ? path.relative(process.cwd(), historyFile) : historyFile;
+    const sub = (shown.length < total ? 'last ' + shown.length + ' of ' + total + ' runs' : total + ' run(s)') +
+                ' — ' + shownPath;
+    return '<div class="section"><h2>Trends <span class="trend-sub">' + esc(sub) + '</span></h2>' +
+        row('Pass rate', pass, '%', true) +
+        row('p95', p95, 'ms', false) +
+        '</div>';
+}
+const trendsHtml = trendsSection();
+
 const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -236,6 +317,11 @@ const html = `<!DOCTYPE html>
 
   /* Footer */
   footer{text-align:center;margin-top:48px;font-size:.75rem;color:var(--muted);}
+.section h2 .trend-sub{font-size:.7rem;color:var(--muted);font-weight:400;margin-left:8px}
+.trend-row{display:flex;align-items:center;gap:14px;padding:6px 0;font-size:.85rem}
+.trend-label{width:90px;color:var(--muted)}
+.spark{font-family:monospace;font-size:1.1rem;letter-spacing:1px;color:var(--accent)}
+.trend-now{font-weight:700}.trend-delta{font-size:.8rem}
 </style>
 </head>
 <body>
@@ -259,6 +345,8 @@ const html = `<!DOCTYPE html>
   <div class="stat"><div class="v" style="color:${failedAssert===0?'var(--green)':'var(--red)'}">${failedAssert}</div><div class="l">Assert fails</div></div>
   <div class="stat"><div class="v" style="color:${timeColor(avgTime)}">${avgTime}ms</div><div class="l">Avg time</div></div>
 </div>
+
+${trendsHtml}
 
 <div class="filter-row">
   <input id="search" type="text" placeholder="Search by request name..." oninput="doFilter()">

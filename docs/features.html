@@ -699,7 +699,13 @@ footer{text-align:center;padding:32px;font-size:.75rem;color:var(--muted);border
       <li><code>expectedStatus</code> pre-filled from the spec's 2xx responses</li>
       <li>Response <code>schema</code> pre-filled from the spec's schemas</li>
       <li>Start asserting immediately, no hand-wiring</li>
+      <li><code>--negative</code> also generates error-path tests</li>
     </ul>
+    <p class="note"><code>--negative</code> only generates cases the spec lets it actually
+    <em>trigger</em> &mdash; withheld auth, a substituted id, an emptied required body, a
+    dropped required parameter. A spec that declares a 400 does not say what makes a request
+    invalid, so no test is invented for it. Each negative request differs from the happy path
+    by exactly one mutation.</p>
   </div>
   <div class="code-window">
     <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">openapi</span></div>
@@ -709,9 +715,18 @@ footer{text-align:center;padding:32px;font-size:.75rem;color:var(--muted);border
 <span class="c-cmt"># YAML subset also accepted</span>
 <span class="c-var">node</span> bin/hephaestus.js openapi swagger.yaml
 
+<span class="c-cmt"># plus error-path tests</span>
+<span class="c-var">node</span> bin/hephaestus.js openapi openapi.json --negative
+
 <span class="c-cmt"># each generated request comes with:
 #   expectedStatus  (from 2xx responses)
-#   schema          (from spec component schemas)</span></pre>
+#   schema          (from spec component schemas)
+#
+# --negative adds a "&lt;tag&gt; — negative" folder:
+#   no auth        401/403   (auth disabled in pre-request)
+#   unknown id     404       (path parameter substituted)
+#   empty body     400/422   (required body sent as {})
+#   missing &lt;p&gt;    400/422   (required query parameter dropped)</span></pre>
     </div>
   </div>
 </div>
