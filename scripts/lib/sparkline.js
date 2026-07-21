@@ -9,20 +9,30 @@
 
 const SPARK = ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'];
 const MID   = SPARK[Math.floor((SPARK.length - 1) / 2)]; // flat bar for a degenerate series
+const GAP   = '·';                                       // a run with no numeric value
 
-// Unicode sparkline. An all-equal series (including a single value) renders as a
-// flat mid bar instead of dividing by a zero range.
+// Unicode sparkline — ALWAYS one glyph per input point, so the bar count matches
+// the run count. A non-finite point (a run missing the metric, a half-written
+// history line) renders as a gap glyph rather than silently vanishing, which
+// used to shorten the bar and desync it from the run count. An all-equal series
+// (including a single value) renders as flat mid bars.
 function sparkline(values) {
     if (!values.length) return '';
-    // Fold min/max rather than Math.min.apply(...values) so a very long history
-    // cannot blow the argument/stack limit with a RangeError.
-    let min = values[0], max = values[0];
-    for (let i = 1; i < values.length; i++) {
-        if (values[i] < min) min = values[i];
-        if (values[i] > max) max = values[i];
+    // Min/max over the FINITE points only. Folded rather than Math.min(...values)
+    // so a very long history cannot blow the argument/stack limit.
+    let min = Infinity, max = -Infinity, anyFinite = false;
+    for (let i = 0; i < values.length; i++) {
+        const v = values[i];
+        if (typeof v === 'number' && isFinite(v)) {
+            anyFinite = true;
+            if (v < min) min = v;
+            if (v > max) max = v;
+        }
     }
+    if (!anyFinite) return values.map(function() { return GAP; }).join('');
     const range = max - min;
     return values.map(function(v) {
+        if (typeof v !== 'number' || !isFinite(v)) return GAP;
         if (range === 0) return MID;
         return SPARK[Math.round((v - min) / range * (SPARK.length - 1))];
     }).join('');
