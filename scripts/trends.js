@@ -27,8 +27,8 @@ const path = require('path');
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const DEFAULT_HISTORY = '.hephaestus/history.jsonl';
-const SPARK = ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'];
-const MID   = SPARK[Math.floor((SPARK.length - 1) / 2)]; // flat/mid bar for degenerate series
+// Sparkline helpers are shared with `report` so both render history identically.
+const { sparkline, deltaOf } = require('./lib/sparkline.js');
 
 // ─── CLI ──────────────────────────────────────────────────────────────────────
 
@@ -113,30 +113,6 @@ function num(v) {
     return isNaN(n) ? 0 : n;
 }
 
-// Unicode sparkline. All-equal (incl. single value) renders a flat mid bar
-// instead of dividing by a zero range.
-function sparkline(values) {
-    if (!values.length) return '';
-    // Fold min/max (not Math.min.apply(...values)) so a very long history can't
-    // blow the argument/stack limit with a RangeError.
-    let min = values[0], max = values[0];
-    for (let i = 1; i < values.length; i++) {
-        if (values[i] < min) min = values[i];
-        if (values[i] > max) max = values[i];
-    }
-    const range = max - min;
-    return values.map(function(v) {
-        if (range === 0) return MID;
-        const idx = Math.round((v - min) / range * (SPARK.length - 1));
-        return SPARK[idx];
-    }).join('');
-}
-
-function deltaOf(values) {
-    if (values.length < 2) return 0;
-    return values[values.length - 1] - values[values.length - 2];
-}
-
 const sliced    = lastN ? records.slice(-lastN) : records;
 const passRates = sliced.map(function(r) { return num(r.passRate); });
 const p95s      = sliced.map(function(r) { return num(r.p95); });
@@ -192,7 +168,7 @@ function padL(s, n) { return String(s).padStart(n); }
 const runWord = sliced.length === 1 ? 'run' : 'runs';
 
 console.log('');
-console.log(c.bold('  🔥 HEPHAESTUS  Run Trends') + c.dim('   (' + sliced.length + ' ' + runWord + ')'));
+console.log(c.bold('  ⚒️  Hephaestus — Run Trends') + c.dim('   (' + sliced.length + ' ' + runWord + ')'));
 console.log(c.dim('  ' + '─'.repeat(64)));
 
 console.log(

@@ -49,7 +49,7 @@ REPORT_HTML="$OUTPUT_DIR/hephaestus-report.html"
 JUNIT_XML="$OUTPUT_DIR/junit-report.xml"
 
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║  🔥 Hephaestus Docker Runner  v4.0.0                       ║"
+echo "║  ⚒️  Hephaestus — Docker Runner  v4.0.0                     ║"
 echo "╠══════════════════════════════════════════════════════════════╣"
 echo "║  Collection:  $COLLECTION"
 echo "║  Environment: ${ENVIRONMENT:-(none)}"

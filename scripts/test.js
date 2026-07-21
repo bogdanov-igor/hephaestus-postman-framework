@@ -674,6 +674,103 @@ test('HTML contains key elements', function() {
     assertContains(html, 'PASS RATE',     'missing SVG pass-rate chart');
 });
 
+test('report --history <file> does not overwrite the history file with HTML', function() {
+    // REGRESSION (data loss): the value after --history is not dash-prefixed, so a
+    // naive positional filter treated it as the output path and wrote the report
+    // over the history JSONL. Same class as the docs/-o bug.
+    const hist = path.join(TMP, 'report-victim-history.jsonl');
+    fs.writeFileSync(hist,
+        JSON.stringify({ passRate: 90, p95: 300 }) + '\n' +
+        JSON.stringify({ passRate: 95, p95: 250 }) + '\n', 'utf8');
+    const before = fs.readFileSync(hist, 'utf8');
+    // No explicit output path: the report must go to the default file, not the history.
+    run(NODE + ' "' + path.join(ROOT, 'scripts/generate-report.js') + '" "' + newmanFixtureFile + '" --history "' + hist + '"');
+    assert(fs.readFileSync(hist, 'utf8') === before, 'the history file was overwritten');
+    JSON.parse(fs.readFileSync(hist, 'utf8').split('\n')[0]); // still JSONL
+});
+
+test('report refuses to write the report over its own inputs', function() {
+    const hist = path.join(TMP, 'report-selftarget.jsonl');
+    fs.writeFileSync(hist, JSON.stringify({ passRate: 90, p95: 300 }) + '\n', 'utf8');
+    let code = 0;
+    try { run(NODE + ' "' + path.join(ROOT, 'scripts/generate-report.js') + '" "' + newmanFixtureFile + '" "' + hist + '" --history "' + hist + '"'); }
+    catch (e) { code = e.status || 1; }
+    assert(code === 1, 'writing the report over the history file must exit 1, got ' + code);
+});
+
+test('report --history=<file> equals form is honoured', function() {
+    const hist = path.join(TMP, 'report-eq-history.jsonl');
+    fs.writeFileSync(hist,
+        JSON.stringify({ passRate: 88, p95: 300 }) + '\n' +
+        JSON.stringify({ passRate: 91, p95: 280 }) + '\n', 'utf8');
+    const out = path.join(TMP, 'report-eq.html');
+    run(NODE + ' "' + path.join(ROOT, 'scripts/generate-report.js') + '" "' + newmanFixtureFile + '" "' + out + '" --history=' + hist);
+    assertContains(fs.readFileSync(out, 'utf8'), 'Trends', '--history=<file> did not produce a Trends section');
+});
+
+test('report Trends section renders outside the summary grid', function() {
+    const hist = path.join(TMP, 'report-grid-history.jsonl');
+    fs.writeFileSync(hist,
+        JSON.stringify({ passRate: 90, p95: 300 }) + '\n' +
+        JSON.stringify({ passRate: 95, p95: 250 }) + '\n', 'utf8');
+    const out = path.join(TMP, 'report-grid.html');
+    run(NODE + ' "' + path.join(ROOT, 'scripts/generate-report.js') + '" "' + newmanFixtureFile + '" "' + out + '" --history "' + hist + '"');
+    const html = fs.readFileSync(out, 'utf8');
+    // Between <div class="summary"> and the filter row, the div count must be
+    // balanced before Trends appears — i.e. the summary grid is already closed.
+    const block = html.slice(html.indexOf('<div class="summary">'), html.indexOf('<div class="filter-row">'));
+    const upTo  = block.slice(0, block.indexOf('>Trends<'));
+    const opens = (upTo.match(/<div/g) || []).length;
+    const closes = (upTo.match(/<\/div>/g) || []).length;
+    assert(opens - closes <= 0, 'Trends is still nested inside the summary grid (depth ' + (opens - closes) + ')');
+});
+
+test('report does not leak an absolute history path into the HTML', function() {
+    const dir = path.join(TMP, '.hephaestus');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'history.jsonl'), JSON.stringify({ passRate: 90, p95: 300 }) + '\n', 'utf8');
+    const out = path.join(TMP, 'report-abs.html');
+    // Run with cwd = TMP so the default .hephaestus/history.jsonl resolves there.
+    run(NODE + ' "' + path.join(ROOT, 'scripts/generate-report.js') + '" "' + newmanFixtureFile + '" "' + out + '" --history', { cwd: TMP });
+    const html = fs.readFileSync(out, 'utf8');
+    assert(html.indexOf(TMP) === -1, 'the absolute temp path leaked into the shareable report');
+});
+
+test('report does not mistake a flag for the output filename', function() {
+    // REGRESSION: `outFile = args[1]` made `report results.json --history` write a
+    // file literally named "--history" (same class of bug as docs/-o and watch/-c).
+    const out = path.join(TMP, 'report-flagargs.html');
+    run(NODE + ' "' + path.join(ROOT, 'scripts/generate-report.js') + '" "' + newmanFixtureFile + '" "' + out + '" --history');
+    assert(fs.existsSync(out), 'report not written to the positional path');
+    assert(!fs.existsSync(path.join(process.cwd(), '--history')), 'created a file named "--history"');
+});
+
+test('report renders a Trends section only when --history is given', function() {
+    const hist = path.join(TMP, 'report-history.jsonl');
+    fs.writeFileSync(hist,
+        JSON.stringify({ passRate: 90, p95: 300 }) + '\n' +
+        JSON.stringify({ passRate: 95, p95: 250 }) + '\n', 'utf8');
+
+    const withOut = path.join(TMP, 'report-trends.html');
+    run(NODE + ' "' + path.join(ROOT, 'scripts/generate-report.js') + '" "' + newmanFixtureFile + '" "' + withOut + '" --history "' + hist + '"');
+    const withHtml = fs.readFileSync(withOut, 'utf8');
+    assertContains(withHtml, 'Trends',      'missing Trends section');
+    assertContains(withHtml, 'class="spark"', 'missing sparkline');
+    assertContains(withHtml, '95%',         'missing latest pass rate');
+
+    // Without the flag the report must be unchanged from before this feature.
+    const plain = fs.readFileSync(reportOut, 'utf8');
+    assert(plain.indexOf('class="spark"') === -1, 'Trends leaked into a report without --history');
+});
+
+test('report survives a malformed history file', function() {
+    const bad = path.join(TMP, 'report-bad-history.jsonl');
+    fs.writeFileSync(bad, '{not json\n' + JSON.stringify({ passRate: 100, p95: 10 }) + '\n', 'utf8');
+    const out = path.join(TMP, 'report-badhist.html');
+    run(NODE + ' "' + path.join(ROOT, 'scripts/generate-report.js') + '" "' + newmanFixtureFile + '" "' + out + '" --history "' + bad + '"');
+    assertContains(fs.readFileSync(out, 'utf8'), 'Trends', 'good lines should still render');
+});
+
 test('HTML has no external <script> or <link rel=stylesheet>', function() {
     const html = fs.readFileSync(reportOut, 'utf8');
     // Allow anchor hrefs to GitHub, forbid external JS/CSS asset loads
