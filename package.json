@@ -7,7 +7,7 @@
   "homepage": "https://github.com/bogdanov-igor/hephaestus-postman-framework",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bogdanov-igor/hephaestus-postman-framework.git"
+    "url": "git+https://github.com/bogdanov-igor/hephaestus-postman-framework.git"
   },
   "bin": {
     "hephaestus": "bin/hephaestus.js"
