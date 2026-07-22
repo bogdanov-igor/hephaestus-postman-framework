@@ -30,7 +30,7 @@
   <circle cx="88" cy="203" r="9.5" fill="none" stroke="#e0654a" stroke-opacity="0.28" stroke-width="1"/>
   <text x="112" y="209"
         font-family="'SF Mono', SFMono-Regular, Menlo, Consolas, monospace"
-        font-size="16" letter-spacing="6.5" fill="#9d8175">HEPHAESTUS · POSTMAN TESTING FRAMEWORK · v3.9 · BOGDANOV</text>
+        font-size="16" letter-spacing="6.5" fill="#9d8175">HEPHAESTUS · POSTMAN TESTING FRAMEWORK · v4.0 · BOGDANOV</text>
 
   <!-- wordmark -->
   <text x="72" y="410"

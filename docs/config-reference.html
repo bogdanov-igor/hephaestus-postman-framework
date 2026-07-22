@@ -96,6 +96,7 @@ footer{text-align:center;padding:20px;font-size:.75rem;color:var(--muted);border
   <a href="#validation">contentType</a>
   <a href="#validation">expectEmpty</a>
   <a href="#validation">maxResponseTime</a>
+  <a href="#validation">maxBytes</a>
   <h3>Auth</h3>
   <a href="#auth">auth.type</a>
   <a href="#auth">auth.enabled</a>
@@ -124,10 +125,20 @@ footer{text-align:center;padding:20px;font-size:.75rem;color:var(--muted);border
   <a href="#schema">schema</a>
   <h3>Plugins</h3>
   <a href="#plugins">plugins</a>
+  <h3>Shipped-plugin Config</h3>
+  <a href="#plugin-config">slackUrl</a>
+  <a href="#plugin-config">slackOnlyFailures</a>
+  <a href="#plugin-config">teamsUrl</a>
+  <a href="#plugin-config">teamsOnlyFailures</a>
+  <a href="#plugin-config">slaMsLimit</a>
+  <a href="#plugin-config">assertJsonApi</a>
   <h3>Security & CI</h3>
   <a href="#security">envRequired</a>
   <a href="#security">secrets</a>
   <a href="#security">ci</a>
+  <h3>Config Safety</h3>
+  <a href="#strict">strictMode</a>
+  <a href="#strict">extraKeys</a>
   <h3>v3.7 / v3.8</h3>
   <a href="#new">retryOnStatus</a>
   <a href="#new">softFail</a>
@@ -244,6 +255,25 @@ footer{text-align:center;padding:20px;font-size:.75rem;color:var(--muted);border
   <div class="opt-body">
     <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">1000</span></div>
     <pre class="example"><span class="kw">const</span> override = { <span class="key">maxResponseTime</span>: <span class="num">3000</span> }; <span class="cmt">// 3 seconds</span></pre>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">maxBytes</div>
+      <div class="opt-desc">Response size budget in bytes — the <code>maxResponseTime</code> for payload size. Fails the test when the response is larger. Values <code>&le; 0</code> (or anything that is not a number) disable the check.</div>
+    </div>
+    <span class="opt-type">number</span><span class="opt-since">v4.0</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">undefined (check off)</span></div>
+    <pre class="example"><span class="cmt">// Fail if the response body exceeds 1 MiB</span>
+<span class="kw">const</span> override = { <span class="key">maxBytes</span>: <span class="num">1048576</span> };
+
+<span class="cmt">// In hephaestus.defaults — one budget for the whole suite:</span>
+{ <span class="key">"maxBytes"</span>: <span class="num">262144</span> }</pre>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:8px">Measured against <code>pm.response.responseSize</code>. The check runs <strong>before</strong> the body is parsed — deliberately, so an oversized binary or unparseable payload is still caught instead of being skipped along with the rest of the assertion block.</p>
   </div>
 </div>
 </div>
@@ -644,6 +674,103 @@ pm.collectionVariables.set(<span class="str">'hephaestus.plugins'</span>, JSON.s
 </div>
 </div>
 
+<!-- ═══════════════════════════════════ PLUGIN CONFIG ═════════ -->
+<div class="section" id="plugin-config">
+<div class="section-title">🔌 Shipped-plugin Config</div>
+<p style="font-size:.8rem;color:var(--muted);margin:-8px 0 16px;line-height:1.6">The keys below are <strong>not read by the engine core</strong>. They are read off <code>ctx.config</code> by the example plugins in <code>docs/plugins/</code> — and do nothing unless that plugin is registered in <code>hephaestus.plugins</code>. They are listed in the engine's known-key list only so <code>strictMode</code> does not flag them. Custom or third-party plugins allowlist their own keys with <a href="#strict"><code>extraKeys</code></a>.</p>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">slackUrl</div>
+      <div class="opt-desc">Incoming-webhook URL for <code>docs/plugins/slack-notifier.js</code>. Read off <code>ctx.config</code> by that plugin, not by the engine.</div>
+    </div>
+    <span class="opt-type">string</span><span class="opt-since">v4.0</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">undefined (plugin no-ops)</span></div>
+    <pre class="example"><span class="kw">const</span> override = { <span class="key">slackUrl</span>: <span class="str">"https://hooks.slack.com/services/..."</span> };</pre>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:8px">Resolution order inside the plugin: <code>ctx.config.slackUrl</code> → collection variable <code>hephaestus.plugin.slackUrl</code> → environment variable <code>SLACK_WEBHOOK_URL</code>. If none is set the plugin returns immediately — an unconfigured notifier is never an error.</p>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">slackOnlyFailures</div>
+      <div class="opt-desc">slack-notifier: notify only when something failed. Set <code>false</code> to post on every request.</div>
+    </div>
+    <span class="opt-type">boolean</span><span class="opt-since">v4.0</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">true</span></div>
+    <pre class="example"><span class="cmt">// Post on every request, not just failures:</span>
+<span class="kw">const</span> override = { <span class="key">slackOnlyFailures</span>: <span class="kw">false</span> };</pre>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:8px">Only an explicit <code>false</code> turns it off — any other value (including unset) keeps failures-only mode. "Failure" here means a <code>5xx</code>, or a status outside <code>expectedStatus</code> when that key is set.</p>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">teamsUrl</div>
+      <div class="opt-desc">Incoming-webhook URL for <code>docs/plugins/teams-notifier.js</code>. Read off <code>ctx.config</code> by that plugin, not by the engine.</div>
+    </div>
+    <span class="opt-type">string</span><span class="opt-since">v4.0</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">undefined (plugin no-ops)</span></div>
+    <pre class="example"><span class="kw">const</span> override = { <span class="key">teamsUrl</span>: <span class="str">"https://outlook.office.com/webhook/..."</span> };</pre>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:8px">Resolution order inside the plugin: <code>ctx.config.teamsUrl</code> → collection variable <code>hephaestus.plugin.teamsUrl</code> → environment variable <code>TEAMS_WEBHOOK_URL</code>.</p>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">teamsOnlyFailures</div>
+      <div class="opt-desc">teams-notifier: notify only when something failed. Set <code>false</code> to post on every request.</div>
+    </div>
+    <span class="opt-type">boolean</span><span class="opt-since">v4.0</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">true</span></div>
+    <pre class="example"><span class="kw">const</span> override = { <span class="key">teamsOnlyFailures</span>: <span class="kw">false</span> };</pre>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:8px">Only an explicit <code>false</code> turns it off. The Teams plugin treats a <code>5xx</code> as the failure condition.</p>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">slaMsLimit</div>
+      <div class="opt-desc">Latency ceiling asserted by <code>docs/plugins/custom-assertions.js</code>. Independent of the engine's own <code>maxResponseTime</code> — this one is a plugin-side test.</div>
+    </div>
+    <span class="opt-type">number</span><span class="opt-since">v4.0</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">3000</span></div>
+    <pre class="example"><span class="kw">const</span> override = { <span class="key">slaMsLimit</span>: <span class="num">1500</span> }; <span class="cmt">// ⏱ Response time &lt; 1500ms</span></pre>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:8px">Falls back to <code>3000</code> whenever the key is unset or falsy, so <code>0</code> does not disable the assertion.</p>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">assertJsonApi</div>
+      <div class="opt-desc">custom-assertions: assert the body follows the JSON:API envelope — a top-level <code>data</code> key must be present.</div>
+    </div>
+    <span class="opt-type">boolean</span><span class="opt-since">v4.0</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">false</span></div>
+    <pre class="example"><span class="kw">const</span> override = { <span class="key">assertJsonApi</span>: <span class="kw">true</span> };</pre>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:8px">Skipped unless the parsed body is an object. The same plugin reads a top-level <code>checkCors</code> flag to assert an <code>Access-Control-Allow-Origin</code> header is present — that is a separate key from <a href="#v39"><code>securityAudit.checkCors</code></a>, which flags a wildcard origin combined with credentials.</p>
+  </div>
+</div>
+</div>
+
 <!-- ═══════════════════════════════════ SECURITY ══════════════ -->
 <div class="section" id="security">
 <div class="section-title">🔒 Security & CI</div>
@@ -694,6 +821,60 @@ pm.collectionVariables.set(<span class="str">'hephaestus.plugins'</span>, JSON.s
 
 <span class="cmt">// Or via Newman --env-var:</span>
 newman run col.json --env-var ci=true</pre>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════ CONFIG SAFETY ══════════ -->
+<div class="section" id="strict">
+<div class="section-title">🧷 Config Safety</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">strictMode</div>
+      <div class="opt-desc">Fail the run when an override contains a key the engine does not know. Off by default: unknown keys only warn.</div>
+    </div>
+    <span class="opt-type">boolean</span><span class="opt-since">v4.0</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">false</span></div>
+    <pre class="example"><span class="cmt">// Default — a typo'd key only warns on the console:</span>
+<span class="kw">const</span> override = { <span class="key">snapshsot</span>: { <span class="key">enabled</span>: <span class="kw">true</span> } };
+<span class="cmt">// ⚠️ Unknown override key: "snapshsot" — did you mean "snapshot"?</span>
+
+<span class="cmt">// In hephaestus.defaults — make CI block on the same typo:</span>
+{ <span class="key">"strictMode"</span>: <span class="kw">true</span> }
+<span class="cmt">// 🚫 strictMode: unknown override key(s)  → a failing pm.test</span></pre>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:8px">Before this guard existed an unrecognised key was silently ignored, so a misspelled option looked like a feature that "did not work". The check runs on the <strong>top-level keys of the per-request <code>override</code></strong>, right after it is merged over <code>hephaestus.defaults</code>; nested keys are not inspected.</p>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:6px">The warning form suggests the nearest known key by edit distance, and only when it is close enough to plausibly be a typo. Warnings are suppressed at <code>logLevel: "silent"</code> — the <code>strictMode</code> failure is not, because it has to reach CI.</p>
+  </div>
+</div>
+
+<div class="opt" onclick="tog(this)">
+  <div class="opt-head">
+    <div>
+      <div class="opt-name">extraKeys</div>
+      <div class="opt-desc">Key names to treat as known even under <code>strictMode</code>. This is how a third-party plugin allowlists its own config, e.g. the gallery plugins in <code>gallery/plugins/</code>.</div>
+    </div>
+    <span class="opt-type">string[]</span><span class="opt-since">v4.0</span>
+  </div>
+  <div class="opt-body">
+    <div class="default-row"><span class="default-lbl">Default:</span><span class="default-val">[]</span></div>
+    <pre class="example"><span class="cmt">// hephaestus.defaults — declare the keys your plugins read:</span>
+{
+  <span class="key">"strictMode"</span>: <span class="kw">true</span>,
+  <span class="key">"extraKeys"</span>: [<span class="str">"budgetMs"</span>, <span class="str">"budgets"</span>, <span class="str">"budgetSoft"</span>, <span class="str">"budgetWarnAt"</span>],
+  <span class="key">"budgetMs"</span>: <span class="num">800</span>
+}
+
+<span class="cmt">// Per-request override — declared and used in the same block:</span>
+<span class="kw">const</span> override = {
+    <span class="key">extraKeys</span>: [<span class="str">"piiRedact"</span>, <span class="str">"piiSoft"</span>],
+    <span class="key">piiRedact</span>: <span class="kw">true</span>,
+    <span class="key">piiSoft</span>:   <span class="kw">false</span>
+};</pre>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:8px">Read from the <em>merged</em> config, so it works from <code>hephaestus.defaults</code> (covering the whole suite) or from the override itself. A non-array value is ignored. Listed keys stop both the warning and the <code>strictMode</code> failure — the engine never reads them, it just stops complaining.</p>
   </div>
 </div>
 </div>

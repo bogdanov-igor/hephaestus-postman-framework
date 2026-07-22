@@ -1,13 +1,13 @@
 <p align="center">
-  <img src="docs/assets/banner.svg?v=3.9" alt="Hephaestus — modular API-testing framework for Postman" width="100%">
+  <img src="docs/assets/banner.svg?v=4.0" alt="Hephaestus — modular API-testing framework for Postman" width="100%">
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-4.0.0-e25822?style=flat-square" alt="version 4.0.0">
+  <a href="https://www.npmjs.com/package/hephaestus-postman-framework"><img src="https://img.shields.io/npm/v/hephaestus-postman-framework?style=flat-square&color=e25822" alt="npm version"></a>
   <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="MIT">
   <img src="https://img.shields.io/badge/engine-207%20KB-success?style=flat-square" alt="207 KB engine">
   <img src="https://img.shields.io/badge/runtime%20deps-0-success?style=flat-square" alt="zero runtime dependencies">
-  <img src="https://img.shields.io/badge/tests-113%20%C2%B7%20354%20golden-success?style=flat-square" alt="113 tests, 354 golden assertions">
+  <img src="https://img.shields.io/badge/tests-143%20%C2%B7%20464%20golden-success?style=flat-square" alt="143 tests, 464 golden assertions">
   <img src="https://img.shields.io/badge/locale-ru%20%C2%B7%20en-success?style=flat-square" alt="locale ru / en">
 </p>
 
@@ -141,7 +141,8 @@ before installing, and saves them to `hephaestus.v3.pre` / `hephaestus.v3.post`.
   for pulling newer code later.
 - **Snapshot regression.** Baselines live in `hephaestus.snapshots`, keyed by
   `collection::request::status::format`. `strict` diffs the whole body,
-  `non-strict` checks only `checkPaths`. `snapshotRecord` force-rewrites a
+  `non-strict` checks only `checkPaths`, and `structural` compares the *shape*
+  (path → type) so volatile values and array length never register as drift. `snapshotRecord` force-rewrites a
   stale baseline in one run when the API legitimately changed.
 - **Schema validation.** JSON Schema via a bundled `tv4` — no dependency.
 - **Security audit.** Opt-in passive checks on the response: missing protective
@@ -156,6 +157,75 @@ before installing, and saves them to `hephaestus.v3.pre` / `hephaestus.v3.post`.
   Responses, usable with the Mock Server.
 - **Secret masking.** Keys named in `secrets`, and matching URL query params,
   are masked in log output only — saved values are never altered.
+
+## Architecture
+
+Two runtimes, one engine. The engine lives *inside* Postman as collection data;
+the CLI lives outside and never touches the engine — it reads what Newman wrote.
+
+```mermaid
+flowchart LR
+    subgraph PM["Postman / Newman runtime"]
+        direction TB
+        V["collection variables<br/>hephaestus.v3.pre / .post"]
+        V --> PRE["pre-request engine"]
+        PRE --> HTTP["HTTP request"]
+        HTTP --> POST["post-request engine"]
+    end
+    subgraph CLI["Node CLI — zero dependencies"]
+        direction TB
+        RES["results.json"] --> G["summary · compare · flaky<br/>coverage · bench · report"]
+        G --> EXIT["exit 0 / 1 — the CI gate"]
+    end
+    POST -.->|"newman -r json"| RES
+```
+
+**Request lifecycle.** Every request runs the same fixed pipeline. A retry
+short-circuits it: when `retryOnStatus` decides to retry, nothing after it runs
+for that pass.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Req as Request script
+    participant Pre as pre-request engine
+    participant API
+    participant Post as post-request engine
+    participant Store as collection vars
+
+    Req->>Pre: eval(hephaestus.v3.pre) + override
+    Pre->>Pre: configMerge → envRequired → iterationData<br/>→ random → urlBuilder → auth → dateUtils
+    Pre->>API: send
+    API-->>Post: response
+    Post->>Post: configMerge → normalizeResponse
+    Post->>Post: retryOnStatus
+    alt retrying
+        Post-->>Req: setNextRequest — pipeline stops here
+    else normal pass
+        Post->>Post: metrics → extractor → assertions<br/>assertEach · assertShape · graphql<br/>assertOrder · assertUnique · assertHeaders
+        Post->>Post: snapshot → schema → securityAudit → plugins
+        Post->>Store: varsToSave, snapshots
+        Post-->>Req: pm.test results + [HEPHAESTUS_CI] line
+    end
+```
+
+**In CI**, every command is a gate: it exits non-zero when its own threshold is
+breached, so the pipeline fails on the specific thing that regressed.
+
+```mermaid
+flowchart TD
+    N["newman run -r json"] --> R["results.json"]
+    R --> S["summary --sla=800"]
+    R --> C["compare before after"]
+    R --> F["flaky run1 run2 --fail-on-flaky"]
+    R --> RP["report --history"]
+    SP["openapi spec"] --> CV["coverage --min 80"]
+    S -->|"p95 over budget"| X["exit 1 — build fails"]
+    C -->|"regression"| X
+    F -->|"flapping test"| X
+    CV -->|"under threshold"| X
+    RP --> H["self-contained HTML<br/>+ trend sparklines"]
+```
 
 ## What it leaves out
 
@@ -192,6 +262,10 @@ deep-merged with a per-request `override`. Common fields:
 | `securityAudit` | disabled | Passive checks: headers · disclosure · CORS · cookie flags · JWT · no-store |
 | `secrets` | `[…]` | Key names masked in logs |
 | `ci` | `false` | Emit a structured `[HEPHAESTUS_CI]` JSON line per request |
+| `strictMode` | `false` | Fail the run on an unknown `override` key (typo-guard); off = warn only |
+| `extraKeys` | `[]` | Key names to treat as known under `strictMode` — how a third-party plugin allowlists its own config |
+| `graphql` | disabled | GraphQL contract checks — `noErrors`, `errorCount`, `errorContains`, `dataShape` |
+| `retryOnStatus` | disabled | Retry on given statuses; `respectRetryAfter` honours the server's `Retry-After` (capped) |
 
 The full field-by-field reference lives in
 [`docs/config-reference.html`](docs/config-reference.html).
@@ -226,23 +300,35 @@ node bin/hephaestus.js <command> [args]
 npm run <command> -- [args]
 ```
 
-> Not yet published to npm. Once it is, the same commands will run as
-> `npx hephaestus <command>` without a clone.
+Or without cloning anything — the package is on npm:
+
+```sh
+npm i -g hephaestus-postman-framework
+hephaestus <command> [args]
+# or one-off:
+npx hephaestus-postman-framework <command> [args]
+```
 
 | Command | Does |
 |---|---|
 | `summary <results.json> [--md] [--sla=<ms>]` | Run summary + p50/p90/p95/p99, SLA gate |
 | `compare <before> <after> [--md]` | Diff two runs — regression gate, exit 1 on regression |
-| `report <results.json> [out.html]` | Self-contained HTML report |
+| `report <results.json> [out.html] [--history [f]]` | Self-contained HTML report; `--history` overlays trend sparklines |
 | `junit <results.json\|-> [out.xml]` | Newman JSON → JUnit XML |
 | `migrate <collection.json>` | Classify a collection's migration state |
 | `docs <collection.json>` | API docs from a collection's test scripts |
 | `sync-examples <collection.json>` | Snapshots → Postman Example Responses |
 | `openapi <spec>` | OpenAPI / Swagger → Hephaestus collection (`--negative` adds error-path tests) |
-| `init` | Interactive config / environment wizard |
+| `init [--demo [dir]]` | Config wizard; `--demo` scaffolds a runnable offline demo |
 | `generate` | Interactive wizard → a ready-to-paste `override` block |
-| `panel [-c <collection.json>]` | Local dev panel: run history, snapshots, defaults editor |
+| `panel [-c <collection.json>]` | Dev panel: trends, snapshot diff, schema-validated defaults editor, override builder |
 | `watch -c <collection.json>` | Re-run Newman on file change |
+| `flaky <run1> <run2> … [--fail-on-flaky]` | Find assertions that flap across repeated runs — exit 1 on any |
+| `coverage --spec <spec> <collection> [--min N]` | OpenAPI coverage of a collection — exit 1 below the threshold |
+| `trends [history.jsonl] [--last N]` | Pass-rate / p95 sparklines across stored runs |
+| `mock <collection.json> [-p <port>]` | Replay saved snapshots as a local API — develop offline |
+| `doctor [-e <env.json>]` | Pre-flight: engine integrity, versions, drift |
+| `bench [--runs K] [--max-ms M]` | Engine overhead per request (A/B vs a no-op) — regression gate |
 
 `node bin/hephaestus.js --help` lists everything.
 
@@ -250,9 +336,9 @@ npm run <command> -- [args]
 
 - **Engine golden harness** — the real engine runs under Newman against a mock
   server and its output is compared byte-for-byte to a golden baseline:
-  **200 assertions across 17 requests**, both locales pinned. It catches any
+  **464 assertions across 48 requests**, both locales pinned. It catches any
   drift in engine behaviour, not just in the tooling.
-- **`npm test`** — **46 tests** over the CLI scripts (docs, summary, compare,
+- **`npm test`** — **143 tests** over the CLI scripts (docs, summary, compare,
   JUnit, migrate, OpenAPI import, sync-examples) and the secret-redaction check.
 - **`npm run build`** — **10 checks**: engine bundle in sync with `engine/src`,
   version single-sourced, `checksums.json` and the embedded collection current,

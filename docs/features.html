@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="description" content="Full feature reference for Hephaestus v3.9 — assertion operators, snapshot regression, auth patterns, array validation, localization, security audit, CLI tools, and more.">
+<meta name="description" content="Full feature reference for Hephaestus v4.0 — assertion operators, snapshot regression, auth patterns, array validation, localization, security audit, CLI tools, and more.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://bogdanov-igor.github.io/hephaestus-postman-framework/features.html">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://bogdanov-igor.github.io/hephaestus-postman-framework/features.html">
 <meta property="og:title" content="All Features — Hephaestus API Testing Framework">
-<meta property="og:description" content="Complete reference for all modules, assertion operators, auth patterns and CLI tools in Hephaestus v3.9.">
+<meta property="og:description" content="Complete reference for all modules, assertion operators, auth patterns and CLI tools in Hephaestus v4.0.">
 <meta property="og:image" content="https://bogdanov-igor.github.io/hephaestus-postman-framework/assets/og.png">
 <title>Features — Hephaestus</title>
 <style>
@@ -55,6 +55,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;backdrop-filter:blur(12px);b
 
 .desc-box{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
 .desc-box h3{font-size:1rem;font-weight:700;margin-bottom:8px}
+.desc-box p.note{font-size:.82rem;color:var(--muted,#8b949e);border-left:2px solid var(--accent);padding-left:10px;margin-top:12px}
 .desc-box p,.desc-box li{font-size:.83rem;color:var(--muted);line-height:1.6}
 .desc-box ul{padding-left:16px;margin-top:8px}
 .desc-box li{margin-bottom:5px}
@@ -255,6 +256,60 @@ footer{text-align:center;padding:32px;font-size:.75rem;color:var(--muted);border
     },
   }
 },</pre>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ASSERT HEADERS -->
+<div class="section" id="headers">
+<div class="section-header">
+  <div class="section-icon">📨</div>
+  <h2>assertHeaders — response header assertions</h2>
+  <span class="section-tag">post-request</span>
+</div>
+<div class="two-col">
+  <div>
+    <div class="desc-box" style="margin-bottom:16px">
+      <h3>One entry per header</h3>
+      <p>An array of entries, each identified by <code>name</code>. An entry without a <code>name</code> is skipped. Unless it is an absence check, every entry first asserts the header <strong>exists and is a non-empty string</strong>, then applies whichever matcher you gave it:</p>
+      <ul>
+        <li><code>name</code> alone — the header must be present</li>
+        <li><code>expect: "substring"</code> — the value must contain that string</li>
+        <li><code>expect: v =&gt; …</code> — predicate must return <code>true</code></li>
+        <li><code>equals: "v2"</code> — exact value match</li>
+        <li><code>absent: true</code> — the header must NOT be there</li>
+        <li><code>label</code> — test name; defaults to the header name</li>
+      </ul>
+    </div>
+    <div class="desc-box">
+      <h3>Each entry is its own pm.test</h3>
+      <p><code>absent: true</code> short-circuits — no existence check runs alongside it, and an empty value counts as absent. <code>equals</code> takes precedence when both <code>equals</code> and <code>expect</code> are given, and is compared as a string. A predicate that throws is treated as a failed check, not as a broken run.</p>
+      <p style="margin-top:10px">The predicate form is a function, so it only works in a JS <code>override</code> block — not in the JSON <code>hephaestus.defaults</code>. Verdicts also land in <code>ctx._meta.results.headers</code>, where plugins can read them.</p>
+    </div>
+  </div>
+  <div class="code-window">
+    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">assertHeaders</span></div>
+    <div class="code-body"><pre><span class="c-key">assertHeaders</span>: [
+  <span class="c-cmt">// exists and is non-empty</span>
+  { <span class="c-key">name</span>: <span class="c-str">"X-Request-Id"</span> },
+
+  <span class="c-cmt">// value contains the substring</span>
+  { <span class="c-key">name</span>: <span class="c-str">"Content-Type"</span>, <span class="c-key">expect</span>: <span class="c-str">"application/json"</span> },
+
+  <span class="c-cmt">// exact match</span>
+  { <span class="c-key">name</span>: <span class="c-str">"X-Api-Version"</span>, <span class="c-key">equals</span>: <span class="c-str">"v2"</span> },
+
+  <span class="c-cmt">// must NOT be present</span>
+  { <span class="c-key">name</span>: <span class="c-str">"X-Powered-By"</span>, <span class="c-key">absent</span>: <span class="c-kw">true</span> },
+
+  <span class="c-cmt">// predicate + custom test label</span>
+  {
+    <span class="c-key">name</span>:   <span class="c-str">"X-RateLimit-Remaining"</span>,
+    <span class="c-key">label</span>:  <span class="c-str">"Rate limit not exhausted"</span>,
+    <span class="c-key">expect</span>: <span class="c-var">v</span> =&gt; <span class="c-fn">Number</span>(<span class="c-var">v</span>) &gt; <span class="c-num">0</span>,
+  },
+],</pre>
     </div>
   </div>
 </div>
@@ -461,6 +516,66 @@ footer{text-align:center;padding:32px;font-size:.75rem;color:var(--muted);border
   <div class="mini-card">
     <h4>ci: true</h4>
     <p>Outputs structured JSON to console alongside human-readable output. Consumed by <code>ci-to-junit.js</code>.</p>
+  </div>
+</div>
+</div>
+
+<!-- DEMO -->
+<div class="section" id="demo">
+<div class="section-header">
+  <div class="section-icon">🚀</div>
+  <h2>init --demo — a runnable offline demo<span class="version-badge v4-0">v4.0</span></h2>
+  <span class="section-tag">CLI · init.js</span>
+</div>
+<div class="two-col">
+  <div>
+    <div class="desc-box" style="margin-bottom:16px">
+      <h3>See it run before you configure anything</h3>
+      <p>One non-interactive command scaffolds a directory holding a collection, an environment, and a README. The collection carries <strong>its own snapshots</strong> inside <code>hephaestus.snapshots</code>, so <code>hephaestus mock</code> serves those recorded responses back and Newman runs green — <strong>no account, no API key, no network</strong>.</p>
+      <ul>
+        <li><strong>5 requests, 35 assertions</strong>, all green — including the one that asserts a 404</li>
+        <li>Wired to the real engine, not a simplified copy — every request is copy-pasteable into a real collection</li>
+        <li>The whole test is the <code>override</code> block at the top of the Tests tab; the line under it evaluates the engine</li>
+        <li>Writes to <code>hephaestus-demo/</code> by default; pass a directory to change it, <code>--force</code> to overwrite</li>
+      </ul>
+    </div>
+    <div class="desc-box">
+      <h3>One headline feature per request</h3>
+      <ul>
+        <li><strong>1. Health check</strong> — <code>expectedStatus</code>: the smallest possible test</li>
+        <li><strong>2. List products</strong> — <code>assertShape</code>, <code>assertEach</code>, <code>assertOrder</code>, <code>maxResponseTime</code></li>
+        <li><strong>3. Create product</strong> — <code>assertions</code> plus <code>varsToSave</code> into a collection variable</li>
+        <li><strong>4. Get product</strong> — <code>snapshot</code> in <code>structural</code> mode</li>
+        <li><strong>5. Missing product</strong> — a negative test: the 404 is the expected result, so the run stays green because the test says so, not because nothing was checked</li>
+      </ul>
+      <p style="margin-top:10px">Demo paths are deliberately static: <code>mock</code> matches <code>{{id}}</code> / <code>:id</code> segments literally, so a templated path would register the route with the braces still in it.</p>
+    </div>
+  </div>
+  <div class="code-window">
+    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">init --demo</span></div>
+    <div class="code-body"><pre><span class="c-cmt"># scaffold it — nothing to answer, nothing to sign up for</span>
+<span class="c-var">npx</span> hephaestus init <span class="c-key">--demo</span>
+
+<span class="c-cmt"># terminal 1 — serve the recorded responses</span>
+<span class="c-var">hephaestus</span> mock hephaestus-demo/demo-collection.json <span class="c-key">-p</span> <span class="c-num">4010</span>
+
+<span class="c-cmt"># terminal 2 — run the tests against it</span>
+<span class="c-var">newman</span> run hephaestus-demo/demo-collection.json \
+  <span class="c-key">-e</span> hephaestus-demo/demo-environment.json
+
+<span class="c-cmt"># → 5 requests, 35 assertions, 0 failures
+
+# written:
+#   hephaestus-demo/demo-collection.json
+#   hephaestus-demo/demo-environment.json
+#   hephaestus-demo/README.md
+
+# then feed the run into the rest of the CLI:</span>
+<span class="c-var">newman</span> run … <span class="c-key">-r</span> json --reporter-json-export run.json
+<span class="c-var">hephaestus</span> summary run.json
+<span class="c-var">hephaestus</span> report  run.json demo-report.html
+<span class="c-var">hephaestus</span> docs    hephaestus-demo/demo-collection.json -o demo-api.md</pre>
+    </div>
   </div>
 </div>
 </div>
@@ -759,6 +874,147 @@ footer{text-align:center;padding:32px;font-size:.75rem;color:var(--muted);border
 #   gains a matching Example Response,
 #   visible in the Postman app.</span></pre>
     </div>
+  </div>
+</div>
+</div>
+
+<!-- EXTRA KEYS -->
+<div class="section" id="extrakeys">
+<div class="section-header">
+  <div class="section-icon">🧷</div>
+  <h2>extraKeys — allowlist your own config keys<span class="version-badge v4-0">v4.0</span></h2>
+  <span class="section-tag">global config</span>
+</div>
+<div class="two-col">
+  <div>
+    <div class="desc-box" style="margin-bottom:16px">
+      <h3>The typo-guard, and its escape hatch</h3>
+      <p>Every top-level key of a request's <code>override</code> is checked against the list of options the engine knows. An unrecognised key used to be silently ignored — a misspelled option just looked like a feature that did not work. Now it warns, with the nearest known key suggested:</p>
+      <ul>
+        <li>Default — <code>⚠️ Unknown override key: "snapshsot" — did you mean "snapshot"?</code></li>
+        <li><code>strictMode: true</code> — a failing <code>pm.test</code> instead, so CI blocks on the typo</li>
+        <li>Warnings are muted at <code>logLevel: "silent"</code>; the strict failure is not</li>
+      </ul>
+    </div>
+    <div class="desc-box">
+      <h3>extraKeys turns that guard off per key</h3>
+      <p>Third-party plugins read their settings off <code>ctx.config</code>, which means their keys live in your config — where the engine has never heard of them. List them in <code>extraKeys</code> and both the warning and the strict failure go away for exactly those names.</p>
+      <p style="margin-top:10px">Read from the <em>merged</em> config, so it works from <code>hephaestus.defaults</code> (covering the whole suite) or from the override itself. A non-array value is ignored. The engine still never reads the listed keys — it just stops complaining about them.</p>
+    </div>
+  </div>
+  <div class="code-window">
+    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">strictMode + extraKeys</span></div>
+    <div class="code-body"><pre><span class="c-cmt">// hephaestus.defaults — strict for the whole suite</span>
+{
+  <span class="c-key">"strictMode"</span>: <span class="c-kw">true</span>,
+  <span class="c-key">"extraKeys"</span>: [
+    <span class="c-str">"budgetMs"</span>, <span class="c-str">"budgets"</span>,
+    <span class="c-str">"budgetSoft"</span>, <span class="c-str">"budgetWarnAt"</span>
+  ],
+  <span class="c-key">"budgetMs"</span>: <span class="c-num">800</span>
+}
+
+<span class="c-cmt">// or declared and used in the same override</span>
+<span class="c-kw">const</span> override = {
+  <span class="c-key">extraKeys</span>: [<span class="c-str">"piiRedact"</span>, <span class="c-str">"piiSoft"</span>],
+  <span class="c-key">piiRedact</span>: <span class="c-kw">true</span>,
+  <span class="c-key">piiSoft</span>:   <span class="c-kw">false</span>,
+};
+
+<span class="c-cmt">// without extraKeys, under strictMode:
+//   🚫 strictMode: unknown override key(s)</span></pre>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PLUGIN GALLERY -->
+<div class="section" id="gallery">
+<div class="section-header">
+  <div class="section-icon">🖼️</div>
+  <h2>Plugin Gallery — gallery/plugins/<span class="version-badge v4-0">v4.0</span></h2>
+  <span class="section-tag">post-request · plugins</span>
+</div>
+<div class="two-col">
+  <div>
+    <div class="desc-box" style="margin-bottom:16px">
+      <h3>Drop-in, zero dependencies, no engine fork</h3>
+      <p>Four working plugins plus a commented skeleton. Each is a single file you paste into a collection variable and register in the collection's Pre-request script — no build step, no fork.</p>
+      <ul>
+        <li>The descriptor key is <code>post</code>, and its value is the <strong>name of the variable</strong> holding the code, not the code itself</li>
+        <li>Plugins run <strong>once per request, second to last</strong> in the pipeline — after <code>securityAudit</code>, before <code>logger.summary</code></li>
+        <li>Running there is what makes them possible: every assertion verdict is already in <code>ctx._meta.results</code>, and <code>ctx.config</code> is still live</li>
+        <li>If <code>retryOnStatus</code> fires, the pipeline stops before plugins and they do not run that iteration</li>
+        <li>A throw inside a plugin becomes a failing test named after it; the remaining plugins still run</li>
+      </ul>
+    </div>
+    <div class="desc-box">
+      <h3>Gallery keys need <code>extraKeys</code></h3>
+      <p>Every gallery plugin reads its settings off <code>ctx.config</code>, so its keys live in your <code>hephaestus.defaults</code> or in a request's <code>override</code>. <strong>None of them are keys the engine knows about</strong> — they are not in <code>KNOWN_KEYS</code>, which covers only the engine's own options plus the shipped first-party plugins.</p>
+      <p style="margin-top:10px">So each one warns by default, and <strong>fails the run under <code>strictMode: true</code></strong>. Declare them with <a href="#extrakeys"><code>extraKeys</code></a> and both go away.</p>
+    </div>
+  </div>
+  <div class="code-window">
+    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">install a gallery plugin</span></div>
+    <div class="code-body"><pre><span class="c-cmt">// 1. Paste the file's text into a collection variable:
+//    hephaestus.plugin.budget → &lt;contents of response-budget.js&gt;
+
+// 2. Register it in the collection Pre-request script:</span>
+<span class="c-var">pm</span>.collectionVariables.<span class="c-fn">set</span>(<span class="c-str">'hephaestus.plugins'</span>, <span class="c-var">JSON</span>.<span class="c-fn">stringify</span>([
+  { <span class="c-key">name</span>: <span class="c-str">'response-budget'</span>,  <span class="c-key">post</span>: <span class="c-str">'hephaestus.plugin.budget'</span> },
+  { <span class="c-key">name</span>: <span class="c-str">'timing-histogram'</span>, <span class="c-key">post</span>: <span class="c-str">'hephaestus.plugin.histogram'</span> },
+  { <span class="c-key">name</span>: <span class="c-str">'pii-redactor'</span>,     <span class="c-key">post</span>: <span class="c-str">'hephaestus.plugin.pii'</span> },
+]));
+
+<span class="c-cmt">// 3. Configure through override — every key lands in ctx.config,
+//    and must be declared when strictMode is on:</span>
+<span class="c-kw">const</span> override = {
+  <span class="c-key">extraKeys</span>: [<span class="c-str">'budgetMs'</span>, <span class="c-str">'budgets'</span>, <span class="c-str">'piiSoft'</span>, <span class="c-str">'csvPrint'</span>],
+  <span class="c-key">budgetMs</span>: <span class="c-num">800</span>,
+  <span class="c-key">budgets</span>:  { <span class="c-str">'Login'</span>: <span class="c-num">2000</span>, <span class="c-str">'Health check'</span>: <span class="c-num">200</span> },
+  <span class="c-key">piiSoft</span>:  <span class="c-kw">false</span>,
+  <span class="c-key">csvPrint</span>: <span class="c-kw">true</span>,
+};
+
+<span class="c-cmt">// Plugins that accumulate state (timing-histogram, csv-metrics)
+// use collection variables, which persist between runs — clear
+// them at the top of the same Pre-request script:</span>
+<span class="c-kw">if</span> (!<span class="c-var">pm</span>.info.iteration) {
+  <span class="c-var">pm</span>.collectionVariables.<span class="c-fn">unset</span>(<span class="c-str">'hephaestus.plugin.timings'</span>);
+  <span class="c-var">pm</span>.collectionVariables.<span class="c-fn">unset</span>(<span class="c-str">'hephaestus.plugin.csvRows'</span>);
+}</pre>
+    </div>
+  </div>
+</div>
+
+<div class="three-col" style="margin-top:24px">
+  <div class="mini-card">
+    <h4>📉 response-budget.js</h4>
+    <p>Fails the run when a response misses its latency budget. Per-request budgets, soft mode, and a warning band before the hard limit.</p>
+    <p style="margin-top:8px;font-size:.7rem;color:var(--accent)">budgetMs · budgets · budgetSoft · budgetWarnAt</p>
+  </div>
+  <div class="mini-card">
+    <h4>📊 timing-histogram.js</h4>
+    <p>Collects response times across a run and prints an ASCII histogram with p50/p90/p95/max and the three slowest requests.</p>
+    <p style="margin-top:8px;font-size:.7rem;color:var(--accent)">histogramVar · histogramMax · histogramBuckets · histogramPrint</p>
+  </div>
+  <div class="mini-card">
+    <h4>🕵️ pii-redactor.js</h4>
+    <p>Finds credential- and PII-shaped values in the response, reports them masked, and registers their field names so the engine summary redacts them too.</p>
+    <p style="margin-top:8px;font-size:.7rem;color:var(--accent)">piiRedact · piiKinds · piiIgnore · piiMaxDepth · piiSoft</p>
+  </div>
+  <div class="mini-card">
+    <h4>📑 csv-metrics.js</h4>
+    <p>Appends one CSV row per request — timing, size, and every module's verdict — and prints the whole table between cut markers at the end of the run.</p>
+    <p style="margin-top:8px;font-size:.7rem;color:var(--accent)">csvVar · csvMaxRows · csvUrl · csvPrint</p>
+  </div>
+  <div class="mini-card">
+    <h4>📄 _template.js</h4>
+    <p>Commented skeleton documenting every surface a plugin can touch: <code>ctx.config</code>, <code>ctx.request</code>, <code>ctx.response</code>, <code>ctx.api</code>, <code>ctx.iteration</code>, <code>ctx._meta</code>, <code>_override</code>. Copy, rename, delete the rest.</p>
+  </div>
+  <div class="mini-card">
+    <h4>⚠️ Two things that trip up first plugins</h4>
+    <p><code>ctx.api</code> carries only <code>get</code>/<code>find</code>/<code>all</code>/<code>count</code>/<code>save</code> — status and timing live on <code>ctx.response</code>. And <code>ctx._meta.results</code> entries use <code>ok</code>, not <code>passed</code>; modules that did not run leave their slot empty, so guard before reading.</p>
   </div>
 </div>
 </div>

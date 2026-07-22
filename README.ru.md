@@ -1,13 +1,13 @@
 <p align="center">
-  <img src="docs/assets/banner.svg?v=3.9" alt="Hephaestus — модульный фреймворк API-тестирования для Postman" width="100%">
+  <img src="docs/assets/banner.svg?v=4.0" alt="Hephaestus — модульный фреймворк API-тестирования для Postman" width="100%">
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-4.0.0-e25822?style=flat-square" alt="version 4.0.0">
+  <a href="https://www.npmjs.com/package/hephaestus-postman-framework"><img src="https://img.shields.io/npm/v/hephaestus-postman-framework?style=flat-square&color=e25822" alt="npm version"></a>
   <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="MIT">
   <img src="https://img.shields.io/badge/engine-207%20KB-success?style=flat-square" alt="207 KB engine">
   <img src="https://img.shields.io/badge/runtime%20deps-0-success?style=flat-square" alt="zero runtime dependencies">
-  <img src="https://img.shields.io/badge/tests-113%20%C2%B7%20354%20golden-success?style=flat-square" alt="113 tests, 354 golden assertions">
+  <img src="https://img.shields.io/badge/tests-143%20%C2%B7%20464%20golden-success?style=flat-square" alt="143 tests, 464 golden assertions">
   <img src="https://img.shields.io/badge/locale-ru%20%C2%B7%20en-success?style=flat-square" alt="locale ru / en">
 </p>
 
@@ -146,7 +146,8 @@ node bin/hephaestus.js summary results.json --sla=500   # p95-гейт, exit 1 �
   чтобы позже подтянуть более новый код.
 - **Регрессия по снапшотам.** Эталоны живут в `hephaestus.snapshots` с ключом
   `collection::request::status::format`. `strict` сравнивает всё тело,
-  `non-strict` проверяет только `checkPaths`. `snapshotRecord` принудительно
+  `non-strict` проверяет только `checkPaths`, а `structural` сравнивает *форму*
+  (путь → тип) — волатильные значения и длина массива не считаются дрейфом. `snapshotRecord` принудительно
   перезаписывает устаревший эталон за один прогон, когда API изменился по делу.
 - **Валидация по схеме.** JSON Schema через встроенный `tv4` — без зависимостей.
 - **Аудит безопасности.** Опциональные пассивные проверки ответа: отсутствие
@@ -164,6 +165,75 @@ node bin/hephaestus.js summary results.json --sla=500   # p95-гейт, exit 1 �
 - **Маскирование секретов.** Ключи, названные в `secrets`, и совпадающие
   query-параметры URL маскируются только в выводе логов — сохранённые значения
   никогда не меняются.
+
+## Архитектура
+
+Два рантайма, один движок. Движок живёт *внутри* Postman как данные коллекции;
+CLI живёт снаружи и движок не трогает — он читает то, что записал Newman.
+
+```mermaid
+flowchart LR
+    subgraph PM["Рантайм Postman / Newman"]
+        direction TB
+        V["переменные коллекции<br/>hephaestus.v3.pre / .post"]
+        V --> PRE["движок pre-request"]
+        PRE --> HTTP["HTTP-запрос"]
+        HTTP --> POST["движок post-request"]
+    end
+    subgraph NODE["Node CLI — ноль зависимостей"]
+        direction TB
+        RES["results.json"] --> G["summary · compare · flaky<br/>coverage · bench · report"]
+        G --> EXIT["выход 0 / 1 — гейт CI"]
+    end
+    POST -.->|"newman -r json"| RES
+```
+
+**Жизненный цикл запроса.** Каждый запрос проходит один и тот же фиксированный
+пайплайн. Повтор его обрывает: если `retryOnStatus` решает повторить, всё, что
+идёт после него, на этом проходе не выполняется.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Req as Скрипт запроса
+    participant Pre as движок pre-request
+    participant API
+    participant Post as движок post-request
+    participant Store as переменные коллекции
+
+    Req->>Pre: eval(hephaestus.v3.pre) + override
+    Pre->>Pre: configMerge → envRequired → iterationData<br/>→ random → urlBuilder → auth → dateUtils
+    Pre->>API: отправка
+    API-->>Post: ответ
+    Post->>Post: configMerge → normalizeResponse
+    Post->>Post: retryOnStatus
+    alt повтор
+        Post-->>Req: setNextRequest — пайплайн останавливается
+    else обычный проход
+        Post->>Post: metrics → extractor → assertions<br/>assertEach · assertShape · graphql<br/>assertOrder · assertUnique · assertHeaders
+        Post->>Post: snapshot → schema → securityAudit → plugins
+        Post->>Store: varsToSave, снапшоты
+        Post-->>Req: результаты pm.test + строка [HEPHAESTUS_CI]
+    end
+```
+
+**В CI** каждая команда — гейт: она выходит с ненулевым кодом, когда нарушен
+её собственный порог, поэтому пайплайн падает именно на том, что регрессировало.
+
+```mermaid
+flowchart TD
+    N["newman run -r json"] --> R["results.json"]
+    R --> S["summary --sla=800"]
+    R --> C["compare before after"]
+    R --> F["flaky run1 run2 --fail-on-flaky"]
+    R --> RP["report --history"]
+    SP["спецификация openapi"] --> CV["coverage --min 80"]
+    S -->|"p95 вышел за бюджет"| X["выход 1 — сборка падает"]
+    C -->|"регрессия"| X
+    F -->|"плавающий тест"| X
+    CV -->|"ниже порога"| X
+    RP --> H["автономный HTML<br/>+ спарклайны трендов"]
+```
 
 ## Что остаётся за рамками
 
@@ -204,6 +274,10 @@ node bin/hephaestus.js summary results.json --sla=500   # p95-гейт, exit 1 �
 | `securityAudit` | выключено | Пассивные проверки: заголовки · раскрытие · CORS · cookie-флаги · JWT · no-store |
 | `secrets` | `[…]` | Имена ключей, маскируемые в логах |
 | `ci` | `false` | Выдавать структурированную JSON-строку `[HEPHAESTUS_CI]` на запрос |
+| `strictMode` | `false` | Валить прогон на неизвестном ключе `override` (защита от опечаток); выключено — только предупреждение |
+| `extraKeys` | `[]` | Имена ключей, считающихся известными при `strictMode` — так сторонний плагин объявляет свой конфиг |
+| `graphql` | выключено | Проверки контракта GraphQL — `noErrors`, `errorCount`, `errorContains`, `dataShape` |
+| `retryOnStatus` | выключено | Повтор на заданных статусах; `respectRetryAfter` учитывает серверный `Retry-After` (с потолком) |
 
 Полный справочник по каждому полю — в
 [`docs/config-reference.html`](docs/config-reference.html).
@@ -238,8 +312,14 @@ node bin/hephaestus.js <command> [args]
 npm run <command> -- [args]
 ```
 
-> Пока не опубликован в npm. Когда опубликуется — те же команды будут
-> запускаться как `npx hephaestus <command>` без клонирования.
+Или вообще без клонирования — пакет опубликован в npm:
+
+```sh
+npm i -g hephaestus-postman-framework
+hephaestus <command> [args]
+# или разово:
+npx hephaestus-postman-framework <command> [args]
+```
 
 | Команда | Что делает |
 |---|---|
@@ -255,6 +335,12 @@ npm run <command> -- [args]
 | `generate` | Интерактивный мастер → готовый к вставке блок `override` |
 | `panel [-c <collection.json>]` | Локальная панель: история прогонов, снапшоты, редактор defaults |
 | `watch -c <collection.json>` | Перезапуск Newman при изменении файла |
+| `flaky <run1> <run2> … [--fail-on-flaky]` | Ищет проверки, «плавающие» между прогонами — выход 1 при находке |
+| `coverage --spec <spec> <collection> [--min N]` | Покрытие OpenAPI коллекцией — выход 1 ниже порога |
+| `trends [history.jsonl] [--last N]` | Спарклайны pass-rate / p95 по сохранённым прогонам |
+| `mock <collection.json> [-p <port>]` | Отдаёт сохранённые снапшоты как локальный API — разработка офлайн |
+| `doctor [-e <env.json>]` | Предполётная проверка: целостность движка, версии, дрейф |
+| `bench [--runs K] [--max-ms M]` | Накладные расходы движка на запрос (A/B против no-op) — гейт регрессии |
 
 `node bin/hephaestus.js --help` перечисляет всё.
 
@@ -262,9 +348,9 @@ npm run <command> -- [args]
 
 - **Golden-харнесс движка** — настоящий движок запускается под Newman против
   mock-сервера, и его вывод сравнивается побайтово с золотым эталоном:
-  **200 проверок в 17 запросах**, обе локали зафиксированы. Он ловит любой
+  **464 проверки в 48 запросах**, обе локали зафиксированы. Он ловит любой
   дрейф в поведении движка, а не только в инструментарии.
-- **`npm test`** — **46 тестов** по CLI-скриптам (docs, summary, compare,
+- **`npm test`** — **143 теста** по CLI-скриптам (docs, summary, compare,
   JUnit, migrate, импорт OpenAPI, sync-examples) и проверка маскирования секретов.
 - **`npm run build`** — **10 проверок**: бандл движка синхронен с `engine/src`,
   версия из единого источника, `checksums.json` и встроенная коллекция
