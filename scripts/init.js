@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Hephaestus — Project Init Wizard  v4.0.0
+ * Hephaestus — Project Init Wizard  v4.0.1
  *
  * Interactive setup: generates hephaestus.defaults.json and
  * an environment file template for a new project.
@@ -110,7 +110,7 @@ function yesNo(question, defaultYes) {
 
 async function main() {
     console.log('\n╔══════════════════════════════════════════════════════════════╗');
-    console.log('║  ⚒️  Hephaestus — Init Wizard  v4.0.0                       ║');
+    console.log('║  ⚒️  Hephaestus — Init Wizard  v4.0.1                       ║');
     console.log('╚══════════════════════════════════════════════════════════════╝\n');
 
     // ─── Project basics ────────────────────────────────────────────────────────

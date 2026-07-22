@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Hephaestus — OpenAPI / Swagger → Collection  v4.0.0
+ * Hephaestus — OpenAPI / Swagger → Collection  v4.0.1
  *
  * Reads an OpenAPI 3.x or Swagger 2.0 spec (JSON, or a common subset of YAML —
  * zero dependencies) and generates a Hephaestus-style Postman collection: one

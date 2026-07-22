@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Hephaestus — OpenAPI Coverage  v4.0.0
+ * Hephaestus — OpenAPI Coverage  v4.0.1
  *
  * How much of an OpenAPI/Swagger spec does a Postman collection actually
  * exercise? Reports the percentage of spec operations (method + path) covered
@@ -142,7 +142,7 @@ if (require.main === module) {
     if (wantHelp || !specFile || specFile === true || !collectionFile) {
         console.log([
             '',
-            '⚒️  Hephaestus Coverage  v4.0.0',
+            '⚒️  Hephaestus Coverage  v4.0.1',
             '',
             'Percentage of an OpenAPI/Swagger spec exercised by a Postman collection.',
             '',

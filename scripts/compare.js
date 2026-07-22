@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Hephaestus — Newman Run Comparator  v4.0.0
+ * Hephaestus — Newman Run Comparator  v4.0.1
  *
  * Compares two Newman JSON result files side-by-side.
  * Highlights new failures, resolved failures, and performance regressions.

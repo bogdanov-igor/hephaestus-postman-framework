@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Hephaestus — demo scaffold  v4.0.0
+ * Hephaestus — demo scaffold  v4.0.1
  *
  * Builds a self-contained demo: a collection wired to the real engine, an
  * environment, and the snapshots that let `hephaestus mock` serve it. The point
@@ -82,7 +82,7 @@ const ITEMS = [
             '    expectedStatus: 200',
             '};',
         ],
-        snapshot: { statusCode: 200, format: 'json', data: { status: 'ok', version: '4.0.0' } },
+        snapshot: { statusCode: 200, format: 'json', data: { status: 'ok', version: '4.0.1' } },
     },
     {
         name: '2. List products',

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Hephaestus — Flaky-Test Detector  v4.0.0
+ * Hephaestus — Flaky-Test Detector  v4.0.1
  *
  * Given TWO OR MORE Newman JSON result files from repeated runs of the SAME
  * collection, finds assertions that FLAP — pass in some runs and fail in
@@ -38,7 +38,7 @@ const USAGE = 'Usage: node scripts/flaky.js <results1.json> <results2.json> ... 
 function printHelp() {
     console.log([
         '',
-        '⚒️  Hephaestus Flaky-Test Detector  v4.0.0',
+        '⚒️  Hephaestus Flaky-Test Detector  v4.0.1',
         '',
         'Finds assertions that flap (pass in some runs, fail in others) across two',
         'or more Newman result files from repeated runs of the SAME collection.',

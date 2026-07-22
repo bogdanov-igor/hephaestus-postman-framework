@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Hephaestus — sparkline helpers  v4.0.0
+ * Hephaestus — sparkline helpers  v4.0.1
  *
  * Shared by `trends` (terminal) and `report` (HTML) so both render a run history
  * the same way. Kept as a tiny module because trends.js runs at top level and

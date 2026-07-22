@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Hephaestus — JSON Schema validator (draft-07 subset)  v4.0.0
+ * Hephaestus — JSON Schema validator (draft-07 subset)  v4.0.1
  *
  * The engine validates responses with tv4, but tv4 is a Postman-sandbox global —
  * it does not exist in Node. The Dev Panel needs to check an edited defaults.json

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Hephaestus — unified CLI  v4.0.0
+ * Hephaestus — unified CLI  v4.0.1
  *
  * One command instead of `node scripts/<x>.js`. Works via npx without cloning:
  *   npx hephaestus-postman-framework <command> [args]

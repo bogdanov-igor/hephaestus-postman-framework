@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Hephaestus — structural JSON diff  v4.0.0
+ * Hephaestus — structural JSON diff  v4.0.1
  *
  * Powers the Dev Panel's snapshot diff viewer. The engine has its own comparison
  * inside the snapshot module, but those are methods on an object inside a bundled

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Hephaestus — Tool Suite Tests  v4.0.0
+ * Hephaestus — Tool Suite Tests  v4.0.1
  *
  * Validates all tooling scripts and project consistency.
  * Run: npm test

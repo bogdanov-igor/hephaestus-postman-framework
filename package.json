@@ -1,6 +1,6 @@
 {
   "name": "hephaestus-postman-framework",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Modular API testing automation framework for Postman",
   "license": "MIT",
   "author": "Bogdanov Igor <bogdanov.ig.alex@gmail.com>",

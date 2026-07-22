@@ -1,8 +1,8 @@
 {
-  "version": "4.0.0",
+  "version": "4.0.1",
   "algorithm": "sha256",
   "files": {
-    "engine/pre-request.js": "81454170289ec3369d7629a53dd83d01b71fc1f787eb00cd5725a1f7a082794a",
-    "engine/post-request.js": "721b89d4cea88d937e7931120b70d6f7476b0f56833966da1a8f8cbca064c140"
+    "engine/pre-request.js": "a4d820eb8e1e1eb06d0a45daf4a95ff18fde2af829fb7385825c845c0f951cff",
+    "engine/post-request.js": "bf26532187f4fd7741a62be02531d18a966c07a6fe05dc338d65aebb3534f02a"
   }
 }

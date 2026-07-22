@@ -6,6 +6,48 @@
 
 ---
 
+## [4.0.1] — 2026-07-22
+
+Documentation and release-plumbing only — no engine or CLI behaviour changed.
+Published so the npm page carries the corrected docs (npm cannot update the
+README of an already-published version).
+
+### Fixed
+- **The docs had fallen behind the code.** An audit against the shipped source
+  found: the banner and the social image still read `v3.9`; both READMEs claimed
+  the package was "not yet published to npm"; the badges and prose advertised
+  113/46 tests and 200 golden assertions across 17 requests when the real
+  figures are 143 and 464 across 48.
+- **9 of the engine's 43 config keys were undocumented** — `strictMode`,
+  `extraKeys`, `maxBytes` and the six shipped-plugin keys. All 43 are now in
+  `docs/config-reference.html`, with the plugin keys grouped under a heading
+  that states they are read by `docs/plugins/*` rather than by the engine core.
+- **6 of the 18 CLI commands were missing from both README tables** — `flaky`,
+  `coverage`, `trends`, `mock`, `doctor`, `bench` — along with the `--history`
+  and `--demo` flags. All 18 are listed now, in both languages.
+- `docs/features.html` gained sections for `init --demo`, the plugin gallery,
+  `assertHeaders` and `extraKeys`, plus a CSS rule for the `.note` class it had
+  been using without ever defining.
+- README config tables gained `strictMode`, `extraKeys`, `graphql` and
+  `retryOnStatus` / `respectRetryAfter`; the snapshot paragraph now covers the
+  `structural` mode.
+
+### Added
+- **Architecture diagrams** — there were none. Three per language: the
+  two-runtime layout (engine as collection data inside Postman, CLI outside
+  reading Newman's output), a request-lifecycle sequence with the real module
+  order including the `retryOnStatus` short-circuit, and a CI-gate flowchart
+  showing which command fails a build on what. All six were verified to render.
+
+### Changed
+- **Publishing moved to npm Trusted Publishing (OIDC).** No npm token is stored
+  anywhere any more — GitHub Actions proves the workflow's identity to npm
+  directly, which also means releases now carry provenance attestations. The
+  publish workflow pins Node 22 and upgrades npm, since OIDC requires npm CLI
+  >= 11.5.1 and Node >= 22.14.0.
+
+---
+
 ## [4.0.0] — 2026-07-21
 
 A major release: the engine gained five new capabilities, the CLI grew from a
