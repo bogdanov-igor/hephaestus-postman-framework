@@ -88,4 +88,6 @@ jobs:
           echo "npm $(npm --version) / node $(node --version)"
           echo "OIDC request URL present: ${ACTIONS_ID_TOKEN_REQUEST_URL:+yes}${ACTIONS_ID_TOKEN_REQUEST_URL:-NO — id-token permission missing}"
           echo "NODE_AUTH_TOKEN set: ${NODE_AUTH_TOKEN:+yes}${NODE_AUTH_TOKEN:-no}"
-          npm publish --access public
+          # verbose: shows whether npm even attempts the OIDC token exchange
+          npm publish --access public --loglevel verbose 2>&1 | tail -60
+          exit "${PIPESTATUS[0]}"
