@@ -79,15 +79,10 @@ jobs:
       - name: Publish (real, via OIDC — no token)
         if: ${{ !inputs.dry_run }}
         run: |
-          # setup-node writes _authToken=${NODE_AUTH_TOKEN} into its npmrc and
-          # exports a placeholder for that variable. Left in place, npm sends the
-          # placeholder as credentials and never reaches the OIDC path.
+          # setup-node writes _authToken=${NODE_AUTH_TOKEN} into its npmrc and exports
+          # a placeholder for that variable. Left in place, npm sends the placeholder
+          # as credentials and never reaches the OIDC exchange.
           for F in "$NPM_CONFIG_USERCONFIG" "$HOME/.npmrc" "$RUNNER_TEMP/.npmrc" ./.npmrc; do
-            [ -n "$F" ] && [ -f "$F" ] && sed -i '/_authToken/d' "$F" && echo "stripped token line from $F"
+            [ -n "$F" ] && [ -f "$F" ] && sed -i '/_authToken/d' "$F"
           done
-          echo "npm $(npm --version) / node $(node --version)"
-          echo "OIDC request URL present: ${ACTIONS_ID_TOKEN_REQUEST_URL:+yes}${ACTIONS_ID_TOKEN_REQUEST_URL:-NO — id-token permission missing}"
-          echo "NODE_AUTH_TOKEN set: ${NODE_AUTH_TOKEN:+yes}${NODE_AUTH_TOKEN:-no}"
-          # verbose: shows whether npm even attempts the OIDC token exchange
-          npm publish --access public --loglevel verbose 2>&1 | tail -60
-          exit "${PIPESTATUS[0]}"
+          npm publish --access public
