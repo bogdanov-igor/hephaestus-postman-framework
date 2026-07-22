@@ -45,21 +45,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22" # OIDC needs >= 22.14.0
-          # NB: registry-url is deliberately NOT set. With it, setup-node writes an
-          # .npmrc containing _authToken=${NODE_AUTH_TOKEN} and exports a placeholder
-          # value for that variable; npm then sends the placeholder as credentials
-          # instead of falling back to OIDC, and the registry answers
-          # "404 Not Found - PUT … or you do not have permission". npm defaults to
-          # registry.npmjs.org anyway, so nothing is lost by omitting it.
-
-      - name: Show npm auth configuration (no secrets — OIDC uses none)
-        run: |
-          echo "npmrc files npm would read:"
-          npm config ls -l 2>/dev/null | grep -iE "^; |userconfig|globalconfig|registry =" | head -20
-          for f in "$HOME/.npmrc" "$RUNNER_TEMP/.npmrc" ./.npmrc; do
-            [ -f "$f" ] && { echo "--- $f"; sed -E "s/(_authToken=).*/\1<redacted>/" "$f"; }
-          done
-          echo "NODE_AUTH_TOKEN set: ${NODE_AUTH_TOKEN:+yes}${NODE_AUTH_TOKEN:-no}"
+          registry-url: "https://registry.npmjs.org"
 
       - name: Upgrade npm to an OIDC-capable version
         # Node 22 ships npm 10.x; trusted publishing landed in 11.5.1.
@@ -92,4 +78,14 @@ jobs:
 
       - name: Publish (real, via OIDC — no token)
         if: ${{ !inputs.dry_run }}
-        run: npm publish --access public
+        run: |
+          # setup-node writes _authToken=${NODE_AUTH_TOKEN} into its npmrc and
+          # exports a placeholder for that variable. Left in place, npm sends the
+          # placeholder as credentials and never reaches the OIDC path.
+          for F in "$NPM_CONFIG_USERCONFIG" "$HOME/.npmrc" "$RUNNER_TEMP/.npmrc" ./.npmrc; do
+            [ -n "$F" ] && [ -f "$F" ] && sed -i '/_authToken/d' "$F" && echo "stripped token line from $F"
+          done
+          echo "npm $(npm --version) / node $(node --version)"
+          echo "OIDC request URL present: ${ACTIONS_ID_TOKEN_REQUEST_URL:+yes}${ACTIONS_ID_TOKEN_REQUEST_URL:-NO — id-token permission missing}"
+          echo "NODE_AUTH_TOKEN set: ${NODE_AUTH_TOKEN:+yes}${NODE_AUTH_TOKEN:-no}"
+          npm publish --access public
