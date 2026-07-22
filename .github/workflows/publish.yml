@@ -48,6 +48,15 @@ jobs:
           npm run build
           npm test
 
+      - name: Verify npm auth
+        # `npm publish --dry-run` never contacts the registry to authenticate, so a
+        # rehearsal alone proves nothing about the token. whoami does — it fails
+        # loudly here if NPM_TOKEN is missing, expired, or lacks access.
+        run: |
+          echo "Authenticated to npm as: $(npm whoami)"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Refuse to re-publish an existing version
         run: |
           NAME=$(node -p "require('./package.json').name")
