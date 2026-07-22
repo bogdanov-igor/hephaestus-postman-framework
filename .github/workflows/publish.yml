@@ -1,17 +1,23 @@
-# npm publish — MANUAL trigger only.
+# npm publish via Trusted Publishing (OIDC) — MANUAL trigger only.
 #
-# The npm token is not on disk (it lives as a GitHub Actions secret, the same way
-# the author's other projects publish). To publish:
+# No npm token is stored anywhere. GitHub Actions proves the workflow's identity
+# to npm over OIDC, so publishing works without a secret — which is also why npm
+# attaches provenance attestations automatically.
 #
-#   1. Add the secret once:  Settings → Secrets and variables → Actions →
-#      New repository secret → name NPM_TOKEN, value = an npm **Automation** token
-#      (npmjs.com → Access Tokens → Generate New Token → Automation).
-#   2. Actions → "npm publish" → Run workflow. Leave dry_run = true for a rehearsal
-#      (no publish), or set it to false to publish for real.
+# ONE-TIME SETUP on npmjs.com (already-published package → Settings → Trusted
+# Publisher → GitHub Actions):
 #
-# Publishing is one-shot: the same version cannot be re-published. The job runs
-# the full gate first and refuses to publish if the package version is already on
-# npm, so a mis-click cannot double-publish.
+#     Organization or user : bogdanov-igor
+#     Repository           : hephaestus-postman-framework
+#     Workflow filename    : publish.yml
+#     Environment          : (leave empty)
+#     Allowed actions      : npm publish
+#
+# Then: Actions → "npm publish" → Run workflow. dry_run=true rehearses without
+# publishing; set it to false to publish for real.
+#
+# Requirements npm enforces for OIDC: npm CLI >= 11.5.1 and Node >= 22.14.0 —
+# hence the Node 22 pin and the explicit npm upgrade below.
 
 name: npm publish
 
@@ -25,6 +31,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write # required: lets GitHub mint the OIDC token npm verifies
 
 jobs:
   publish:
@@ -37,8 +44,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22" # OIDC needs >= 22.14.0
           registry-url: "https://registry.npmjs.org"
+
+      - name: Upgrade npm to an OIDC-capable version
+        # Node 22 ships npm 10.x; trusted publishing landed in 11.5.1.
+        run: |
+          npm install -g npm@latest
+          echo "npm $(npm --version) / node $(node --version)"
 
       - name: Install dev dependencies
         run: npm install
@@ -47,15 +60,6 @@ jobs:
         run: |
           npm run build
           npm test
-
-      - name: Verify npm auth
-        # `npm publish --dry-run` never contacts the registry to authenticate, so a
-        # rehearsal alone proves nothing about the token. whoami does — it fails
-        # loudly here if NPM_TOKEN is missing, expired, or lacks access.
-        run: |
-          echo "Authenticated to npm as: $(npm whoami)"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Refuse to re-publish an existing version
         run: |
@@ -72,8 +76,6 @@ jobs:
         if: ${{ inputs.dry_run }}
         run: npm publish --access public --dry-run
 
-      - name: Publish (real)
+      - name: Publish (real, via OIDC — no token)
         if: ${{ !inputs.dry_run }}
         run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
