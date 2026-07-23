@@ -1,0 +1,26 @@
+/* ── Forge coherence layer ─────────────────────────────────────────────
+   Shared across the reference pages so they inherit the landing page's
+   typography and palette without touching their bespoke components.
+   Loaded LAST in <head>, so equal-specificity rules win over inline styles.
+   ------------------------------------------------------------------------ */
+:root{
+  --f-disp:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --f-body:'Hanken Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --f-mono:'JetBrains Mono','SF Mono','Fira Code',monospace;
+  --bg:#0a0a0d;            /* warm near-black, matches the landing ground */
+  --accent:#f77f00;        /* molten — unify config-reference's blue accent */
+  --accent2:#d63e14;
+}
+body{font-family:var(--f-body)}
+h1,h2,h3,h4,h5,.nav-logo,.logo,.hero-title,.section-title,.page-title{
+  font-family:var(--f-disp);letter-spacing:-.015em
+}
+code,pre,kbd,.mono,tt{font-family:var(--f-mono)}
+
+/* brand mark — the forge hammer, lit like the wordmark on the landing page */
+.nav-logo,.logo{font-family:var(--f-disp);font-weight:800}
+.nav-logo .mk,.logo .mk{
+  background:linear-gradient(90deg,#d63e14,#f77f00 55%,#ffc24b);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 8px rgba(247,127,0,.4));font-weight:800
+}
