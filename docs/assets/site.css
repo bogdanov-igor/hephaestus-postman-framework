@@ -27,7 +27,7 @@
   --r:6px;
   --r-lg:12px;
   --nav-h:60px;
-  --maxw:1120px;
+  --maxw:1300px;
   --wordmark:linear-gradient(176deg,#f7ddc9 0%,#eec3a4 38%,#e3966c 72%,#b5502e 100%);
   --quench-rule:linear-gradient(90deg,#c14a2c,#eaa24d 50%,#5aa9dd);
   --warm:linear-gradient(92deg,#b5502e,#e3966c 55%,#eaa24d);
@@ -67,7 +67,9 @@ h1,h2,h3,h4{font-family:var(--f-disp);letter-spacing:-.02em;font-weight:800;colo
 /* ── Nav (shared) ──────────────────────────────────────────────────── */
 .nav{position:fixed;inset:0 0 auto 0;z-index:200;height:var(--nav-h);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);background:rgba(12,7,6,.82);border-bottom:1px solid var(--line)}
 .nav-in{max-width:var(--maxw);margin:0 auto;padding:0 28px;height:100%;display:flex;align-items:center;gap:26px}
-.brand{display:flex;align-items:center;gap:9px;font-family:var(--f-disp);font-weight:800;font-size:1.08rem;letter-spacing:-.02em;color:var(--cream)}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--f-disp);font-weight:800;font-size:1.08rem;letter-spacing:-.02em;color:var(--cream)}
+.brand .dot,.foot-brand .dot{width:9px;height:9px;border-radius:50%;border:1.6px solid var(--copper);position:relative;flex:0 0 auto}
+.brand .dot::after,.foot-brand .dot::after{content:"";position:absolute;inset:2px;border-radius:50%;background:var(--copper)}
 .nav-links{display:flex;gap:22px;margin-left:8px}
 .nav-links a{color:var(--taupe);font-size:.9rem;font-weight:500}
 .nav-links a:hover,.nav-links a.on{color:var(--cream)}
@@ -141,16 +143,19 @@ h1,h2,h3,h4{font-family:var(--f-disp);letter-spacing:-.02em;font-weight:800;colo
 .rt-flow .arw{width:34px;height:34px;stroke:url(#qgrad);stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .rt-flow small{font-family:var(--f-mono);font-size:.63rem;color:var(--taupe-2);text-align:center;letter-spacing:.03em;line-height:1.4}
 
-/* ── Pipeline — vertical, no horizontal scroll ─────────────────────── */
-.pipe{list-style:none;position:relative;max-width:640px;margin-left:6px}
-.pipe::before{content:"";position:absolute;left:17px;top:12px;bottom:12px;width:2px;background:linear-gradient(180deg,var(--copper-lo),var(--line-2))}
-.pipe li{position:relative;display:flex;align-items:center;gap:16px;padding:7px 0}
-.pipe .pn{width:36px;height:36px;flex:0 0 auto;display:grid;place-items:center;border-radius:8px;background:var(--coal-2);border:1px solid var(--line-2);font-family:var(--f-mono);font-size:.72rem;color:var(--taupe);position:relative;z-index:1}
-.pipe li.ctrl .pn{border-color:var(--quench);color:var(--quench)}
-.pipe .nm{font-family:var(--f-mono);font-size:.92rem;color:var(--cream);font-weight:500}
+/* ── Pipeline — compact module grid, fills width, no scroll ────────── */
+.pipe{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.pipe li{display:flex;align-items:center;gap:12px;border:1px solid var(--line-2);border-top:2px solid var(--copper-lo);border-radius:var(--r);background:var(--coal-2);padding:12px 14px;transition:border-color .18s}
+.pipe li:hover{border-color:var(--line-2);border-top-color:var(--copper)}
+.pipe .pn{font-family:var(--f-mono);font-size:.7rem;color:var(--taupe-2);flex:0 0 auto}
+.pipe .nm{font-family:var(--f-mono);font-size:.85rem;color:var(--cream);font-weight:500}
+.pipe li.ctrl{border-top-color:var(--quench)}
 .pipe li.ctrl .nm{color:var(--quench)}
-.pipe .tagline{font-size:.82rem;color:var(--taupe);margin-left:8px}
-.pipe-note{margin-top:22px;font-size:.92rem;color:var(--taupe);max-width:66ch}
+.pipe .tagline{display:none}
+.pipe-legend{display:flex;gap:22px;margin-top:16px;font-size:.8rem;color:var(--taupe);flex-wrap:wrap}
+.pipe-legend span{display:flex;align-items:center;gap:8px}
+.pipe-legend i{width:16px;height:2px;display:inline-block}
+.pipe-note{margin-top:18px;font-size:.92rem;color:var(--taupe);max-width:none}
 .pipe-note b{color:var(--cream);font-weight:600}
 .pipe-note code{color:var(--quench)}
 
@@ -158,7 +163,9 @@ h1,h2,h3,h4{font-family:var(--f-disp);letter-spacing:-.02em;font-weight:800;colo
 .tools{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
 .tool{display:flex;gap:11px;align-items:baseline;border:1px solid var(--line);border-radius:var(--r);background:var(--coal-2);padding:12px 15px;transition:border-color .18s}
 .tool:hover{border-color:var(--line-2)}
-.tool .cmd{font-family:var(--f-mono);font-size:.84rem;color:var(--coral);font-weight:500;white-space:nowrap}
+.tool .cmd{font-family:var(--f-mono);font-size:.84rem;color:var(--coral);font-weight:500;white-space:nowrap;
+  /* reset the standalone .cmd chip styles that would otherwise leak in */
+  display:inline;background:none;border:0;padding:0;overflow:visible}
 .tool .desc{font-size:.8rem;color:var(--taupe)}
 
 /* ── Tabs ──────────────────────────────────────────────────────────── */
@@ -214,12 +221,17 @@ h1,h2,h3,h4{font-family:var(--f-disp);letter-spacing:-.02em;font-weight:800;colo
 .doc-body h2{font-size:1.6rem;letter-spacing:-.02em;margin:44px 0 14px;padding-top:6px}
 .doc-body h2:first-child{margin-top:0}
 .doc-body h3{font-size:1.16rem;font-weight:700;margin:26px 0 10px}
-.doc-body p{color:#cdbcb0;margin:0 0 14px;max-width:70ch}
-.doc-body ul,.doc-body ol{color:#cdbcb0;margin:0 0 16px 20px;max-width:70ch}
+.doc-body p{color:#cdbcb0;margin:0 0 14px}
+.doc-body ul,.doc-body ol{color:#cdbcb0;margin:0 0 16px 20px}
 .doc-body li{margin:5px 0}
 .doc-body a{color:var(--copper)}.doc-body a:hover{color:var(--quench)}
 .doc-body p code,.doc-body li code,.doc-body td code{font-family:var(--f-mono);font-size:.84em;color:var(--coral);background:var(--coal-2);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+/* code blocks: a positioned wrapper so a copy button can sit top-right */
+.codewrap{position:relative;margin:0 0 18px}
+.codewrap .cbtn{position:absolute;top:9px;right:9px;font-family:var(--f-mono);font-size:.71rem;color:var(--taupe);background:var(--coal-3);border:1px solid var(--line-2);border-radius:5px;padding:4px 10px;cursor:pointer;transition:.15s;z-index:2}
+.codewrap .cbtn:hover{border-color:var(--quench);color:var(--cream)}
 .doc-body pre{background:#0b0605;border:1px solid var(--line-2);border-radius:var(--r-lg);padding:16px 18px;overflow-x:auto;font-size:.8rem;line-height:1.7;margin:0 0 18px}
+.codewrap pre{margin:0}
 .doc-body pre code{color:var(--cream);background:none;border:0;padding:0}
 .callout{border:1px solid var(--line-2);border-left:3px solid var(--quench);border-radius:var(--r);background:var(--coal-2);padding:13px 16px;margin:0 0 18px;font-size:.92rem;color:#cdbcb0}
 .callout b{color:var(--cream)}
