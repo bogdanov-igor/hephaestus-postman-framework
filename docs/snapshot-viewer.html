@@ -2,381 +2,234 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hephaestus — Snapshot Viewer</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="description" content="Hephaestus snapshot tool — paste the hephaestus.snapshots collection variable and inspect every stored baseline: key, format, mode, size, check/ignore paths and captured data. Runs entirely in your browser.">
+<title>Snapshot tool — Hephaestus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
 <style>
-  :root {
-    --bg:        #0d1117;
-    --bg-card:   #161b22;
-    --bg-input:  #1c2128;
-    --border:    #21262d;
-    --border-h:  #f77f00;
-    --text:      #e6edf3;
-    --muted:     #8b949e;
-    --accent:    #f77f00;
-    --green:     #3fb950;
-    --yellow:    #d29922;
-    --red:       #f85149;
-    --purple:    #bc8cff;
-    --orange:    #ffa657;
-    --code-bg:   #0d1117;
-    --radius:    8px;
-  }
+/* snapshot-tool page-only tweaks — all colours from site.css tokens */
+:root{
+  /* aliases so the inspector JS can keep writing var(--…) inline styles */
+  --muted:var(--taupe);
+  --green:var(--pass);
+  --yellow:var(--amber);
+  --red:var(--fail);
+}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+.snap-main{padding:36px 0 84px}
+.snap-col{max-width:900px;margin:0 auto}
 
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    padding: 0;
-  }
+.doc-hero p code,.callout code{font-family:var(--f-mono);font-size:.86em;color:var(--coral)}
 
-  /* ── Header ─────────────────────────────────────────────────── */
-  header {
-    width: 100%;
-    padding: 14px 24px;
-    background: #161b22;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-  .logo { font-size: 1.5rem; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
-  .logo span { color: var(--accent); }
-  .badge {
-    font-size: 0.7rem;
-    padding: 2px 8px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    font-weight: 500;
-  }
-  header p { flex-basis: 100%; font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
+/* input editor — reuses the .code window shell */
+.snap-editor{margin:18px 0 14px}
+.snap-editor .code-body{padding:0}
+.snap-editor textarea{
+  width:100%;min-height:150px;resize:vertical;display:block;
+  background:transparent;border:0;outline:none;
+  color:var(--cream);font-family:var(--f-mono);
+  font-size:.82rem;line-height:1.6;padding:16px 18px;
+}
+.snap-editor textarea::placeholder{color:var(--taupe-2)}
 
-  /* ── Page content wrapper ────────────────────────────────────── */
-  .page-content {
-    padding: 24px 16px 64px;
-  }
+.snap-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.snap-err{display:none;color:var(--fail);font-size:.86rem;margin:10px 0 0;font-family:var(--f-mono)}
 
-  /* ── Input area ──────────────────────────────────────────────── */
-  .input-section {
-    max-width: 900px;
-    margin: 0 auto 24px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-  }
-  .input-section label {
-    display: block;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 8px;
-  }
-  textarea {
-    width: 100%;
-    height: 120px;
-    background: var(--code-bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text);
-    font-family: 'SF Mono', 'Fira Code', monospace;
-    font-size: 0.8rem;
-    padding: 10px 12px;
-    resize: vertical;
-    outline: none;
-    transition: border-color 0.15s;
-  }
-  textarea:focus { border-color: var(--border-h); }
-  textarea::placeholder { color: var(--muted); }
+/* stats bar */
+.snap-stats{gap:12px;flex-wrap:wrap;align-items:stretch;margin:24px 0 16px}
+.stat-card{background:var(--coal-2);border:1px solid var(--line);border-radius:var(--r-lg);padding:14px 18px;min-width:118px;flex:1}
+.stat-card .val{font-family:var(--f-disp);font-weight:800;font-size:1.5rem;line-height:1;color:var(--copper);font-variant-numeric:tabular-nums}
+.stat-card .lbl{font-family:var(--f-mono);font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;color:var(--taupe-2);margin-top:7px}
+.gauge-wrap{flex:2;min-width:210px}
+.gauge-label{display:flex;justify-content:space-between;gap:10px;font-size:.76rem;color:var(--taupe);margin-bottom:9px}
+.gauge-bar{background:var(--coal-4);border:1px solid var(--line);border-radius:4px;height:8px;overflow:hidden}
+.gauge-fill{height:100%;border-radius:4px;transition:width .4s ease;background:var(--pass)}
 
-  .actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 12px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-  button {
-    cursor: pointer;
-    border: none;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    padding: 8px 18px;
-    transition: opacity 0.15s, transform 0.1s;
-  }
-  button:active { transform: scale(0.97); }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { opacity: 0.85; }
-  .btn-ghost {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text);
-  }
-  .btn-ghost:hover { border-color: var(--border-h); color: var(--accent); }
-  .btn-danger { background: transparent; border: 1px solid var(--red); color: var(--red); }
-  .btn-danger:hover { background: var(--red); color: #fff; }
-  .error-msg { font-size: 0.82rem; color: var(--red); margin-top: 8px; display: none; }
+/* filter row */
+.snap-filter{gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 18px}
+#search{flex:1;min-width:200px;background:var(--coal-2);border:1px solid var(--line-2);border-radius:var(--r);color:var(--cream);font-family:var(--f-body);font-size:.88rem;padding:9px 13px;outline:none;transition:border-color .15s}
+#search:focus{border-color:var(--quench)}
+#search::placeholder{color:var(--taupe-2)}
+.filter-btn{font-family:var(--f-mono);font-size:.78rem;color:var(--taupe);background:var(--coal-2);border:1px solid var(--line-2);border-radius:var(--r);padding:7px 13px;cursor:pointer;transition:.16s}
+.filter-btn:hover{color:var(--cream)}
+.filter-btn.active{color:#241009;background:var(--copper);border-color:var(--copper);font-weight:500}
 
-  /* ── Stats bar ───────────────────────────────────────────────── */
-  #stats-bar {
-    max-width: 900px;
-    margin: 0 auto 20px;
-    display: none;
-    gap: 12px;
-    flex-wrap: wrap;
-    align-items: stretch;
-  }
-  .stat-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 12px 18px;
-    min-width: 130px;
-    flex: 1;
-  }
-  .stat-card .val { font-size: 1.6rem; font-weight: 700; color: var(--accent); line-height: 1; }
-  .stat-card .lbl { font-size: 0.72rem; color: var(--muted); margin-top: 4px; font-weight: 500; text-transform: uppercase; }
+/* result cards */
+#cards{display:flex;flex-direction:column;gap:12px}
+#cards .card{padding:0;overflow:hidden}
+#cards .card:hover{transform:none;border-color:var(--line-2)}
+.card-header{display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;user-select:none;flex-wrap:wrap}
+.card-header:hover{background:rgba(255,255,255,.02)}
+.status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.card-name{font-family:var(--f-mono);font-size:.86rem;font-weight:500;color:var(--cream);flex:1;min-width:0;word-break:break-all}
+.tag{font-family:var(--f-mono);font-size:.66rem;padding:3px 9px;border-radius:100px;font-weight:500;white-space:nowrap;border:1px solid var(--line-2)}
+.tag-status{color:var(--pass);background:rgba(99,192,145,.1);border-color:rgba(99,192,145,.3)}
+.tag-format{color:var(--quench);background:rgba(90,169,221,.1);border-color:rgba(90,169,221,.28)}
+.tag-mode{color:var(--copper);background:var(--coal-3)}
+.tag-size{color:var(--taupe);background:var(--coal-3)}
+.chevron{color:var(--taupe);flex-shrink:0;display:flex;transition:transform .2s}
+.chevron svg{width:15px;height:15px;stroke:currentColor}
+.card.open .chevron{transform:rotate(90deg)}
+.card-meta{display:flex;gap:16px;padding:0 16px 12px;font-family:var(--f-mono);font-size:.73rem;color:var(--taupe);flex-wrap:wrap}
+.card-meta span{display:flex;align-items:center;gap:6px}
+.mi{width:13px;height:13px;flex:0 0 auto;opacity:.75;stroke:currentColor}
+.card-body{display:none;border-top:1px solid var(--line)}
+.card.open .card-body{display:block}
+.card-section{padding:14px 16px}
+.card-section + .card-section{border-top:1px solid var(--line)}
+.section-label{font-family:var(--f-mono);font-size:.66rem;color:var(--taupe-2);text-transform:uppercase;letter-spacing:.1em;font-weight:500;margin-bottom:9px}
 
-  /* Size gauge */
-  .gauge-wrap { flex: 2; min-width: 200px; }
-  .gauge-label { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--muted); margin-bottom: 6px; }
-  .gauge-bar { background: var(--border); border-radius: 4px; height: 8px; overflow: hidden; }
-  .gauge-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+pre.json-view{background:#0b0605;border:1px solid var(--line-2);border-radius:var(--r);padding:12px 14px;font-family:var(--f-mono);font-size:.77rem;line-height:1.6;overflow:auto;max-height:400px;color:var(--cream);white-space:pre}
+.j-key{color:var(--quench)}
+.j-str{color:var(--pass)}
+.j-num{color:var(--amber)}
+.j-bool{color:var(--coral)}
+.j-null{color:var(--taupe);font-style:italic}
+.j-brace{color:var(--taupe)}
 
-  /* ── Filter row ──────────────────────────────────────────────── */
-  #filter-row {
-    max-width: 900px;
-    margin: 0 auto 16px;
-    display: none;
-    gap: 10px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-  #search {
-    flex: 1;
-    min-width: 200px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text);
-    font-size: 0.85rem;
-    padding: 8px 12px;
-    outline: none;
-    transition: border-color 0.15s;
-  }
-  #search:focus { border-color: var(--border-h); }
-  .filter-btn {
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--muted);
-    font-size: 0.78rem;
-    padding: 6px 12px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .filter-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(247,127,0,0.08); }
-  .filter-btn:hover { border-color: var(--border-h); }
+.paths-list{display:flex;flex-wrap:wrap;gap:7px}
+.path-tag{font-family:var(--f-mono);font-size:.72rem;padding:3px 9px;border-radius:4px;background:rgba(90,169,221,.08);border:1px solid rgba(90,169,221,.22);color:var(--quench-hi);word-break:break-all}
+.path-tag.ignore{background:rgba(224,82,58,.08);border-color:rgba(224,82,58,.25);color:var(--coral)}
 
-  /* ── Cards ───────────────────────────────────────────────────── */
-  #cards {
-    max-width: 900px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  #empty {
-    max-width: 900px;
-    margin: 0 auto;
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--muted);
-    display: none;
-  }
-  #empty .icon { font-size: 3rem; margin-bottom: 16px; }
-  #empty h3 { font-size: 1.1rem; color: var(--text); margin-bottom: 8px; }
-  #empty p { font-size: 0.85rem; }
-  .card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    transition: border-color 0.15s;
-  }
-  .card:hover { border-color: var(--border-h); }
-
-  .card-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 16px;
-    cursor: pointer;
-    user-select: none;
-    flex-wrap: wrap;
-  }
-  .card-header:hover { background: rgba(255,255,255,0.02); }
-
-  .status-dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-  .card-name {
-    font-size: 0.88rem;
-    font-weight: 600;
-    color: var(--text);
-    flex: 1;
-    word-break: break-all;
-  }
-  .tag {
-    font-size: 0.68rem;
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-  .tag-format { background: rgba(188,140,255,0.15); color: var(--purple); border: 1px solid rgba(188,140,255,0.3); }
-  .tag-mode   { background: rgba(247,127,0,0.08);   color: var(--accent); border: 1px solid rgba(247,127,0,0.2); }
-  .tag-size   { background: rgba(139,148,158,0.1);  color: var(--muted);  border: 1px solid var(--border); }
-  .tag-status { background: rgba(63,185,80,0.1);    color: var(--green);  border: 1px solid rgba(63,185,80,0.3); }
-
-  .chevron { color: var(--muted); font-size: 0.8rem; transition: transform 0.2s; flex-shrink: 0; }
-  .card.open .chevron { transform: rotate(90deg); }
-
-  .card-meta {
-    display: flex;
-    gap: 16px;
-    padding: 0 16px 10px;
-    font-size: 0.75rem;
-    color: var(--muted);
-    flex-wrap: wrap;
-  }
-  .card-meta span { display: flex; align-items: center; gap: 4px; }
-
-  /* Card body */
-  .card-body { display: none; border-top: 1px solid var(--border); }
-  .card.open .card-body { display: block; }
-
-  .card-section { padding: 12px 16px; }
-  .card-section + .card-section { border-top: 1px solid var(--border); }
-
-  .section-label {
-    font-size: 0.7rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    font-weight: 600;
-    margin-bottom: 8px;
-  }
-
-  /* JSON viewer */
-  pre.json-view {
-    background: var(--code-bg);
-    border-radius: 6px;
-    padding: 12px 14px;
-    font-family: 'SF Mono', 'Fira Code', monospace;
-    font-size: 0.78rem;
-    line-height: 1.55;
-    overflow-x: auto;
-    max-height: 400px;
-    overflow-y: auto;
-  }
-  .j-key   { color: var(--accent); }
-  .j-str   { color: var(--green); }
-  .j-num   { color: var(--orange); }
-  .j-bool  { color: var(--purple); }
-  .j-null  { color: var(--muted); font-style: italic; }
-  .j-brace { color: var(--text); }
-
-  /* Paths list */
-  .paths-list { display: flex; flex-wrap: wrap; gap: 6px; }
-  .path-tag {
-    font-size: 0.72rem;
-    padding: 2px 8px;
-    border-radius: 4px;
-    background: rgba(247,127,0,0.06);
-    border: 1px solid rgba(247,127,0,0.2);
-    color: var(--accent);
-    font-family: 'SF Mono', monospace;
-  }
-  .path-tag.ignore { background: rgba(248,81,73,0.08); border-color: rgba(248,81,73,0.2); color: var(--red); }
+/* empty state */
+#empty{display:none;text-align:center;padding:56px 20px;color:var(--taupe)}
+#empty .icon{color:var(--line-2);margin:0 auto 14px;width:44px;height:44px}
+#empty .icon svg{width:44px;height:44px;stroke:currentColor}
+#empty h3{font-size:1.05rem;color:var(--cream);margin-bottom:8px}
+#empty p{font-size:.9rem}
 </style>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="assets/cohere.css">
 </head>
 <body>
 
-<header>
-  <div class="logo"><span class="mk">⚒</span> <span>Hephaestus</span> Snapshot Viewer</div>
-  <div class="badge">v4.0.1</div>
-  <div style="margin-left:auto;display:flex;gap:14px;align-items:center">
-    <a href="https://www.linkedin.com/in/i-a-bogdanov/" target="_blank" rel="noopener" style="font-size:.78rem;color:var(--muted)">LinkedIn</a>
-    <a href="index.html" style="font-size:.78rem;color:var(--muted)">← Home</a>
-    <a href="quickstart.html" style="font-size:.78rem;color:var(--muted)">Quick Start</a>
-    <a href="config-reference.html" style="font-size:.78rem;color:var(--muted)">Config Ref</a>
-  </div>
-</header>
-<div style="padding:12px 24px;background:#161b22;border-bottom:1px solid var(--border);font-size:.84rem;color:var(--muted)">
-  Paste the value of <code style="color:var(--accent)">hephaestus.snapshots</code> collection variable below to inspect your snapshots.
-</div>
-
-<div class="page-content">
-
-<!-- Input -->
-<div class="input-section">
-  <label>hephaestus.snapshots JSON</label>
-  <textarea id="input" placeholder='{"GET::UserById::200::json": {"_saved":"2026-04-07T10:00:00Z", "data": {...}}, ...}'></textarea>
-  <div class="error-msg" id="err">Invalid JSON — please paste the raw value of hephaestus.snapshots.</div>
-  <div class="actions">
-    <button class="btn-primary" onclick="load()">▶ Load Snapshots</button>
-    <button class="btn-ghost" onclick="loadDemo()">Load Demo Data</button>
-    <button class="btn-danger" onclick="clear_()">Clear</button>
-  </div>
-</div>
-
-<!-- Stats bar -->
-<div id="stats-bar" style="display:none; max-width:900px; margin:0 auto 20px; gap:12px; flex-wrap:wrap; align-items:stretch;">
-  <div class="stat-card"><div class="val" id="s-total">0</div><div class="lbl">Snapshots</div></div>
-  <div class="stat-card"><div class="val" id="s-formats">—</div><div class="lbl">Formats</div></div>
-  <div class="stat-card"><div class="val" id="s-oldest">—</div><div class="lbl">Oldest</div></div>
-  <div class="gauge-wrap stat-card">
-    <div class="gauge-label">
-      <span>Collection Variable Size</span>
-      <span id="s-size-label">0 / ~256 KB</span>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="lgrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eec3a4"/><stop offset="1" stop-color="#b5502e"/></linearGradient>
+</defs></svg>
+<nav class="nav">
+  <div class="nav-in">
+    <a class="brand" href="index.html">
+      <svg class="logo-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 12-8.4 8.4a2.1 2.1 0 0 1-3-3L12 9"/><path d="M17.6 15 22 10.6"/><path d="m21 11.7-1.3-1.3c-.6-.6-.9-1.4-.9-2.2v-.9L16 4.6A5.6 5.6 0 0 0 12 3H9l.9.8A6.2 6.2 0 0 1 12 8.4v1.6l2 2h2.5l2.3 1.9"/></svg>
+      Hephaestus
+    </a>
+    <div class="nav-links">
+      <a href="quickstart.html" data-nav="quickstart">Quickstart</a>
+      <a href="features.html" data-nav="features">Guide</a>
+      <a href="config-reference.html" data-nav="config">Config</a>
+      <a href="snapshot-viewer.html" data-nav="snapshot" class="on">Snapshot</a>
     </div>
-    <div class="gauge-bar"><div class="gauge-fill" id="s-gauge" style="width:0%; background: var(--green);"></div></div>
+    <div class="nav-right">
+      <a class="nav-gh" href="https://github.com/bogdanov-igor/hephaestus-postman-framework"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.5 2 2 6.6 2 12.2c0 4.5 2.9 8.3 6.8 9.6.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.4-3.4-1.4-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.9.1-.7.3-1.1.6-1.4-2.2-.3-4.5-1.1-4.5-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.6 0 0 .8-.3 2.7 1a9.3 9.3 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.3.2 2.3.1 2.6.6.7 1 1.6 1 2.7 0 3.9-2.3 4.7-4.5 5 .3.3.6.9.6 1.9v2.8c0 .3.2.6.7.5A10 10 0 0 0 22 12.2C22 6.6 17.5 2 12 2Z"/></svg>GitHub</a>
+      <button class="burger" id="burger" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+    </div>
   </div>
+</nav>
+<div id="mnav">
+  <a href="quickstart.html">Quickstart</a>
+  <a href="features.html">Guide</a>
+  <a href="config-reference.html">Config reference</a>
+  <a href="snapshot-viewer.html">Snapshot tool</a>
+  <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework">GitHub ↗</a>
 </div>
 
-<!-- Filter row -->
-<div id="filter-row" style="display:none; max-width:900px; margin:0 auto 16px; gap:10px; flex-wrap:wrap; align-items:center;">
-  <input id="search" type="text" placeholder="Search by key, format, mode..." oninput="filter()">
-  <button class="filter-btn active" data-fmt="all" onclick="setFmt(this)">All</button>
-  <button class="filter-btn" data-fmt="json" onclick="setFmt(this)">JSON</button>
-  <button class="filter-btn" data-fmt="xml" onclick="setFmt(this)">XML</button>
-  <button class="filter-btn" data-fmt="text" onclick="setFmt(this)">Text</button>
-  <button class="filter-btn" data-fmt="strict" onclick="setFmt(this)">Strict</button>
-</div>
+<div class="doc-hero"><div class="wrap">
+  <span class="eyebrow"><span class="tgt"></span> Utility</span>
+  <h1>Snapshot tool</h1>
+  <p>Paste the value of your <code>hephaestus.snapshots</code> collection variable to inspect every stored baseline — its key, HTTP status, format, comparison mode, size, check / ignore paths and the captured data.</p>
+</div></div>
 
-<!-- Cards -->
-<div id="cards"></div>
+<section class="snap-main">
+  <div class="wrap">
+    <div class="snap-col">
 
-<!-- Empty state -->
-<div id="empty">
-  <div class="icon">📭</div>
-  <h3>No snapshots match your search</h3>
-  <p>Try clearing the filter or search for a different term.</p>
-</div>
+      <div class="callout"><b>Where to find it.</b> In Postman, open your collection's Variables tab and copy the current value of <code>hephaestus.snapshots</code>. Nothing leaves your machine — parsing and rendering happen entirely in your browser.</div>
 
-</div><!-- /page-content -->
+      <!-- Input -->
+      <div class="code snap-editor">
+        <div class="code-bar">
+          <span class="d r"></span><span class="d y"></span><span class="d g"></span>
+          <span class="code-file">hephaestus.snapshots</span>
+        </div>
+        <div class="code-body">
+          <textarea id="input" spellcheck="false" placeholder='{"GET::UserById::200::json": {"_saved":"2026-04-07T10:00:00Z", "data": { }}, ...}'></textarea>
+        </div>
+      </div>
+      <div class="snap-actions">
+        <button class="btn btn-primary" onclick="load()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>Load snapshots</button>
+        <button class="btn btn-ghost" onclick="loadDemo()">Load demo data</button>
+        <button class="btn btn-ghost" onclick="clear_()">Clear</button>
+      </div>
+      <div class="snap-err" id="err">Invalid JSON — please paste the raw value of hephaestus.snapshots.</div>
+
+      <!-- Stats bar -->
+      <div id="stats-bar" class="snap-stats" style="display:none">
+        <div class="stat-card"><div class="val" id="s-total">0</div><div class="lbl">Snapshots</div></div>
+        <div class="stat-card"><div class="val" id="s-formats">—</div><div class="lbl">Formats</div></div>
+        <div class="stat-card"><div class="val" id="s-oldest">—</div><div class="lbl">Oldest</div></div>
+        <div class="gauge-wrap stat-card">
+          <div class="gauge-label">
+            <span>Collection variable size</span>
+            <span id="s-size-label">0 / ~256 KB</span>
+          </div>
+          <div class="gauge-bar"><div class="gauge-fill" id="s-gauge" style="width:0%;background:var(--green)"></div></div>
+        </div>
+      </div>
+
+      <!-- Filter row -->
+      <div id="filter-row" class="snap-filter" style="display:none">
+        <input id="search" type="text" placeholder="Search by key, format, mode..." oninput="filter()">
+        <button class="filter-btn active" data-fmt="all" onclick="setFmt(this)">All</button>
+        <button class="filter-btn" data-fmt="json" onclick="setFmt(this)">JSON</button>
+        <button class="filter-btn" data-fmt="xml" onclick="setFmt(this)">XML</button>
+        <button class="filter-btn" data-fmt="text" onclick="setFmt(this)">Text</button>
+        <button class="filter-btn" data-fmt="strict" onclick="setFmt(this)">Strict</button>
+      </div>
+
+      <!-- Cards -->
+      <div id="cards"></div>
+
+      <!-- Empty state -->
+      <div id="empty">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div>
+        <h3>No snapshots match your search</h3>
+        <p>Try clearing the filter or searching for a different term.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer class="foot-wrap">
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <div class="foot-brand"><svg class="logo-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 12-8.4 8.4a2.1 2.1 0 0 1-3-3L12 9"/><path d="M17.6 15 22 10.6"/><path d="m21 11.7-1.3-1.3c-.6-.6-.9-1.4-.9-2.2v-.9L16 4.6A5.6 5.6 0 0 0 12 3H9l.9.8A6.2 6.2 0 0 1 12 8.4v1.6l2 2h2.5l2.3 1.9"/></svg> Hephaestus</div>
+        <p class="foot-lead">A modular, zero-dependency API-testing framework for Postman &amp; Newman.</p>
+      </div>
+      <div class="foot-cols">
+        <div class="foot-col"><h4>Docs</h4>
+          <a href="quickstart.html">Quickstart</a>
+          <a href="features.html">Guide</a>
+          <a href="config-reference.html">Config reference</a>
+          <a href="snapshot-viewer.html">Snapshot tool</a>
+        </div>
+        <div class="foot-col"><h4>Project</h4>
+          <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework">GitHub</a>
+          <a href="https://www.npmjs.com/package/hephaestus-postman-framework">npm</a>
+          <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework/releases">Releases</a>
+          <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework/blob/main/CHANGELOG.md">Changelog</a>
+        </div>
+      </div>
+    </div>
+    <div class="foot-legal"><span>MIT © Bogdanov Igor · v4.0.1</span><span>Scattered scripts, forged into one engine.</span></div>
+  </div>
+</footer>
+<script>
+var burger=document.getElementById('burger'),mnav=document.getElementById('mnav');
+if(burger){burger.addEventListener('click',function(){var o=mnav.classList.toggle('open');burger.setAttribute('aria-expanded',o)});mnav.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){mnav.classList.remove('open')})});}
+document.querySelectorAll('[data-cmd]').forEach(function(b){b.addEventListener('click',function(){navigator.clipboard&&navigator.clipboard.writeText(b.dataset.cmd);var t=b.textContent;b.textContent='copied';setTimeout(function(){b.textContent=t},1200)})});
+</script>
 
 <script>
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -509,12 +362,12 @@ function buildCard(key, snap) {
     '<span class="tag tag-format">' + esc(parsed.format.toUpperCase()) + '</span>',
     '<span class="tag tag-mode">' + esc(mode) + '</span>',
     '<span class="tag tag-size">' + fmtBytes(byteSize) + '</span>',
-    '  <span class="chevron">▶</span>',
+    '  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span>',
     '</div>',
     '<div class="card-meta">',
-    '  <span>🗓 ' + fmtDate(saved) + '</span>',
+    '  <span><svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg> ' + fmtDate(saved) + '</span>',
     saved ? '<span>(' + relDate(saved) + ')</span>' : '',
-    parsed.method ? '<span>📡 ' + esc(parsed.method) + '</span>' : '',
+    parsed.method ? '<span><svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 19.1a10 10 0 0 1 0-14.2"/><path d="M7.8 16.2a6 6 0 0 1 0-8.4"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4"/><path d="M19.1 4.9a10 10 0 0 1 0 14.2"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg> ' + esc(parsed.method) + '</span>' : '',
     '</div>',
   ].join('');
 

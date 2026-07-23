@@ -3,350 +3,209 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="description" content="Get started with Hephaestus in 5 minutes. Load the engine, configure defaults, add your first request override — and run.">
-<meta name="robots" content="index, follow">
+<meta name="description" content="Get started with Hephaestus — import the shipped collection, set defaults, add a request, run in Postman or Newman, and gate CI with the zero-dependency CLI.">
+<meta name="author" content="Bogdanov Igor">
 <link rel="canonical" href="https://bogdanov-igor.github.io/hephaestus-postman-framework/quickstart.html">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://bogdanov-igor.github.io/hephaestus-postman-framework/quickstart.html">
-<meta property="og:title" content="Quick Start — Hephaestus API Testing Framework">
-<meta property="og:description" content="Get started with Hephaestus in 5 minutes. Modular API testing for Postman & Newman.">
-<meta property="og:image" content="https://bogdanov-igor.github.io/hephaestus-postman-framework/assets/og.png">
-<title>Quick Start — Hephaestus</title>
+<title>Quickstart — Hephaestus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
 <style>
-:root{--bg:#0a0c10;--bg-card:#111318;--bg-code:#0d1117;--border:#21262d;--text:#e6edf3;--muted:#8b949e;--accent:#f77f00;--accent2:#e8480a;--blue:#58a6ff;--green:#3fb950;--radius:10px}
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
-a{color:var(--accent);text-decoration:none}
-code,pre{font-family:'SF Mono','Fira Code',monospace}
-code{background:rgba(247,127,0,.1);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent)}
-
-nav{position:fixed;top:0;left:0;right:0;z-index:100;backdrop-filter:blur(12px);background:rgba(10,12,16,.9);border-bottom:1px solid var(--border)}
-.nav-inner{max-width:1100px;margin:0 auto;padding:0 24px;height:58px;display:flex;align-items:center;gap:24px}
-.nav-logo{font-size:1rem;font-weight:800;color:var(--text)}
-.nav-links{margin-left:auto;display:flex;gap:20px}
-.nav-links a{font-size:.82rem;color:var(--muted)}
-.nav-links a:hover{color:var(--text)}
-.nav-cta{background:var(--accent);color:#fff!important;padding:6px 14px;border-radius:6px;font-weight:600}
-
-.layout{display:flex;max-width:1100px;margin:0 auto;padding:80px 24px 80px}
-aside{width:220px;flex-shrink:0;padding-right:40px;padding-top:24px;position:sticky;top:80px;height:calc(100vh - 80px);overflow-y:auto}
-aside h3{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;margin-bottom:8px;margin-top:20px}
-aside h3:first-child{margin-top:0}
-aside a{display:block;font-size:.8rem;color:var(--muted);padding:4px 8px;border-left:2px solid transparent;border-radius:0 4px 4px 0;transition:all .12s}
-aside a:hover,aside a.active{color:var(--text);border-left-color:var(--accent);background:rgba(247,127,0,.05)}
-
-main{flex:1;min-width:0;padding-top:24px}
-.step{margin-bottom:64px;scroll-margin-top:80px}
-.step-num{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;font-size:.85rem;font-weight:800;margin-bottom:12px}
-.step h2{font-size:1.5rem;font-weight:800;margin-bottom:12px}
-.step p,.step li{font-size:.9rem;color:var(--muted);line-height:1.7;margin-bottom:8px}
-.step ul,.step ol{padding-left:20px;margin-bottom:12px}
-.step li{margin-bottom:6px}
-
-.code-window{background:var(--bg-code);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:16px 0}
-.code-tb{background:#161b22;padding:10px 14px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border)}
-.dot{width:11px;height:11px;border-radius:50%}
-.dot-r{background:#f85149}.dot-y{background:#e3b341}.dot-g{background:#3fb950}
-.code-fn{font-size:.7rem;color:var(--muted);margin-left:8px}
-.code-body{padding:18px;font-size:.78rem;line-height:1.7;overflow-x:auto}
-.c-kw{color:#ff7b72}.c-fn{color:#d2a8ff}.c-str{color:#a5d6ff}.c-cmt{color:#8b949e;font-style:italic}
-.c-key{color:#79c0ff}.c-num{color:#f2cc60}.c-var{color:#ffa657}
-
-.callout{background:rgba(247,127,0,.06);border:1px solid rgba(247,127,0,.2);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:.84rem;line-height:1.6}
-.callout-info{background:rgba(88,166,255,.06);border-color:rgba(88,166,255,.2)}
-.callout strong{color:var(--text)}
-
-.badge-row{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
-.badge{font-size:.72rem;padding:3px 10px;border-radius:4px;border:1px solid var(--border);color:var(--muted);background:var(--bg-card)}
-.badge.ok{border-color:rgba(63,185,80,.3);color:var(--green);background:rgba(63,185,80,.05)}
-
-.next-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px}
-.ns-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:border-color .15s}
-.ns-card:hover{border-color:var(--accent)}
-.ns-card .icon{font-size:1.4rem;margin-bottom:8px}
-.ns-card h4{font-size:.9rem;font-weight:700;margin-bottom:6px}
-.ns-card p{font-size:.78rem;color:var(--muted)}
-
-footer{text-align:center;padding:32px;font-size:.75rem;color:var(--muted);border-top:1px solid var(--border)}
+/* quickstart-only: keep the "what's next" cards clickable as whole blocks */
+.doc-body a.card{color:inherit}
+.doc-body a.card:hover{color:inherit}
+.doc-body a.card h3{margin-bottom:7px}
+.next-grid{margin-top:8px}
 </style>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="assets/cohere.css">
 </head>
 <body>
 
-<nav>
-<div class="nav-inner">
-  <a href="index.html" class="nav-logo"><span class="mk">⚒</span> Hephaestus</a>
-  <div class="nav-links">
-    <a href="index.html">Home</a>
-    <a href="features.html">Features</a>
-    <a href="config-reference.html">Config Ref</a>
-    <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework" class="nav-cta">GitHub</a>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="lgrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eec3a4"/><stop offset="1" stop-color="#b5502e"/></linearGradient>
+</defs></svg>
+<nav class="nav">
+  <div class="nav-in">
+    <a class="brand" href="index.html">
+      <svg class="logo-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 12-8.4 8.4a2.1 2.1 0 0 1-3-3L12 9"/><path d="M17.6 15 22 10.6"/><path d="m21 11.7-1.3-1.3c-.6-.6-.9-1.4-.9-2.2v-.9L16 4.6A5.6 5.6 0 0 0 12 3H9l.9.8A6.2 6.2 0 0 1 12 8.4v1.6l2 2h2.5l2.3 1.9"/></svg>
+      Hephaestus
+    </a>
+    <div class="nav-links">
+      <a href="quickstart.html" data-nav="quickstart" class="on">Quickstart</a>
+      <a href="features.html" data-nav="features">Guide</a>
+      <a href="config-reference.html" data-nav="config">Config</a>
+      <a href="snapshot-viewer.html" data-nav="snapshot">Snapshot</a>
+    </div>
+    <div class="nav-right">
+      <a class="nav-gh" href="https://github.com/bogdanov-igor/hephaestus-postman-framework"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.5 2 2 6.6 2 12.2c0 4.5 2.9 8.3 6.8 9.6.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.4-3.4-1.4-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.9.1-.7.3-1.1.6-1.4-2.2-.3-4.5-1.1-4.5-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.6 0 0 .8-.3 2.7 1a9.3 9.3 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.3.2 2.3.1 2.6.6.7 1 1.6 1 2.7 0 3.9-2.3 4.7-4.5 5 .3.3.6.9.6 1.9v2.8c0 .3.2.6.7.5A10 10 0 0 0 22 12.2C22 6.6 17.5 2 12 2Z"/></svg>GitHub</a>
+      <button class="burger" id="burger" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+    </div>
   </div>
-</div>
 </nav>
-
-<div class="layout">
-<aside>
-  <h3>Quick Start</h3>
-  <a href="#prereqs">Prerequisites</a>
-  <a href="#step1">1. Create Collection</a>
-  <a href="#step2">2. Load Engine</a>
-  <a href="#step3">3. Configure Defaults</a>
-  <a href="#step4">4. Add First Request</a>
-  <a href="#step5">5. Run & Verify</a>
-  <h3>Next</h3>
-  <a href="#step6">Newman + CI</a>
-  <a href="config-reference.html">Config Reference</a>
-  <a href="features.html">All Features</a>
-</aside>
-
-<main>
-<div style="margin-bottom:40px">
-  <p style="font-size:.8rem;color:var(--muted);margin-bottom:8px">QUICK START GUIDE</p>
-  <h1 style="font-size:2.2rem;font-weight:900;margin-bottom:12px">Up and running in 5 minutes</h1>
-  <p style="color:var(--muted);font-size:.95rem">Hephaestus runs inside Postman as a collection-level script. No npm install, no build step — just paste and run.</p>
-  <div class="badge-row">
-    <span class="badge ok">✓ Postman 10+</span>
-    <span class="badge ok">✓ Newman 6+</span>
-    <span class="badge">No local Node.js required for Postman</span>
-    <span class="badge">MIT License</span>
-  </div>
+<div id="mnav">
+  <a href="quickstart.html">Quickstart</a>
+  <a href="features.html">Guide</a>
+  <a href="config-reference.html">Config reference</a>
+  <a href="snapshot-viewer.html">Snapshot tool</a>
+  <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework">GitHub ↗</a>
 </div>
 
-<!-- Step 0 -->
-<div class="step" id="prereqs">
-  <div class="step-num">⚙</div>
-  <h2>Prerequisites</h2>
-  <p>You need Postman (free) and optionally Newman for CI runs:</p>
-  <ul>
-    <li><a href="https://www.postman.com/downloads/">Postman</a> — download the desktop app (v10 or newer)</li>
-    <li><a href="https://github.com/bogdanov-igor/hephaestus-postman-framework">Clone or download this repo</a> to get templates and scripts</li>
-    <li><strong>Optional for CI:</strong> <code>npm install -g newman</code></li>
-  </ul>
-  <div class="callout callout-info">
-    <strong>Tip:</strong> If you want to use the CLI tools (<code>npm run docs</code>, <code>npm run compare</code>, etc.), run <code>npm install</code> in the repo root once.
-  </div>
-</div>
+<div class="doc-hero"><div class="wrap">
+  <span class="eyebrow"><span class="tgt"></span> Get started</span>
+  <h1>Quickstart</h1>
+  <p>Import the shipped collection, set your defaults, add a request, and run — inside Postman or through Newman in CI. No build step, no plugin, no network.</p>
+</div></div>
 
-<!-- Step 1 -->
-<div class="step" id="step1">
-  <div class="step-num">1</div>
-  <h2>Create or open your collection</h2>
-  <p>You can start fresh or add Hephaestus to an existing collection.</p>
-  <ol>
-    <li>In Postman, click <strong>New → Collection</strong></li>
-    <li>Name it (e.g. <em>My API</em>)</li>
-    <li>Alternatively, import <code>collection/hephaestus-template.postman_collection.json</code> from this repo — it comes pre-wired</li>
-  </ol>
-  <div class="callout">
-    <strong>Recommended:</strong> Use the template collection. It includes the engine-update helper request, a working example folder, and pre-configured collection variables.
-  </div>
-</div>
+<div class="doc-layout">
+  <aside class="doc-side">
+    <div class="grp">Set up</div>
+    <a href="#prereqs">1 · Prerequisites</a>
+    <a href="#import">2 · Import the collection</a>
+    <a href="#defaults">3 · Set defaults</a>
+    <a href="#request">4 · Add a request</a>
+    <a href="#run">5 · Run &amp; verify</a>
+    <div class="grp">Ship</div>
+    <a href="#ci">6 · Run in CI</a>
+    <div class="grp">Try it now</div>
+    <a href="#demo">60-second demo</a>
+    <a href="#next">What's next</a>
+  </aside>
 
-<!-- Step 2 -->
-<div class="step" id="step2">
-  <div class="step-num">2</div>
-  <h2>Load the engine into collection variables</h2>
-  <p>The engine lives in two collection variables: <code>hephaestus.v3.pre</code> and <code>hephaestus.v3.post</code>. The easiest way is to run the included setup request:</p>
-  <ol>
-    <li>Open the <strong>🛠️ Hephaestus System</strong> folder in the template collection</li>
-    <li>Run <strong>🔧 engine-update</strong> — it fetches the latest engine from GitHub and saves it to collection variables</li>
-  </ol>
+  <main class="doc-body">
+    <h2 id="prereqs">1 · Prerequisites</h2>
+    <p>To run inside Postman you need nothing but the app. The engine ships embedded in the collection, so there is no package to install and no code to fetch.</p>
+    <ul>
+      <li><a href="https://www.postman.com/downloads/">Postman</a> v10 or newer — the free desktop app.</li>
+      <li>Optional, for CI and the CLI gates: <a href="https://nodejs.org/">Node.js</a> 18+ and <a href="https://github.com/postmanlabs/newman">Newman</a>.</li>
+    </ul>
+    <p>The command-line gates come from a single zero-dependency package. Install it globally, or call it with <code>npx</code> and skip the install:</p>
+    <div class="cmd"><span class="p">$</span> npm i -g hephaestus-postman-framework<button class="cc" data-cmd="npm i -g hephaestus-postman-framework">copy</button></div>
+    <div class="callout"><b>No Node for Postman.</b> Running the framework inside Postman needs only the desktop app — Node, Newman and the CLI matter only when you take the same collection into CI.</div>
 
-  <p>Or do it manually via the <strong>Collection Variables</strong> tab — paste the contents of <code>engine/pre-request.js</code> into <code>hephaestus.v3.pre</code> and <code>engine/post-request.js</code> into <code>hephaestus.v3.post</code>.</p>
+    <h2 id="import">2 · Import the collection</h2>
+    <p>The shipped collection embeds the engine at build time, so a fresh import is fully self-contained and runs offline.</p>
+    <p>In Postman, choose <b>Import</b> and select the file:</p>
+    <pre><span class="c-cmt"># from the repo</span>
+collection/hephaestus-template.postman_collection.json</pre>
+    <p>The engine lives in two collection variables — <code>hephaestus.v3.pre</code> and <code>hephaestus.v3.post</code> — which the import brings with it. There is no fetch step and no plugin to enable.</p>
+    <div class="callout"><b>Adding to an existing collection?</b> Copy those two collection variables across, then wire each request to the engine as shown in step 4.</div>
 
-  <div class="code-window">
-  <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">Collection → Pre-request (one-time setup)</span></div>
-  <div class="code-body"><pre><span class="c-cmt">// This is already in the template collection's Pre-request script.
-// It loads the engine from GitHub on first run.</span>
-<span class="c-kw">const</span> version = pm.collectionVariables.<span class="c-fn">get</span>(<span class="c-str">'hephaestus.version'</span>) || <span class="c-str">'main'</span>;
-<span class="c-cmt">// Engine is auto-loaded by engine-update.js setup request</span></pre>
-  </div></div>
-</div>
-
-<!-- Step 3 -->
-<div class="step" id="step3">
-  <div class="step-num">3</div>
-  <h2>Configure hephaestus.defaults</h2>
-  <p>Open <strong>Collection Variables</strong> and set <code>hephaestus.defaults</code> to a JSON config. This applies to all requests in the collection.</p>
-
-  <div class="code-window">
-  <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">hephaestus.defaults (collection variable)</span></div>
-  <div class="code-body"><pre>{
+    <h2 id="defaults">3 · Set defaults</h2>
+    <p>Open <b>Collection Variables</b> and set <code>hephaestus.defaults</code> to a JSON object. It applies to every request in the collection; any request can override a single key without touching the rest.</p>
+    <p>A minimal starting point:</p>
+    <pre><span class="c-punc">{</span>
   <span class="c-key">"baseUrl"</span>: <span class="c-str">"https://api.example.com"</span>,
-  <span class="c-key">"auth"</span>: { <span class="c-str">"enabled"</span>: <span class="c-kw">false</span>, <span class="c-str">"type"</span>: <span class="c-str">"none"</span> },
-  <span class="c-key">"expectedStatus"</span>: [<span class="c-num">200</span>, <span class="c-num">201</span>, <span class="c-num">202</span>],
-  <span class="c-key">"maxResponseTime"</span>: <span class="c-num">2000</span>,
+  <span class="c-key">"locale"</span>: <span class="c-str">"en"</span>,
   <span class="c-key">"contentType"</span>: <span class="c-str">"json"</span>,
-  <span class="c-key">"snapshot"</span>: { <span class="c-str">"enabled"</span>: <span class="c-kw">false</span>, <span class="c-str">"mode"</span>: <span class="c-str">"non-strict"</span> },
-  <span class="c-key">"secrets"</span>: [<span class="c-str">"token"</span>, <span class="c-str">"password"</span>, <span class="c-str">"secret"</span>, <span class="c-str">"key"</span>],
-  <span class="c-key">"ci"</span>: <span class="c-kw">false</span>,
-  <span class="c-key">"logLevel"</span>: <span class="c-str">"normal"</span>,
-  <span class="c-key">"softFail"</span>: <span class="c-kw">false</span>,
-  <span class="c-key">"envRequired"</span>: []
-}</pre>
-  </div></div>
-  <p>Copy the full template from <code>setup/defaults.json</code> in the repo. Use the <strong>init wizard</strong> to generate it interactively:</p>
-  <div class="code-window">
-  <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">Terminal</span></div>
-  <div class="code-body"><pre>npm run init   <span class="c-cmt"># interactive wizard — generates defaults.json + environment template</span></pre>
-  </div></div>
-</div>
+  <span class="c-key">"auth"</span>: <span class="c-punc">{</span> <span class="c-key">"enabled"</span>: <span class="c-kw">false</span>, <span class="c-key">"type"</span>: <span class="c-str">"none"</span> <span class="c-punc">}</span>
+<span class="c-punc">}</span></pre>
+    <div class="callout"><b>Full template.</b> An annotated version ships at <code>setup/defaults.json</code>. Every key it accepts is listed in the <a href="config-reference.html">Config reference</a>.</div>
 
-<!-- Step 4 -->
-<div class="step" id="step4">
-  <div class="step-num">4</div>
-  <h2>Add your first request</h2>
-  <p>Every request follows the same pattern: <code>override</code> object in the Pre-request and Test scripts, then <code>eval()</code> to run the engine.</p>
-
-  <div class="code-window">
-  <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">Pre-request Script (copy from templates/method.pre-request.js)</span></div>
-  <div class="code-body"><pre><span class="c-kw">const</span> <span class="c-var">override</span> = {
-  <span class="c-cmt">// Optional: override baseUrl for this specific request</span>
-  <span class="c-cmt">// baseUrl: "https://other-api.example.com",</span>
-
-  <span class="c-cmt">// Auth override (if different from defaults)</span>
-  <span class="c-cmt">// auth: { enabled: true, type: "bearer", token: "{{prod.token}}" },</span>
-};
-
-<span class="c-fn">eval</span>(<span class="c-var">pm</span>.collectionVariables.<span class="c-fn">get</span>(<span class="c-str">"hephaestus.v3.pre"</span>));</pre>
-  </div></div>
-
-  <div class="code-window">
-  <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">Test Script (copy from templates/method.post-request.js)</span></div>
-  <div class="code-body"><pre><span class="c-kw">const</span> <span class="c-var">override</span> = {
-
+    <h2 id="request">4 · Add a request</h2>
+    <p>Each request carries a small <code>override</code> block, then one line evaluates the engine. That line never changes between releases — only the <code>override</code> above it does.</p>
+    <p>In the request's <b>Tests</b> tab (the post-request pipeline):</p>
+    <pre><span class="c-kw">const</span> <span class="c-var">override</span> <span class="c-punc">=</span> {
   <span class="c-key">expectedStatus</span>: <span class="c-num">200</span>,
   <span class="c-key">maxResponseTime</span>: <span class="c-num">1000</span>,
-
-  <span class="c-cmt">// Check response structure</span>
   <span class="c-key">assertShape</span>: {
     <span class="c-str">"data.id"</span>:   <span class="c-str">"number"</span>,
     <span class="c-str">"data.name"</span>: <span class="c-str">"string"</span>,
     <span class="c-str">"error"</span>:     <span class="c-str">"absent"</span>,
   },
-
-  <span class="c-cmt">// Save a value for the next request</span>
-  <span class="c-key">varsToSave</span>: {
-    <span class="c-key">userId</span>: { <span class="c-key">path</span>: <span class="c-str">"data.id"</span>, <span class="c-key">scope</span>: <span class="c-str">"collection"</span>, <span class="c-key">name</span>: <span class="c-str">"lastUserId"</span> }
-  },
-
 };
 
 <span class="c-fn">eval</span>(<span class="c-var">pm</span>.collectionVariables.<span class="c-fn">get</span>(<span class="c-str">"hephaestus.v3.post"</span>));</pre>
-  </div></div>
+    <p>The <b>Pre-request</b> tab follows the same shape, ending in <code>eval(pm.collectionVariables.get("hephaestus.v3.pre"))</code>.</p>
+    <div class="callout"><b>Copy a starting point.</b> Paste-ready scripts live at <code>templates/method.pre-request.js</code> and <code>templates/method.post-request.js</code> — edit only the <code>override</code> section.</div>
 
-  <div class="callout callout-info">
-    <strong>Pro tip:</strong> Templates are in <code>templates/</code>. Copy them as starting points for every new request. The engine is the only thing that changes between releases — your override stays the same.
+    <h2 id="run">5 · Run &amp; verify</h2>
+    <p>Inside Postman, hit <b>Send</b>. Open the console (<b>View → Show Postman Console</b>) to read the engine output; the <b>Test Results</b> tab lists every assertion, and a failure names the exact field and why.</p>
+    <p>To run the same request from a terminal, point Newman at the collection with the CLI reporter:</p>
+    <div class="cmd"><span class="p">$</span> newman run collection.json -e env.json -r cli<button class="cc" data-cmd="newman run collection.json -e env.json -r cli">copy</button></div>
+    <div class="callout"><b>Byte-stable output.</b> Every test name and log line routes through a locale catalog; the <code>en</code> and <code>ru</code> output are locked by a golden harness, so the reporter reads the same on every machine.</div>
+
+    <h2 id="ci">6 · Run in CI</h2>
+    <p>In CI, run Newman with the JSON reporter, then hand the report to the CLI. Each command reads what Newman wrote and exits non-zero on the one thing that regressed — so the build fails for a reason.</p>
+    <pre><span class="c-var">newman</span> run collection.json \
+  -e env.json \
+  -r json \
+  --reporter-json-export run.json</pre>
+    <p>Then gate on the run. The p95 latency gate and the run-to-run regression diff are two independent exit codes:</p>
+    <pre><span class="c-cmt"># p95 SLA gate — non-zero if p95 &gt; 1500 ms</span>
+hephaestus summary run.json --sla=1500
+
+<span class="c-cmt"># regression gate — diff two runs</span>
+hephaestus compare before.json run.json</pre>
+    <div class="callout"><b>Zero dependencies.</b> The CLI is one binary with no install tree of its own, provenance-signed on npm. There are eighteen commands, each usable as a CI gate.</div>
+
+    <h2 id="demo">60-second offline demo</h2>
+    <p>Not ready to wire up a real API? One non-interactive command scaffolds a complete demo — a collection, an environment and a README — with <b>no account, no API key and no network</b>.</p>
+    <div class="cmd"><span class="p">$</span> npx hephaestus init --demo<button class="cc" data-cmd="npx hephaestus init --demo">copy</button></div>
+    <p>The collection carries its own recorded snapshots, so <code>hephaestus mock</code> serves those responses back and Newman runs green:</p>
+    <pre><span class="c-cmt"># terminal 1 — serve recorded responses</span>
+hephaestus mock \
+  hephaestus-demo/demo-collection.json \
+  -p 4010
+
+<span class="c-cmt"># terminal 2 — run the tests</span>
+newman run \
+  hephaestus-demo/demo-collection.json \
+  -e hephaestus-demo/demo-environment.json</pre>
+    <p>The result is <b>5 requests and 35 assertions, all green</b> — including a negative test whose expected result is a 404. Every request is copy-pasteable into a real collection, one headline feature at a time.</p>
+    <div class="callout"><b>Feed it onward.</b> Re-run with <code>-r json --reporter-json-export run.json</code>, then try <code>hephaestus summary</code>, <code>report</code> and <code>docs</code> against the same run.</div>
+
+    <h2 id="next">What's next</h2>
+    <p>You are up and running. From here, go deeper on the engine, look up any config key, or read the source.</p>
+    <div class="grid next-grid">
+      <a class="card" href="features.html">
+        <div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg></div>
+        <h3>Guide</h3>
+        <p>Every module, operator and pattern, each with a worked example.</p>
+      </a>
+      <a class="card" href="config-reference.html">
+        <div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-6"/><path d="M4 11V3"/><path d="M12 21v-9"/><path d="M12 7V3"/><path d="M20 21v-4"/><path d="M20 13V3"/><path d="M1 15h6"/><path d="M9 7h6"/><path d="M17 17h6"/></svg></div>
+        <h3>Config reference</h3>
+        <p>All the override / defaults keys, typed, straight from the schema.</p>
+      </a>
+      <a class="card" href="https://github.com/bogdanov-igor/hephaestus-postman-framework">
+        <div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="8" r="2.5"/><path d="M6 8.5v7"/><path d="M18 10.5a6 6 0 0 1-6 6H9"/></svg></div>
+        <h3>GitHub</h3>
+        <p>Source, releases and the full changelog.</p>
+      </a>
+    </div>
+  </main>
+</div>
+
+<footer class="foot-wrap">
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <div class="foot-brand"><svg class="logo-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 12-8.4 8.4a2.1 2.1 0 0 1-3-3L12 9"/><path d="M17.6 15 22 10.6"/><path d="m21 11.7-1.3-1.3c-.6-.6-.9-1.4-.9-2.2v-.9L16 4.6A5.6 5.6 0 0 0 12 3H9l.9.8A6.2 6.2 0 0 1 12 8.4v1.6l2 2h2.5l2.3 1.9"/></svg> Hephaestus</div>
+        <p class="foot-lead">A modular, zero-dependency API-testing framework for Postman &amp; Newman.</p>
+      </div>
+      <div class="foot-cols">
+        <div class="foot-col"><h4>Docs</h4>
+          <a href="quickstart.html">Quickstart</a>
+          <a href="features.html">Guide</a>
+          <a href="config-reference.html">Config reference</a>
+          <a href="snapshot-viewer.html">Snapshot tool</a>
+        </div>
+        <div class="foot-col"><h4>Project</h4>
+          <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework">GitHub</a>
+          <a href="https://www.npmjs.com/package/hephaestus-postman-framework">npm</a>
+          <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework/releases">Releases</a>
+          <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework/blob/main/CHANGELOG.md">Changelog</a>
+        </div>
+      </div>
+    </div>
+    <div class="foot-legal"><span>MIT © Bogdanov Igor · v4.0.1</span><span>Scattered scripts, forged into one engine.</span></div>
   </div>
-</div>
-
-<!-- Step 5 -->
-<div class="step" id="step5">
-  <div class="step-num">5</div>
-  <h2>Run & verify</h2>
-  <p>Hit <strong>Send</strong> in Postman. Open the <strong>Console</strong> (View → Show Postman Console) to see the Hephaestus output:</p>
-  <div class="code-window">
-  <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">Postman Console output</span></div>
-  <div class="code-body"><pre>╔══════════════════════════════════════════════════════════════╗
-║  HEPHAESTUS v4.0.1  ·  POST-REQUEST
-║  📅 2026-04-07 12:34:56 UTC
-╠══════════════════════════════════════════════════════════════╣
-║  📋  GET  Get User
-║  🌐  https://api.example.com/users/42
-╠══════════════════════════════════════════════════════════════╣
-║  ✅ STATUS  200 — OK
-║  ⏱   124 ms   📦 1.2 KB   📄 JSON
-╠══════════════════════════════════════════════════════════════╣
-║  📤 RESPONSE PREVIEW
-──────────────────────────────────────────────────────────────
-{ "data": { "id": 42, "name": "John Doe", ... } }
-──────────────────────────────────────────────────────────────
-║  🧩 shape "data.id": number ✅
-║  🧩 shape "data.name": string ✅
-║  🧩 shape "error": absent ✅
-║  💾 SAVED    'userId' → collection ✅
-╚══════════════════════════════════════════════════════════════╝</pre>
-  </div></div>
-  <p>Check the <strong>Test Results</strong> tab to see all assertion outcomes. Green = pass. If something fails, you'll see exactly which field and why.</p>
-</div>
-
-<!-- Step 6 -->
-<div class="step" id="step6">
-  <div class="step-num">6</div>
-  <h2>Run in CI with Newman</h2>
-  <p>Export your collection and environment from Postman, then run with Newman:</p>
-  <div class="code-window">
-  <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">Terminal</span></div>
-  <div class="code-body"><pre><span class="c-cmt"># Install Newman once</span>
-npm install -g newman
-
-<span class="c-cmt"># Run collection</span>
-newman run collection.json \
-  -e environments/prod.json \
-  --reporter-json-export results.json \
-  -r json
-
-<span class="c-cmt"># View rich summary</span>
-npm run summary -- results.json
-
-<span class="c-cmt"># Generate HTML report</span>
-npm run report -- results.json report.html
-
-<span class="c-cmt"># Convert to JUnit XML for CI</span>
-npm run ci-to-junit -- results.json junit.xml</pre>
-  </div></div>
-
-  <div class="callout">
-    <strong>Docker alternative:</strong> No Newman install needed.<br>
-    <code>bash scripts/docker-run.sh -c collection.json -e env.json -o reports/</code>
-  </div>
-
-  <p>See the full <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework/blob/main/docs/newman-ci.md">Newman + CI Guide</a> for GitHub Actions, GitLab CI, and Jenkins examples.</p>
-</div>
-
-<!-- Next steps -->
-<div style="margin-top:64px;border-top:1px solid var(--border);padding-top:48px">
-  <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:8px">What's next?</h2>
-  <p style="color:var(--muted);font-size:.88rem;margin-bottom:24px">Now that you're up and running, explore the full feature set:</p>
-  <div class="next-steps">
-    <a href="config-reference.html" class="ns-card">
-      <div class="icon">📖</div>
-      <h4>Config Reference</h4>
-      <p>Every option with type, default, and example. Searchable.</p>
-    </a>
-    <a href="features.html" class="ns-card">
-      <div class="icon">✨</div>
-      <h4>All Features</h4>
-      <p>Full list of modules, operators, and patterns with examples.</p>
-    </a>
-    <a href="snapshot-viewer.html" class="ns-card">
-      <div class="icon">📸</div>
-      <h4>Snapshot Viewer</h4>
-      <p>Visual browser UI for snapshot regression inspection.</p>
-    </a>
-  </div>
-</div>
-
-</main>
-</div>
-
-<footer><span class="mk">⚒</span> Hephaestus v4.0.1 · <a href="index.html">Home</a> · <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework">GitHub</a> · <a href="https://www.linkedin.com/in/i-a-bogdanov/" target="_blank" rel="noopener">LinkedIn</a> · MIT License</footer>
-
+</footer>
 <script>
-var links = document.querySelectorAll('aside a');
-var steps = document.querySelectorAll('.step');
-window.addEventListener('scroll', function() {
-  var y = window.scrollY + 100;
-  steps.forEach(function(s) {
-    if (s.offsetTop <= y) {
-      links.forEach(function(l) { l.classList.remove('active'); });
-      var active = document.querySelector('aside a[href="#' + s.id + '"]');
-      if (active) active.classList.add('active');
-    }
-  });
-}, { passive: true });
+var burger=document.getElementById('burger'),mnav=document.getElementById('mnav');
+if(burger){burger.addEventListener('click',function(){var o=mnav.classList.toggle('open');burger.setAttribute('aria-expanded',o)});mnav.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){mnav.classList.remove('open')})});}
+document.querySelectorAll('[data-cmd]').forEach(function(b){b.addEventListener('click',function(){navigator.clipboard&&navigator.clipboard.writeText(b.dataset.cmd);var t=b.textContent;b.textContent='copied';setTimeout(function(){b.textContent=t},1200)})});
 </script>
+
 </body>
 </html>

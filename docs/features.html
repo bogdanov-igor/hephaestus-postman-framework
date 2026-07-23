@@ -3,1083 +3,313 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="description" content="Full feature reference for Hephaestus v4.0 — assertion operators, snapshot regression, auth patterns, array validation, localization, security audit, CLI tools, and more.">
-<meta name="robots" content="index, follow">
-<link rel="canonical" href="https://bogdanov-igor.github.io/hephaestus-postman-framework/features.html">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://bogdanov-igor.github.io/hephaestus-postman-framework/features.html">
-<meta property="og:title" content="All Features — Hephaestus API Testing Framework">
-<meta property="og:description" content="Complete reference for all modules, assertion operators, auth patterns and CLI tools in Hephaestus v4.0.">
-<meta property="og:image" content="https://bogdanov-igor.github.io/hephaestus-postman-framework/assets/og.png">
-<title>Features — Hephaestus</title>
+<meta name="description" content="Hephaestus engine & CLI guide — assertion operators, shape/order/header checks, structural snapshots, schema, GraphQL, retries, security audit, localization, the 18-command CLI and the plugin gallery.">
+<title>Guide — Hephaestus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
 <style>
-:root{--bg:#0a0c10;--bg-card:#111318;--bg-code:#0d1117;--border:#21262d;--text:#e6edf3;--muted:#8b949e;--accent:#f77f00;--blue:#58a6ff;--green:#3fb950;--red:#f85149;--purple:#bc8cff;--radius:10px}
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
-a{color:var(--accent);text-decoration:none}
-code,pre{font-family:'SF Mono','Fira Code',monospace}
-code{background:rgba(247,127,0,.1);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent)}
-
-nav{position:fixed;top:0;left:0;right:0;z-index:100;backdrop-filter:blur(12px);background:rgba(10,12,16,.9);border-bottom:1px solid var(--border)}
-.nav-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:58px;display:flex;align-items:center;gap:24px}
-.nav-logo{font-size:1rem;font-weight:800;color:var(--text)}
-.nav-links{margin-left:auto;display:flex;gap:20px}
-.nav-links a{font-size:.82rem;color:var(--muted)}
-.nav-links a:hover{color:var(--text)}
-.nav-cta{background:var(--accent);color:#fff!important;padding:6px 14px;border-radius:6px;font-weight:600}
-
-.hero-sm{padding:100px 24px 48px;text-align:center;background:radial-gradient(ellipse 60% 40% at 50% 0%,rgba(247,127,0,.07),transparent 70%)}
-.hero-sm h1{font-size:2.4rem;font-weight:900;margin-bottom:12px}
-.hero-sm p{color:var(--muted);font-size:1rem;max-width:520px;margin:0 auto}
-
-.page-inner{max-width:1200px;margin:0 auto;padding:0 24px 80px}
-
-.section{margin-bottom:80px;scroll-margin-top:80px}
-.section-header{display:flex;align-items:center;gap:12px;margin-bottom:32px;padding-bottom:12px;border-bottom:1px solid var(--border)}
-.section-icon{font-size:1.6rem}
-.section-header h2{font-size:1.5rem;font-weight:800}
-.section-tag{font-size:.7rem;padding:3px 8px;border-radius:4px;background:rgba(247,127,0,.1);border:1px solid rgba(247,127,0,.2);color:var(--accent);font-weight:700}
-
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
-.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-
-.code-window{background:var(--bg-code);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
-.code-tb{background:#161b22;padding:10px 14px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border)}
-.dot{width:10px;height:10px;border-radius:50%}
-.dot-r{background:#f85149}.dot-y{background:#e3b341}.dot-g{background:#3fb950}
-.code-fn{font-size:.68rem;color:var(--muted);margin-left:8px}
-.code-body{padding:16px;font-size:.75rem;line-height:1.7;overflow-x:auto}
-.c-kw{color:#ff7b72}.c-str{color:#a5d6ff}.c-cmt{color:#8b949e;font-style:italic}
-.c-key{color:#79c0ff}.c-num{color:#f2cc60}.c-var{color:#ffa657}.c-fn{color:#d2a8ff}
-
-.desc-box{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
-.desc-box h3{font-size:1rem;font-weight:700;margin-bottom:8px}
-.desc-box p.note{font-size:.82rem;color:var(--muted,#8b949e);border-left:2px solid var(--accent);padding-left:10px;margin-top:12px}
-.desc-box p,.desc-box li{font-size:.83rem;color:var(--muted);line-height:1.6}
-.desc-box ul{padding-left:16px;margin-top:8px}
-.desc-box li{margin-bottom:5px}
-
-.op-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
-.op-item{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:10px 12px}
-.op-item code{display:block;font-size:.8rem;color:var(--blue);margin-bottom:4px}
-.op-item p{font-size:.72rem;color:var(--muted)}
-
-.version-badge{display:inline-block;font-size:.65rem;padding:1px 7px;border-radius:3px;font-weight:700;margin-left:8px}
-.v3-5{background:rgba(163,113,247,.1);color:#a371f7;border:1px solid rgba(163,113,247,.2)}
-.v3-6{background:rgba(88,166,255,.1);color:var(--blue);border:1px solid rgba(88,166,255,.2)}
-.v3-7{background:rgba(63,185,80,.1);color:var(--green);border:1px solid rgba(63,185,80,.2)}
-.v3-8{background:rgba(247,127,0,.1);color:var(--accent);border:1px solid rgba(247,127,0,.2)}
-.v3-9{background:rgba(247,120,186,.1);color:#f778ba;border:1px solid rgba(247,120,186,.2)}
-.v4-0{background:rgba(226,88,34,.12);color:#e25822;border:1px solid rgba(226,88,34,.3)}
-
-.mini-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px}
-.mini-card h4{font-size:.85rem;font-weight:700;margin-bottom:6px}
-.mini-card p{font-size:.75rem;color:var(--muted);line-height:1.5}
-
-footer{text-align:center;padding:32px;font-size:.75rem;color:var(--muted);border-top:1px solid var(--border)}
-
-@media(max-width:800px){
-  .two-col,.three-col,.op-grid{grid-template-columns:1fr}
-}
+/* guide-only tweaks — everything structural reuses site.css */
+.doc-body h2 .pill{vertical-align:middle;margin-left:10px}
+.doc-body h2 .pill+.pill{margin-left:6px}
+.doc-body .tools{margin:4px 0 20px}
+.doc-body .opset{margin:4px 0 20px}
+.doc-body pre{max-width:100%}
 </style>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="assets/cohere.css">
 </head>
 <body>
-
-<nav>
-<div class="nav-inner">
-  <a href="index.html" class="nav-logo"><span class="mk">⚒</span> Hephaestus</a>
-  <div class="nav-links">
-    <a href="index.html">Home</a>
-    <a href="quickstart.html">Quick Start</a>
-    <a href="config-reference.html">Config Ref</a>
-    <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework" class="nav-cta">GitHub</a>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="lgrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eec3a4"/><stop offset="1" stop-color="#b5502e"/></linearGradient>
+</defs></svg>
+<nav class="nav">
+  <div class="nav-in">
+    <a class="brand" href="index.html">
+      <svg class="logo-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 12-8.4 8.4a2.1 2.1 0 0 1-3-3L12 9"/><path d="M17.6 15 22 10.6"/><path d="m21 11.7-1.3-1.3c-.6-.6-.9-1.4-.9-2.2v-.9L16 4.6A5.6 5.6 0 0 0 12 3H9l.9.8A6.2 6.2 0 0 1 12 8.4v1.6l2 2h2.5l2.3 1.9"/></svg>
+      Hephaestus
+    </a>
+    <div class="nav-links">
+      <a href="quickstart.html" data-nav="quickstart">Quickstart</a>
+      <a href="features.html" data-nav="features" class="on">Guide</a>
+      <a href="config-reference.html" data-nav="config">Config</a>
+      <a href="snapshot-viewer.html" data-nav="snapshot">Snapshot</a>
+    </div>
+    <div class="nav-right">
+      <a class="nav-gh" href="https://github.com/bogdanov-igor/hephaestus-postman-framework"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.5 2 2 6.6 2 12.2c0 4.5 2.9 8.3 6.8 9.6.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.4-3.4-1.4-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.9.1-.7.3-1.1.6-1.4-2.2-.3-4.5-1.1-4.5-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.6 0 0 .8-.3 2.7 1a9.3 9.3 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.3.2 2.3.1 2.6.6.7 1 1.6 1 2.7 0 3.9-2.3 4.7-4.5 5 .3.3.6.9.6 1.9v2.8c0 .3.2.6.7.5A10 10 0 0 0 22 12.2C22 6.6 17.5 2 12 2Z"/></svg>GitHub</a>
+      <button class="burger" id="burger" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+    </div>
   </div>
-</div>
 </nav>
-
-<div class="hero-sm">
-  <h1>All Features</h1>
-  <p>Complete reference for every module, assertion operator, and tool in Hephaestus v4.0.</p>
+<div id="mnav">
+  <a href="quickstart.html">Quickstart</a>
+  <a href="features.html">Guide</a>
+  <a href="config-reference.html">Config reference</a>
+  <a href="snapshot-viewer.html">Snapshot tool</a>
+  <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework">GitHub ↗</a>
 </div>
 
-<div class="page-inner">
+<div class="doc-hero"><div class="wrap">
+  <span class="eyebrow"><span class="tgt"></span> Guide</span>
+  <h1>The engine &amp; CLI, end to end</h1>
+  <p>Every engine capability, the eighteen-command CLI, and the plugin gallery — how each one works and the smallest <code>override</code> that turns it on. Everything here is opt-in and off by default.</p>
+</div></div>
+<div class="doc-layout">
+  <aside class="doc-side">
+    <div class="grp">Engine</div>
+    <a href="#assertions">Assertions</a>
+    <a href="#arrays">Shape, order &amp; headers</a>
+    <a href="#snapshots">Snapshots</a>
+    <a href="#schema">Schema, GraphQL &amp; retries</a>
+    <a href="#security">Security &amp; output</a>
+    <div class="grp">Tooling</div>
+    <a href="#cli">The CLI</a>
+    <a href="#plugins">Plugins &amp; gallery</a>
+  </aside>
+  <main class="doc-body">
 
-<!-- ASSERTIONS -->
-<div class="section" id="assertions">
-<div class="section-header">
-  <div class="section-icon">🔬</div>
-  <h2>Assertion System</h2>
-  <span class="section-tag">post-request</span>
-</div>
+    <p>The engine ships as collection data and runs where your requests run — two passes over one shared <code>ctx</code>, both driven by a single <code>override</code> block at the top of a request's Tests tab.</p>
+    <div class="callout">
+      <b>Two pipelines, one config.</b> Auth, environment checks, random data and date variables run before the request goes out <span class="pill cool">pre-request</span>; assertions, snapshots, schema, security and plugins run after it comes back <span class="pill">post-request</span>. Both read the same merged config, so anything below can live in a per-request <code>override</code> or in the suite-wide <code>hephaestus.defaults</code>.
+    </div>
 
-<div class="two-col">
-  <div>
-    <div class="desc-box" style="margin-bottom:16px">
-      <h3>assertions map</h3>
-      <p>Per-field assertion rules using a shorthand map. Supports all operators below. Each field can have multiple operators. Conditional logic via <code>when</code>.</p>
-      <ul>
-        <li>Use <code>soft: true</code> per-rule to log warning instead of failing</li>
-        <li>Use <code>when: "expression"</code> to conditionally skip</li>
-        <li>Global <code>softFail: true</code> applies soft behavior to all assertions</li>
-      </ul>
+    <h2 id="assertions">Assertions <span class="pill">post-request</span></h2>
+    <p>The <code>assertions</code> map is the workhorse: a field path maps to an object of operators, and <b>every operator on that field must pass</b>. Operators combine, so one entry can check existence, type and range at once. Two modifiers ride alongside them — <code>soft</code> logs a warning instead of failing, and <code>when</code> skips the check unless its expression is truthy. Setting <code>softFail: true</code> globally makes every functional failure soft.</p>
+
+    <div class="tools opset">
+      <div class="tool"><span class="cmd">eq</span><span class="desc">strict deep equality</span></div>
+      <div class="tool"><span class="cmd">ne</span><span class="desc">not equal</span></div>
+      <div class="tool"><span class="cmd">gt</span><span class="desc">greater than</span></div>
+      <div class="tool"><span class="cmd">gte</span><span class="desc">greater than or equal</span></div>
+      <div class="tool"><span class="cmd">lt</span><span class="desc">less than</span></div>
+      <div class="tool"><span class="cmd">lte</span><span class="desc">less than or equal</span></div>
+      <div class="tool"><span class="cmd">type</span><span class="desc">typeof / array / null</span></div>
+      <div class="tool"><span class="cmd">minLen</span><span class="desc">min string / array length</span></div>
+      <div class="tool"><span class="cmd">maxLen</span><span class="desc">max string / array length</span></div>
+      <div class="tool"><span class="cmd">includes</span><span class="desc">string / array contains</span></div>
+      <div class="tool"><span class="cmd">matches</span><span class="desc">regex or substring</span></div>
+      <div class="tool"><span class="cmd">exists</span><span class="desc">field is present</span></div>
+      <div class="tool"><span class="cmd">absent</span><span class="desc">field must not be present</span></div>
+      <div class="tool"><span class="cmd">soft</span><span class="desc">warn, do not fail</span></div>
+      <div class="tool"><span class="cmd">when</span><span class="desc">conditional skip expression</span></div>
     </div>
-    <div class="desc-box">
-      <h3>keysToFind</h3>
-      <p>Simple key existence check. Specify a dot-notation path — the engine walks the response body and confirms the key exists (or is absent with <code>!</code> prefix).</p>
-    </div>
-  </div>
-  <div class="code-window">
-    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">assertions map example</span></div>
-    <div class="code-body"><pre><span class="c-key">assertions</span>: {
-  <span class="c-str">"data.id"</span>:     { <span class="c-key">exists</span>: <span class="c-kw">true</span>, <span class="c-key">type</span>: <span class="c-str">"number"</span> },
-  <span class="c-str">"data.email"</span>:  { <span class="c-key">matches</span>: <span class="c-str">"@"</span> },
-  <span class="c-str">"data.score"</span>:  { <span class="c-key">gte</span>: <span class="c-num">0</span>, <span class="c-key">lte</span>: <span class="c-num">100</span> },
-  <span class="c-str">"data.name"</span>:   { <span class="c-key">minLen</span>: <span class="c-num">1</span>, <span class="c-key">maxLen</span>: <span class="c-num">100</span> },
-  <span class="c-str">"data.active"</span>: {
-    <span class="c-key">eq</span>: <span class="c-kw">true</span>,
-    <span class="c-key">soft</span>: <span class="c-kw">true</span>,   <span class="c-cmt">// warning only</span>
-    <span class="c-key">when</span>: <span class="c-str">"ctx.response.code === 200"</span>
-  },
-  <span class="c-str">"data.items"</span>:  { <span class="c-key">type</span>: <span class="c-str">"array"</span>, <span class="c-key">minLen</span>: <span class="c-num">1</span> },
-  <span class="c-str">"error"</span>:       { <span class="c-key">absent</span>: <span class="c-kw">true</span> },
+
+    <pre><span class="c-key">assertions</span>: {
+  <span class="c-str">"data.id"</span>:    { <span class="c-key">exists</span>: <span class="c-kw">true</span>, <span class="c-key">type</span>: <span class="c-str">"number"</span> },
+  <span class="c-str">"data.email"</span>: { <span class="c-key">matches</span>: <span class="c-str">"@"</span> },
+  <span class="c-str">"data.score"</span>: { <span class="c-key">gte</span>: <span class="c-num">0</span>, <span class="c-key">lte</span>: <span class="c-num">100</span> },
+  <span class="c-str">"data.name"</span>:  { <span class="c-key">minLen</span>: <span class="c-num">1</span>, <span class="c-key">maxLen</span>: <span class="c-num">100</span> },
+  <span class="c-str">"data.role"</span>:  { <span class="c-key">includes</span>: <span class="c-str">"admin"</span> },
+  <span class="c-str">"status"</span>:     { <span class="c-key">eq</span>: <span class="c-str">"active"</span>,
+                 <span class="c-key">when</span>: <span class="c-str">"ctx.response.code === 200"</span>,
+                 <span class="c-key">soft</span>: <span class="c-kw">true</span> },
+  <span class="c-str">"error"</span>:      { <span class="c-key">absent</span>: <span class="c-kw">true</span> },
+}</pre>
+
+    <h3>keysToFind, varsToSave, keysToCount</h3>
+    <p>Three lighter helpers sit next to the map. <code>keysToFind</code> asserts that fields exist at the given paths — a bare string, or a <code>{ path, expect }</code> object to also match a value (it honours <code>soft</code> and <code>when</code> too). <code>varsToSave</code> pulls a value out of the response and stores it in a Postman variable, keyed by alias, with <code>scope</code> of <code>collection</code> (default), <code>environment</code> or <code>local</code>. <code>keysToCount</code> asserts how many entries sit at a path — an array by default, or an object when you set <code>type: "object"</code>.</p>
+
+    <pre><span class="c-key">keysToFind</span>: [
+  <span class="c-str">"data.id"</span>,
+  { <span class="c-key">path</span>: <span class="c-str">"data.token"</span>, <span class="c-key">expect</span>: <span class="c-str">"abc"</span> },
+],
+
+<span class="c-key">varsToSave</span>: {
+  <span class="c-key">token</span>: { <span class="c-key">path</span>: <span class="c-str">"data.token"</span>, <span class="c-key">scope</span>: <span class="c-str">"collection"</span> },
 },
 
-<span class="c-key">keysToFind</span>: [<span class="c-str">"data.id"</span>, <span class="c-str">"data.name"</span>, <span class="c-str">"!error"</span>],</pre>
-    </div>
-  </div>
-</div>
+<span class="c-key">keysToCount</span>: {
+  <span class="c-key">items</span>: { <span class="c-key">path</span>: <span class="c-str">"data.items"</span>, <span class="c-key">expected</span>: <span class="c-num">3</span> },
+}</pre>
 
-<div class="op-grid" style="margin-top:24px">
-  <div class="op-item"><code>exists</code><p>Key exists in response</p></div>
-  <div class="op-item"><code>absent</code><p>Key must NOT be present</p></div>
-  <div class="op-item"><code>eq</code><p>Strict equality</p></div>
-  <div class="op-item"><code>ne</code><p>Not equal</p></div>
-  <div class="op-item"><code>gt</code><p>Greater than (number)</p></div>
-  <div class="op-item"><code>gte</code><p>Greater than or equal</p></div>
-  <div class="op-item"><code>lt</code><p>Less than (number)</p></div>
-  <div class="op-item"><code>lte</code><p>Less than or equal</p></div>
-  <div class="op-item"><code>type</code><p>typeof check</p></div>
-  <div class="op-item"><code>minLen</code><p>Min string/array length</p></div>
-  <div class="op-item"><code>maxLen</code><p>Max string/array length</p></div>
-  <div class="op-item"><code>includes</code><p>String/array includes</p></div>
-  <div class="op-item"><code>matches</code><p>Regex or substring match</p></div>
-  <div class="op-item"><code>soft</code><p>Log warning, don't fail</p></div>
-  <div class="op-item"><code>when</code><p>Conditional skip expression</p></div>
-  <div class="op-item"><code>absent</code><p>Must not exist</p></div>
-</div>
-</div>
+    <h2 id="arrays">Shape, order &amp; headers <span class="pill">post-request</span></h2>
+    <p>Above the per-field map sit five declarative checks for structure and collections. Each one is a single object and emits its own Postman test.</p>
 
-<!-- SHAPE / ORDER / UNIQUE -->
-<div class="section" id="shape">
-<div class="section-header">
-  <div class="section-icon">📐</div>
-  <h2>assertShape · assertOrder · assertUnique<span class="version-badge v3-6">v3.6</span><span class="version-badge v3-8">v3.8</span></h2>
-  <span class="section-tag">post-request</span>
-</div>
-<div class="two-col">
-  <div>
-    <div class="desc-box" style="margin-bottom:16px">
-      <h3>assertShape — structural type check</h3>
-      <p>Quick one-liner per field: declare the expected type. Options:</p>
-      <ul>
-        <li><code>"string"</code> <code>"number"</code> <code>"boolean"</code></li>
-        <li><code>"object"</code> <code>"array"</code></li>
-        <li><code>"absent"</code> — field must NOT exist</li>
-        <li><code>"any"</code> — field must exist, any type</li>
-      </ul>
-    </div>
-    <div class="desc-box" style="margin-bottom:16px">
-      <h3>assertOrder — verify sort direction</h3>
-      <p>Checks that an array is sorted by a field in the given direction (<code>"asc"</code> or <code>"desc"</code>). Specify <code>type: "number"</code> or <code>"string"</code>.</p>
-    </div>
-    <div class="desc-box">
-      <h3>assertUnique — no duplicates<span class="version-badge v3-8">v3.8</span></h3>
-      <p>Checks that all values in an array (or sub-field values) are unique. Set <code>by</code> to check a nested field (e.g. <code>"id"</code>).</p>
-    </div>
-  </div>
-  <div class="code-window">
-    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">Shape + Order + Unique</span></div>
-    <div class="code-body"><pre><span class="c-key">assertShape</span>: {
-  <span class="c-str">"data"</span>:        <span class="c-str">"object"</span>,
-  <span class="c-str">"data.id"</span>:     <span class="c-str">"number"</span>,
-  <span class="c-str">"data.name"</span>:   <span class="c-str">"string"</span>,
-  <span class="c-str">"data.items"</span>:  <span class="c-str">"array"</span>,
-  <span class="c-str">"data.active"</span>: <span class="c-str">"boolean"</span>,
-  <span class="c-str">"error"</span>:       <span class="c-str">"absent"</span>,
-  <span class="c-str">"meta"</span>:        <span class="c-str">"any"</span>,
+    <h3>assertShape &middot; assertOrder &middot; assertUnique</h3>
+    <p><code>assertShape</code> is a one-liner per field: a path maps to an expected type — <code>"string"</code>, <code>"number"</code>, <code>"boolean"</code>, <code>"object"</code>, <code>"array"</code>, plus <code>"absent"</code> (must not exist) and <code>"any"</code> (must exist, any type). <code>assertOrder</code> confirms an array is sorted by a field in a <code>direction</code>, comparing as <code>"number"</code> or <code>"string"</code>. <code>assertUnique</code> confirms elements are unique — by whole value, or by a nested field with <code>by</code>.</p>
+
+    <pre><span class="c-key">assertShape</span>: {
+  <span class="c-str">"data"</span>:       <span class="c-str">"object"</span>,
+  <span class="c-str">"data.id"</span>:    <span class="c-str">"number"</span>,
+  <span class="c-str">"data.items"</span>: <span class="c-str">"array"</span>,
+  <span class="c-str">"error"</span>:      <span class="c-str">"absent"</span>,   <span class="c-cmt">// must not exist</span>
+  <span class="c-str">"meta"</span>:       <span class="c-str">"any"</span>,      <span class="c-cmt">// any type, present</span>
 },
 
 <span class="c-key">assertOrder</span>: {
-  <span class="c-key">path</span>:      <span class="c-str">"data.items"</span>,
-  <span class="c-key">by</span>:        <span class="c-str">"price"</span>,
-  <span class="c-key">direction</span>: <span class="c-str">"asc"</span>,
-  <span class="c-key">type</span>:      <span class="c-str">"number"</span>,
+  <span class="c-key">path</span>: <span class="c-str">"data.items"</span>, <span class="c-key">by</span>: <span class="c-str">"price"</span>,
+  <span class="c-key">direction</span>: <span class="c-str">"asc"</span>, <span class="c-key">type</span>: <span class="c-str">"number"</span>,
 },
 
-<span class="c-key">assertUnique</span>: {
-  <span class="c-key">path</span>: <span class="c-str">"data.items"</span>,
-  <span class="c-key">by</span>:   <span class="c-str">"id"</span>,   <span class="c-cmt">// check item.id uniqueness</span>
-},</pre>
-    </div>
-  </div>
-</div>
-</div>
+<span class="c-key">assertUnique</span>: { <span class="c-key">path</span>: <span class="c-str">"data.items"</span>, <span class="c-key">by</span>: <span class="c-str">"id"</span> }</pre>
 
-<!-- ASSERT EACH -->
-<div class="section" id="each">
-<div class="section-header">
-  <div class="section-icon">🔢</div>
-  <h2>assertEach — array item validation<span class="version-badge v3-5">v3.5</span></h2>
-  <span class="section-tag">post-request</span>
-</div>
-<div class="two-col">
-  <div class="desc-box">
-    <h3>Per-item rule validation</h3>
-    <p>Validates every element of an array against a set of rules. Same operator syntax as assertions map. Supports <code>minCount</code> / <code>maxCount</code> for array length, and per-rule <code>soft</code> mode.</p>
-    <p style="margin-top:10px">Global <code>softFail: true</code> makes all rule violations non-fatal.</p>
-  </div>
-  <div class="code-window">
-    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">assertEach</span></div>
-    <div class="code-body"><pre><span class="c-key">assertEach</span>: {
-  <span class="c-key">path</span>:     <span class="c-str">"data.products"</span>,
-  <span class="c-key">minCount</span>: <span class="c-num">1</span>,
-  <span class="c-key">maxCount</span>: <span class="c-num">200</span>,
+    <h3>assertEach — every element against the same rules</h3>
+    <p>Run the assertion vocabulary over each item of an array. Give it a <code>path</code>, optional <code>minCount</code> / <code>maxCount</code> for length, and a <code>rules</code> object using the same operators as the map above. Any rule can be marked <code>soft</code> to warn per item instead of failing.</p>
+
+    <pre><span class="c-key">assertEach</span>: {
+  <span class="c-key">path</span>: <span class="c-str">"data.products"</span>,
+  <span class="c-key">minCount</span>: <span class="c-num">1</span>, <span class="c-key">maxCount</span>: <span class="c-num">200</span>,
   <span class="c-key">rules</span>: {
-    <span class="c-str">"id"</span>:       { <span class="c-key">type</span>: <span class="c-str">"number"</span>, <span class="c-key">gt</span>: <span class="c-num">0</span> },
-    <span class="c-str">"name"</span>:     { <span class="c-key">type</span>: <span class="c-str">"string"</span>, <span class="c-key">minLen</span>: <span class="c-num">1</span> },
-    <span class="c-str">"price"</span>:    { <span class="c-key">gte</span>: <span class="c-num">0</span> },
-    <span class="c-str">"category"</span>: { <span class="c-key">exists</span>: <span class="c-kw">true</span> },
-    <span class="c-str">"active"</span>:   {
-      <span class="c-key">eq</span>: <span class="c-kw">true</span>,
-      <span class="c-key">soft</span>: <span class="c-kw">true</span>,  <span class="c-cmt">// warn only per item</span>
-    },
-  }
-},</pre>
-    </div>
-  </div>
-</div>
-</div>
-
-<!-- ASSERT HEADERS -->
-<div class="section" id="headers">
-<div class="section-header">
-  <div class="section-icon">📨</div>
-  <h2>assertHeaders — response header assertions</h2>
-  <span class="section-tag">post-request</span>
-</div>
-<div class="two-col">
-  <div>
-    <div class="desc-box" style="margin-bottom:16px">
-      <h3>One entry per header</h3>
-      <p>An array of entries, each identified by <code>name</code>. An entry without a <code>name</code> is skipped. Unless it is an absence check, every entry first asserts the header <strong>exists and is a non-empty string</strong>, then applies whichever matcher you gave it:</p>
-      <ul>
-        <li><code>name</code> alone — the header must be present</li>
-        <li><code>expect: "substring"</code> — the value must contain that string</li>
-        <li><code>expect: v =&gt; …</code> — predicate must return <code>true</code></li>
-        <li><code>equals: "v2"</code> — exact value match</li>
-        <li><code>absent: true</code> — the header must NOT be there</li>
-        <li><code>label</code> — test name; defaults to the header name</li>
-      </ul>
-    </div>
-    <div class="desc-box">
-      <h3>Each entry is its own pm.test</h3>
-      <p><code>absent: true</code> short-circuits — no existence check runs alongside it, and an empty value counts as absent. <code>equals</code> takes precedence when both <code>equals</code> and <code>expect</code> are given, and is compared as a string. A predicate that throws is treated as a failed check, not as a broken run.</p>
-      <p style="margin-top:10px">The predicate form is a function, so it only works in a JS <code>override</code> block — not in the JSON <code>hephaestus.defaults</code>. Verdicts also land in <code>ctx._meta.results.headers</code>, where plugins can read them.</p>
-    </div>
-  </div>
-  <div class="code-window">
-    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">assertHeaders</span></div>
-    <div class="code-body"><pre><span class="c-key">assertHeaders</span>: [
-  <span class="c-cmt">// exists and is non-empty</span>
-  { <span class="c-key">name</span>: <span class="c-str">"X-Request-Id"</span> },
-
-  <span class="c-cmt">// value contains the substring</span>
-  { <span class="c-key">name</span>: <span class="c-str">"Content-Type"</span>, <span class="c-key">expect</span>: <span class="c-str">"application/json"</span> },
-
-  <span class="c-cmt">// exact match</span>
-  { <span class="c-key">name</span>: <span class="c-str">"X-Api-Version"</span>, <span class="c-key">equals</span>: <span class="c-str">"v2"</span> },
-
-  <span class="c-cmt">// must NOT be present</span>
-  { <span class="c-key">name</span>: <span class="c-str">"X-Powered-By"</span>, <span class="c-key">absent</span>: <span class="c-kw">true</span> },
-
-  <span class="c-cmt">// predicate + custom test label</span>
-  {
-    <span class="c-key">name</span>:   <span class="c-str">"X-RateLimit-Remaining"</span>,
-    <span class="c-key">label</span>:  <span class="c-str">"Rate limit not exhausted"</span>,
-    <span class="c-key">expect</span>: <span class="c-var">v</span> =&gt; <span class="c-fn">Number</span>(<span class="c-var">v</span>) &gt; <span class="c-num">0</span>,
+    <span class="c-key">id</span>:     { <span class="c-key">type</span>: <span class="c-str">"number"</span>, <span class="c-key">gt</span>: <span class="c-num">0</span> },
+    <span class="c-key">name</span>:   { <span class="c-key">type</span>: <span class="c-str">"string"</span>, <span class="c-key">minLen</span>: <span class="c-num">1</span> },
+    <span class="c-key">price</span>:  { <span class="c-key">gte</span>: <span class="c-num">0</span> },
+    <span class="c-key">active</span>: { <span class="c-key">eq</span>: <span class="c-kw">true</span>, <span class="c-key">soft</span>: <span class="c-kw">true</span> },
   },
-],</pre>
-    </div>
-  </div>
-</div>
-</div>
-
-<!-- SNAPSHOT -->
-<div class="section" id="snapshot">
-<div class="section-header">
-  <div class="section-icon">📸</div>
-  <h2>Snapshot Regression Testing</h2>
-  <span class="section-tag">post-request</span>
-</div>
-<div class="two-col">
-  <div>
-    <div class="desc-box" style="margin-bottom:16px">
-      <h3>How it works</h3>
-      <p>On first run, response body is saved as a baseline in a collection variable. On subsequent runs, the current response is compared against that baseline.</p>
-      <ul>
-        <li><strong>strict</strong> — exact deep equality</li>
-        <li><strong>non-strict</strong> — structure & types only (ignores new keys)</li>
-        <li><code>ignorePaths</code> — skip dynamic fields (timestamps, IDs)</li>
-        <li><code>checkPaths</code> — only compare specific sub-paths</li>
-      </ul>
-    </div>
-    <a href="snapshot-viewer.html" style="display:block;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;font-size:.82rem;color:var(--accent)">📸 Open Snapshot Viewer →</a>
-  </div>
-  <div class="code-window">
-    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">snapshot config</span></div>
-    <div class="code-body"><pre><span class="c-key">snapshot</span>: {
-  <span class="c-key">enabled</span>:     <span class="c-kw">true</span>,
-  <span class="c-key">mode</span>:        <span class="c-str">"non-strict"</span>,
-  <span class="c-key">ignorePaths</span>: [
-    <span class="c-str">"data.updatedAt"</span>,
-    <span class="c-str">"data.requestId"</span>,
-    <span class="c-str">"meta.timestamp"</span>
-  ],
-  <span class="c-key">checkPaths</span>: [<span class="c-str">"data.status"</span>, <span class="c-str">"data.type"</span>],
-  <span class="c-key">record</span>: <span class="c-kw">false</span>,  <span class="c-cmt">// set true to force-rewrite the baseline (snapshotRecord)</span>
-},</pre>
-    </div>
-  </div>
-</div>
-</div>
-
-<!-- AUTH -->
-<div class="section" id="auth">
-<div class="section-header">
-  <div class="section-icon">🔐</div>
-  <h2>Authentication</h2>
-  <span class="section-tag">pre-request</span>
-</div>
-<div class="three-col">
-  <div class="code-window">
-    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">Basic Auth</span></div>
-    <div class="code-body"><pre><span class="c-key">auth</span>: {
-  <span class="c-key">enabled</span>: <span class="c-kw">true</span>,
-  <span class="c-key">type</span>: <span class="c-str">"basic"</span>,
-  <span class="c-key">basic</span>: {
-    <span class="c-key">username</span>: <span class="c-str">"{{user}}"</span>,
-    <span class="c-key">password</span>: <span class="c-str">"{{pass}}"</span>
-  }
-},</pre>
-    </div>
-  </div>
-  <div class="code-window">
-    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">Bearer Token</span></div>
-    <div class="code-body"><pre><span class="c-key">auth</span>: {
-  <span class="c-key">enabled</span>: <span class="c-kw">true</span>,
-  <span class="c-key">type</span>: <span class="c-str">"bearer"</span>,
-  <span class="c-key">bearer</span>: {
-    <span class="c-key">token</span>: <span class="c-str">"{{access_token}}"</span>
-  }
-},</pre>
-    </div>
-  </div>
-  <div class="code-window">
-    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">OAuth2 Client Credentials</span></div>
-    <div class="code-body"><pre><span class="c-key">auth</span>: {
-  <span class="c-key">enabled</span>: <span class="c-kw">true</span>,
-  <span class="c-key">type</span>: <span class="c-str">"oauth2cc"</span>,
-  <span class="c-key">oauth2cc</span>: {
-    <span class="c-key">tokenUrl</span>: <span class="c-str">"{{tokenUrl}}"</span>,
-    <span class="c-key">clientId</span>: <span class="c-str">"{{clientId}}"</span>,
-    <span class="c-key">clientSecret</span>: <span class="c-str">"{{secret}}"</span>,
-    <span class="c-key">scope</span>: <span class="c-str">"read write"</span>,
-  }
-},</pre>
-    </div>
-  </div>
-</div>
-</div>
-
-<!-- RANDOM + DATE -->
-<div class="section" id="data">
-<div class="section-header">
-  <div class="section-icon">🎲</div>
-  <h2>Random Data &amp; Date Utils<span class="version-badge v3-8">v3.8</span></h2>
-  <span class="section-tag">pre-request</span>
-</div>
-<div class="two-col">
-  <div class="code-window">
-    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">ctx.random + randomData</span></div>
-    <div class="code-body"><pre><span class="c-cmt">// Option 1: use ctx.random directly in scripts</span>
-<span class="c-var">ctx</span>.random.<span class="c-fn">uuid</span>()          <span class="c-cmt">// → "a7f3..."</span>
-<span class="c-var">ctx</span>.random.<span class="c-fn">email</span>()         <span class="c-cmt">// → "test42@example.com"</span>
-<span class="c-var">ctx</span>.random.<span class="c-fn">str</span>(<span class="c-num">8</span>)          <span class="c-cmt">// → "xK9mPqRt"</span>
-<span class="c-var">ctx</span>.random.<span class="c-fn">int</span>(<span class="c-num">1</span>, <span class="c-num">100</span>)    <span class="c-cmt">// → 42</span>
-<span class="c-var">ctx</span>.random.<span class="c-fn">bool</span>()          <span class="c-cmt">// → true/false</span>
-<span class="c-var">ctx</span>.random.<span class="c-fn">pick</span>([<span class="c-str">'a'</span>,<span class="c-str">'b'</span>]) <span class="c-cmt">// → "a"</span>
-<span class="c-var">ctx</span>.random.<span class="c-fn">date</span>()          <span class="c-cmt">// → "2026-04-07"</span>
-
-<span class="c-cmt">// Option 2: auto-inject into pm.variables</span>
-<span class="c-key">randomData</span>: {
-  <span class="c-str">"email"</span>:   <span class="c-str">"random.email"</span>,
-  <span class="c-str">"userId"</span>:  <span class="c-str">"random.int:1:9999"</span>,
-  <span class="c-str">"orderId"</span>: <span class="c-str">"random.uuid"</span>,
-  <span class="c-str">"name"</span>:    <span class="c-str">"random.str:10"</span>,
-}
-<span class="c-cmt">// → {{email}}, {{userId}}, {{orderId}} in URL/Body</span></pre>
-    </div>
-  </div>
-  <div class="code-window">
-    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">Date Utilities</span></div>
-    <div class="code-body"><pre><span class="c-cmt">// Configure in hephaestus.defaults or override</span>
-<span class="c-key">dates</span>: {
-  <span class="c-key">today</span>:          <span class="c-str">"today"</span>,
-  <span class="c-key">tomorrow</span>:       <span class="c-str">"today+1d"</span>,
-  <span class="c-key">yesterday</span>:      <span class="c-str">"today-1d"</span>,
-  <span class="c-key">nextWeek</span>:       <span class="c-str">"today+7d"</span>,
-  <span class="c-key">lastMonth</span>:      <span class="c-str">"today-1m"</span>,
-  <span class="c-key">startOfMonth</span>:   <span class="c-str">"startOfMonth"</span>,
-  <span class="c-key">endOfMonth</span>:     <span class="c-str">"endOfMonth"</span>,
-  <span class="c-key">q1Start</span>:        <span class="c-str">"startOfQuarter"</span>,
-}
-<span class="c-cmt">// → {{today}}, {{tomorrow}} injected as pm.variables</span></pre>
-    </div>
-  </div>
-</div>
-</div>
-
-<!-- RETRY + ENV -->
-<div class="section" id="resilience">
-<div class="section-header">
-  <div class="section-icon">⚡</div>
-  <h2>Resilience &amp; Validation<span class="version-badge v3-7">v3.7</span></h2>
-  <span class="section-tag">pre &amp; post request</span>
-</div>
-<div class="two-col">
-  <div class="code-window">
-    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">retryOnStatus</span></div>
-    <div class="code-body"><pre><span class="c-cmt">// Auto-retry on 503 (service unavailable) or 429 (rate limit)</span>
-<span class="c-key">retryOnStatus</span>: {
-  <span class="c-key">statuses</span>:   [<span class="c-num">503</span>, <span class="c-num">429</span>],
-  <span class="c-key">maxRetries</span>: <span class="c-num">3</span>,
-}
-<span class="c-cmt">// Uses pm.setNextRequest to loop.
-// Assertion pipeline is skipped on intermediate retries.
-// Counter auto-cleaned on success.</span></pre>
-    </div>
-  </div>
-  <div class="code-window">
-    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">envRequired</span></div>
-    <div class="code-body"><pre><span class="c-cmt">// Pre-flight: halt collection if required vars missing</span>
-<span class="c-key">envRequired</span>: [
-  <span class="c-str">"BASE_URL"</span>,
-  <span class="c-str">"API_KEY"</span>,
-  <span class="c-str">"CLIENT_SECRET"</span>
-]
-<span class="c-cmt">// Fails fast with clear error message:
-// [Hephaestus] ❌ Required env var missing: API_KEY</span></pre>
-    </div>
-  </div>
-</div>
-</div>
-
-<!-- LOGGING -->
-<div class="section" id="logging">
-<div class="section-header">
-  <div class="section-icon">📋</div>
-  <h2>Logging &amp; softFail<span class="version-badge v3-8">v3.8</span></h2>
-  <span class="section-tag">global config</span>
-</div>
-<div class="three-col">
-  <div class="mini-card">
-    <h4>logLevel: "silent"</h4>
-    <p>No console output. Only CI JSON if <code>ci: true</code>. Good for data-driven runs with thousands of iterations.</p>
-  </div>
-  <div class="mini-card">
-    <h4>logLevel: "minimal"</h4>
-    <p>Single-line summary per request: method, URL, status, time. Compact output for watch mode or large test suites.</p>
-  </div>
-  <div class="mini-card">
-    <h4>logLevel: "normal"</h4>
-    <p>Default. Full bordered summary box with response preview, all assertion results, saved variables.</p>
-  </div>
-  <div class="mini-card">
-    <h4>logLevel: "verbose"</h4>
-    <p>Normal + response headers. Useful for debugging auth, CORS, and caching issues.</p>
-  </div>
-  <div class="mini-card">
-    <h4>softFail: true</h4>
-    <p>Global flag. All assertion failures log as warnings instead of failing the Postman test. Overrides per-rule <code>soft</code>.</p>
-  </div>
-  <div class="mini-card">
-    <h4>ci: true</h4>
-    <p>Outputs structured JSON to console alongside human-readable output. Consumed by <code>ci-to-junit.js</code>.</p>
-  </div>
-</div>
-</div>
-
-<!-- DEMO -->
-<div class="section" id="demo">
-<div class="section-header">
-  <div class="section-icon">🚀</div>
-  <h2>init --demo — a runnable offline demo<span class="version-badge v4-0">v4.0</span></h2>
-  <span class="section-tag">CLI · init.js</span>
-</div>
-<div class="two-col">
-  <div>
-    <div class="desc-box" style="margin-bottom:16px">
-      <h3>See it run before you configure anything</h3>
-      <p>One non-interactive command scaffolds a directory holding a collection, an environment, and a README. The collection carries <strong>its own snapshots</strong> inside <code>hephaestus.snapshots</code>, so <code>hephaestus mock</code> serves those recorded responses back and Newman runs green — <strong>no account, no API key, no network</strong>.</p>
-      <ul>
-        <li><strong>5 requests, 35 assertions</strong>, all green — including the one that asserts a 404</li>
-        <li>Wired to the real engine, not a simplified copy — every request is copy-pasteable into a real collection</li>
-        <li>The whole test is the <code>override</code> block at the top of the Tests tab; the line under it evaluates the engine</li>
-        <li>Writes to <code>hephaestus-demo/</code> by default; pass a directory to change it, <code>--force</code> to overwrite</li>
-      </ul>
-    </div>
-    <div class="desc-box">
-      <h3>One headline feature per request</h3>
-      <ul>
-        <li><strong>1. Health check</strong> — <code>expectedStatus</code>: the smallest possible test</li>
-        <li><strong>2. List products</strong> — <code>assertShape</code>, <code>assertEach</code>, <code>assertOrder</code>, <code>maxResponseTime</code></li>
-        <li><strong>3. Create product</strong> — <code>assertions</code> plus <code>varsToSave</code> into a collection variable</li>
-        <li><strong>4. Get product</strong> — <code>snapshot</code> in <code>structural</code> mode</li>
-        <li><strong>5. Missing product</strong> — a negative test: the 404 is the expected result, so the run stays green because the test says so, not because nothing was checked</li>
-      </ul>
-      <p style="margin-top:10px">Demo paths are deliberately static: <code>mock</code> matches <code>{{id}}</code> / <code>:id</code> segments literally, so a templated path would register the route with the braces still in it.</p>
-    </div>
-  </div>
-  <div class="code-window">
-    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">init --demo</span></div>
-    <div class="code-body"><pre><span class="c-cmt"># scaffold it — nothing to answer, nothing to sign up for</span>
-<span class="c-var">npx</span> hephaestus init <span class="c-key">--demo</span>
-
-<span class="c-cmt"># terminal 1 — serve the recorded responses</span>
-<span class="c-var">hephaestus</span> mock hephaestus-demo/demo-collection.json <span class="c-key">-p</span> <span class="c-num">4010</span>
-
-<span class="c-cmt"># terminal 2 — run the tests against it</span>
-<span class="c-var">newman</span> run hephaestus-demo/demo-collection.json \
-  <span class="c-key">-e</span> hephaestus-demo/demo-environment.json
-
-<span class="c-cmt"># → 5 requests, 35 assertions, 0 failures
-
-# written:
-#   hephaestus-demo/demo-collection.json
-#   hephaestus-demo/demo-environment.json
-#   hephaestus-demo/README.md
-
-# then feed the run into the rest of the CLI:</span>
-<span class="c-var">newman</span> run … <span class="c-key">-r</span> json --reporter-json-export run.json
-<span class="c-var">hephaestus</span> summary run.json
-<span class="c-var">hephaestus</span> report  run.json demo-report.html
-<span class="c-var">hephaestus</span> docs    hephaestus-demo/demo-collection.json -o demo-api.md</pre>
-    </div>
-  </div>
-</div>
-</div>
-
-<!-- TOOLS -->
-<div class="section" id="tools">
-<div class="section-header">
-  <div class="section-icon">🛠️</div>
-  <h2>CLI Tools</h2>
-  <span class="section-tag">npm scripts</span>
-</div>
-<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
-  <div class="mini-card">
-    <h4>📝 docs.js</h4>
-    <p>Generate Markdown API docs from a Postman collection. Your tests become your documentation.</p>
-    <p style="margin-top:8px;font-size:.7rem;color:var(--accent)">npm run docs -- col.json -o API.md</p>
-  </div>
-  <div class="mini-card">
-    <h4>📊 summary.js</h4>
-    <p>Rich Newman run summary: per-folder stats, slowest endpoints, most-failed assertions.</p>
-    <p style="margin-top:8px;font-size:.7rem;color:var(--accent)">npm run summary -- results.json --md</p>
-  </div>
-  <div class="mini-card">
-    <h4>🔍 compare.js</h4>
-    <p>Diff two Newman runs. Detect regressions, new failures, performance changes. Exit 1 on regression.</p>
-    <p style="margin-top:8px;font-size:.7rem;color:var(--accent)">npm run compare -- before.json after.json</p>
-  </div>
-  <div class="mini-card">
-    <h4>👁️ watch.js</h4>
-    <p>Auto re-run Newman when collection or env changes. Press R to force rerun. Debounced.</p>
-    <p style="margin-top:8px;font-size:.7rem;color:var(--accent)">npm run watch -- -c col.json</p>
-  </div>
-  <div class="mini-card">
-    <h4>📄 generate-report.js</h4>
-    <p>Beautiful self-contained HTML report from Newman JSON. Charts, pass rates, details.</p>
-    <p style="margin-top:8px;font-size:.7rem;color:var(--accent)">npm run report -- results.json</p>
-  </div>
-  <div class="mini-card">
-    <h4>📋 ci-to-junit.js</h4>
-    <p>Convert Newman JSON to JUnit XML for Jenkins, GitLab CI, and other tools.</p>
-    <p style="margin-top:8px;font-size:.7rem;color:var(--accent)">npm run ci-to-junit -- results.json</p>
-  </div>
-  <div class="mini-card">
-    <h4>🧙 init.js</h4>
-    <p>Interactive setup wizard. Generates defaults.json and environment template.</p>
-    <p style="margin-top:8px;font-size:.7rem;color:var(--accent)">npm run init</p>
-  </div>
-  <div class="mini-card">
-    <h4>🚚 migrate.js</h4>
-    <p>Scan existing Postman collection and classify which requests need migration to Hephaestus.</p>
-    <p style="margin-top:8px;font-size:.7rem;color:var(--accent)">npm run migrate -- col.json</p>
-  </div>
-  <div class="mini-card">
-    <h4>🐳 docker-run.sh</h4>
-    <p>Run full Newman + report pipeline in Docker. No local Node.js needed.</p>
-    <p style="margin-top:8px;font-size:.7rem;color:var(--accent)">bash scripts/docker-run.sh -c col.json</p>
-  </div>
-</div>
-</div>
-
-<!-- LOCALIZATION / i18n -->
-<div class="section" id="i18n">
-<div class="section-header">
-  <div class="section-icon">🌍</div>
-  <h2>Localization — locale ru · en<span class="version-badge v3-9">v3.9</span></h2>
-  <span class="section-tag">global config</span>
-</div>
-<div class="two-col">
-  <div>
-    <div class="desc-box" style="margin-bottom:16px">
-      <h3>One engine, two languages</h3>
-      <p>The <code>locale</code> setting selects the language of every user-facing string the engine emits: generated test names, console logs, error messages, and status labels.</p>
-      <ul>
-        <li><code>"ru"</code> — <strong>default</strong>. Byte-identical output to prior releases.</li>
-        <li><code>"en"</code> — the exact same engine, rendered in English.</li>
-      </ul>
-      <p style="margin-top:10px">Nothing about assertions or request behaviour changes — only the text you read. Defined in <code>setup/defaults.json</code>, resolved through the shared i18n catalog.</p>
-    </div>
-    <div class="desc-box">
-      <h3>Why default "ru"</h3>
-      <p>Existing suites keep their exact wording — test IDs, snapshots, and log-scraping stay stable across the upgrade. Opt into English by setting a single field.</p>
-    </div>
-  </div>
-  <div class="code-window">
-    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">locale</span></div>
-    <div class="code-body"><pre><span class="c-cmt">// setup/defaults.json (or per-request override)</span>
-<span class="c-key">locale</span>: <span class="c-str">"ru"</span>,   <span class="c-cmt">// default — unchanged output</span>
-
-<span class="c-cmt">// switch the whole engine to English:</span>
-<span class="c-key">locale</span>: <span class="c-str">"en"</span>,
-
-<span class="c-cmt">// affects test names, logs, errors, status labels:</span>
-<span class="c-cmt">//   ru → "🟢 Статус: 200 — Успешно"</span>
-<span class="c-cmt">//   en → "🟢 Status: 200 — OK"</span></pre>
-    </div>
-  </div>
-</div>
-</div>
-
-<!-- SECURITY AUDIT -->
-<div class="section" id="security">
-<div class="section-header">
-  <div class="section-icon">🛡️</div>
-  <h2>Security Audit<span class="version-badge v3-9">v3.9</span></h2>
-  <span class="section-tag">post-request</span>
-</div>
-<div class="two-col">
-  <div>
-    <div class="desc-box" style="margin-bottom:16px">
-      <h3>Response hardening checks</h3>
-      <p>Opt-in module (<code>enabled: false</code> by default). When on, each check emits its own <code>pm.test</code> so failures surface individually.</p>
-      <ul>
-        <li><code>requireHeaders</code> — security headers that must be present</li>
-        <li><code>forbidHeaders</code> — headers that must NOT leak (server, tech fingerprints)</li>
-        <li><code>forbidBodyPatterns</code> — strings that must not appear in the body (stack traces, DB errors)</li>
-        <li><code>checkCors</code> — flags a wildcard <code>Access-Control-Allow-Origin</code> combined with <code>Allow-Credentials</code></li>
-      </ul>
-    </div>
-    <div class="desc-box">
-      <h3>Sensible built-in defaults</h3>
-      <p>When enabled without lists, the engine applies OWASP-style defaults: requires HSTS, CSP, <code>X-Frame-Options</code>, <code>X-Content-Type-Options</code>; forbids <code>server</code>, <code>x-powered-by</code>, <code>x-aspnet-version</code>; and scans the body for <code>SQLSTATE</code>, stack traces, <code>ORA-0</code>, and MySQL warnings. Default <code>{ enabled: false, checkCors: true }</code>.</p>
-    </div>
-  </div>
-  <div class="code-window">
-    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">securityAudit</span></div>
-    <div class="code-body"><pre><span class="c-key">securityAudit</span>: {
-  <span class="c-key">enabled</span>:   <span class="c-kw">true</span>,
-  <span class="c-key">checkCors</span>: <span class="c-kw">true</span>,   <span class="c-cmt">// wildcard ACAO + credentials</span>
-  <span class="c-key">requireHeaders</span>: [
-    <span class="c-str">"strict-transport-security"</span>,
-    <span class="c-str">"content-security-policy"</span>,
-    <span class="c-str">"x-frame-options"</span>,
-    <span class="c-str">"x-content-type-options"</span>,
-  ],
-  <span class="c-key">forbidHeaders</span>: [
-    <span class="c-str">"server"</span>, <span class="c-str">"x-powered-by"</span>, <span class="c-str">"x-aspnet-version"</span>,
-  ],
-  <span class="c-key">forbidBodyPatterns</span>: [
-    <span class="c-str">"SQLSTATE"</span>, <span class="c-str">"stack trace"</span>, <span class="c-str">"ORA-0"</span>,
-  ],
-},
-<span class="c-cmt">// each check → its own pm.test</span></pre>
-    </div>
-  </div>
-</div>
-</div>
-
-<!-- SNAPSHOT RECORD -->
-<div class="section" id="snapshot-record">
-<div class="section-header">
-  <div class="section-icon">⏺️</div>
-  <h2>snapshotRecord — force-rewrite baseline<span class="version-badge v3-9">v3.9</span></h2>
-  <span class="section-tag">post-request</span>
-</div>
-<div class="two-col">
-  <div>
-    <div class="desc-box" style="margin-bottom:16px">
-      <h3>Rewrite a snapshot in one run</h3>
-      <p>When an endpoint intentionally changes, you need a fresh baseline. Set <code>snapshot.record: true</code> (or top-level <code>snapshotRecord: true</code>), run <strong>once</strong>, then remove the flag.</p>
-      <ul>
-        <li>Ignores the existing snapshot entirely</li>
-        <li>Writes the current response as the new baseline</li>
-        <li>Stored in the <code>collection-vars</code> backend</li>
-      </ul>
-    </div>
-    <div class="desc-box">
-      <h3>Snapshot storage</h3>
-      <p><code>snapshot.storage</code> defaults to <code>"collection-vars"</code>, the only backend that works offline. <code>"postman-api"</code> is unavailable offline — the engine warns once and falls back to <code>collection-vars</code> automatically.</p>
-    </div>
-  </div>
-  <div class="code-window">
-    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">snapshotRecord</span></div>
-    <div class="code-body"><pre><span class="c-cmt">// Step 1 — force a new baseline this run:</span>
-<span class="c-key">snapshot</span>: {
-  <span class="c-key">enabled</span>: <span class="c-kw">true</span>,
-  <span class="c-key">record</span>:  <span class="c-kw">true</span>,   <span class="c-cmt">// rewrite baseline, ignore old</span>
-  <span class="c-key">storage</span>: <span class="c-str">"collection-vars"</span>,
-},
-
-<span class="c-cmt">// or the top-level shorthand:</span>
-<span class="c-key">snapshotRecord</span>: <span class="c-kw">true</span>,
-
-<span class="c-cmt">// Step 2 — run once.
-// Step 3 — remove the flag; back to compare mode.</span></pre>
-    </div>
-  </div>
-</div>
-</div>
-
-<!-- SLA PERCENTILES -->
-<div class="section" id="sla">
-<div class="section-header">
-  <div class="section-icon">📈</div>
-  <h2>SLA Percentiles — summary --sla<span class="version-badge v3-9">v3.9</span></h2>
-  <span class="section-tag">CLI · summary.js</span>
-</div>
-<div class="two-col">
-  <div class="desc-box">
-    <h3>Latency percentiles &amp; a hard gate</h3>
-    <p>The <code>summary</code> tool now reports <strong>p50 / p90 / p95 / p99</strong> response times across the run. Pass <code>--sla=&lt;ms&gt;</code> to turn it into a gate.</p>
-    <ul>
-      <li>Exits <code>1</code> when <strong>p95</strong> exceeds the budget</li>
-      <li>Failed / no-response executions are excluded so they don't deflate percentiles</li>
-      <li>Drop it into CI to fail builds on latency regressions</li>
-    </ul>
-  </div>
-  <div class="code-window">
-    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">summary --sla</span></div>
-    <div class="code-body"><pre><span class="c-cmt"># percentiles in the summary output</span>
-<span class="c-var">node</span> scripts/summary.js results.json
-
-<span class="c-cmt"># gate the run: fail if p95 &gt; 800ms</span>
-<span class="c-var">node</span> scripts/summary.js results.json <span class="c-key">--sla=800</span>
-
-<span class="c-cmt"># → Response time  p50 120ms  p90 410ms
-#                  p95 690ms  p99 1.2s
-# → SLA OK: p95 690ms &lt;= 800ms  (exit 0)</span></pre>
-    </div>
-  </div>
-</div>
-</div>
-
-<!-- OPENAPI IMPORT -->
-<div class="section" id="openapi">
-<div class="section-header">
-  <div class="section-icon">📥</div>
-  <h2>OpenAPI / Swagger Import<span class="version-badge v3-9">v3.9</span></h2>
-  <span class="section-tag">CLI · openapi-import.js</span>
-</div>
-<div class="two-col">
-  <div class="desc-box">
-    <h3>Spec → Hephaestus collection</h3>
-    <p>Turn an existing API spec into a ready-to-run collection. Reads <strong>OpenAPI 3.x</strong> and <strong>Swagger 2.0</strong> (JSON, or a common YAML subset).</p>
-    <ul>
-      <li>One request per path + method</li>
-      <li><code>expectedStatus</code> pre-filled from the spec's 2xx responses</li>
-      <li>Response <code>schema</code> pre-filled from the spec's schemas</li>
-      <li>Start asserting immediately, no hand-wiring</li>
-      <li><code>--negative</code> also generates error-path tests</li>
-    </ul>
-    <p class="note"><code>--negative</code> only generates cases the spec lets it actually
-    <em>trigger</em> &mdash; withheld auth, a substituted id, an emptied required body, a
-    dropped required parameter. A spec that declares a 400 does not say what makes a request
-    invalid, so no test is invented for it. Each negative request differs from the happy path
-    by exactly one mutation.</p>
-  </div>
-  <div class="code-window">
-    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">openapi</span></div>
-    <div class="code-body"><pre><span class="c-cmt"># OpenAPI 3.x or Swagger 2.0 → collection</span>
-<span class="c-var">node</span> bin/hephaestus.js openapi openapi.json
-
-<span class="c-cmt"># YAML subset also accepted</span>
-<span class="c-var">node</span> bin/hephaestus.js openapi swagger.yaml
-
-<span class="c-cmt"># plus error-path tests</span>
-<span class="c-var">node</span> bin/hephaestus.js openapi openapi.json --negative
-
-<span class="c-cmt"># each generated request comes with:
-#   expectedStatus  (from 2xx responses)
-#   schema          (from spec component schemas)
-#
-# --negative adds a "&lt;tag&gt; — negative" folder:
-#   no auth        401/403   (auth disabled in pre-request)
-#   unknown id     404       (path parameter substituted)
-#   empty body     400/422   (required body sent as {})
-#   missing &lt;p&gt;    400/422   (required query parameter dropped)</span></pre>
-    </div>
-  </div>
-</div>
-</div>
-
-<!-- SYNC EXAMPLES -->
-<div class="section" id="sync-examples">
-<div class="section-header">
-  <div class="section-icon">🔁</div>
-  <h2>Snapshots → Postman Examples<span class="version-badge v3-9">v3.9</span></h2>
-  <span class="section-tag">CLI · sync-examples.js</span>
-</div>
-<div class="two-col">
-  <div class="desc-box">
-    <h3>Saved snapshots become native Examples</h3>
-    <p>The <code>sync-examples</code> tool writes your saved snapshot baselines into a collection's native <strong>Postman Example Responses</strong>.</p>
-    <ul>
-      <li>Turns regression baselines into documentation you can browse in Postman</li>
-      <li>Examples render in the Postman UI and in generated docs</li>
-      <li>Keeps captured responses and the collection in sync</li>
-    </ul>
-  </div>
-  <div class="code-window">
-    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">sync-examples</span></div>
-    <div class="code-body"><pre><span class="c-cmt"># write saved snapshots into native</span>
-<span class="c-cmt"># Postman Example Responses</span>
-<span class="c-var">node</span> bin/hephaestus.js sync-examples collection.json
-
-<span class="c-cmt"># → each request with a snapshot baseline
-#   gains a matching Example Response,
-#   visible in the Postman app.</span></pre>
-    </div>
-  </div>
-</div>
-</div>
-
-<!-- EXTRA KEYS -->
-<div class="section" id="extrakeys">
-<div class="section-header">
-  <div class="section-icon">🧷</div>
-  <h2>extraKeys — allowlist your own config keys<span class="version-badge v4-0">v4.0</span></h2>
-  <span class="section-tag">global config</span>
-</div>
-<div class="two-col">
-  <div>
-    <div class="desc-box" style="margin-bottom:16px">
-      <h3>The typo-guard, and its escape hatch</h3>
-      <p>Every top-level key of a request's <code>override</code> is checked against the list of options the engine knows. An unrecognised key used to be silently ignored — a misspelled option just looked like a feature that did not work. Now it warns, with the nearest known key suggested:</p>
-      <ul>
-        <li>Default — <code>⚠️ Unknown override key: "snapshsot" — did you mean "snapshot"?</code></li>
-        <li><code>strictMode: true</code> — a failing <code>pm.test</code> instead, so CI blocks on the typo</li>
-        <li>Warnings are muted at <code>logLevel: "silent"</code>; the strict failure is not</li>
-      </ul>
-    </div>
-    <div class="desc-box">
-      <h3>extraKeys turns that guard off per key</h3>
-      <p>Third-party plugins read their settings off <code>ctx.config</code>, which means their keys live in your config — where the engine has never heard of them. List them in <code>extraKeys</code> and both the warning and the strict failure go away for exactly those names.</p>
-      <p style="margin-top:10px">Read from the <em>merged</em> config, so it works from <code>hephaestus.defaults</code> (covering the whole suite) or from the override itself. A non-array value is ignored. The engine still never reads the listed keys — it just stops complaining about them.</p>
-    </div>
-  </div>
-  <div class="code-window">
-    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">strictMode + extraKeys</span></div>
-    <div class="code-body"><pre><span class="c-cmt">// hephaestus.defaults — strict for the whole suite</span>
-{
-  <span class="c-key">"strictMode"</span>: <span class="c-kw">true</span>,
-  <span class="c-key">"extraKeys"</span>: [
-    <span class="c-str">"budgetMs"</span>, <span class="c-str">"budgets"</span>,
-    <span class="c-str">"budgetSoft"</span>, <span class="c-str">"budgetWarnAt"</span>
-  ],
-  <span class="c-key">"budgetMs"</span>: <span class="c-num">800</span>
-}
-
-<span class="c-cmt">// or declared and used in the same override</span>
-<span class="c-kw">const</span> override = {
-  <span class="c-key">extraKeys</span>: [<span class="c-str">"piiRedact"</span>, <span class="c-str">"piiSoft"</span>],
-  <span class="c-key">piiRedact</span>: <span class="c-kw">true</span>,
-  <span class="c-key">piiSoft</span>:   <span class="c-kw">false</span>,
-};
-
-<span class="c-cmt">// without extraKeys, under strictMode:
-//   🚫 strictMode: unknown override key(s)</span></pre>
-    </div>
-  </div>
-</div>
-</div>
-
-<!-- PLUGIN GALLERY -->
-<div class="section" id="gallery">
-<div class="section-header">
-  <div class="section-icon">🖼️</div>
-  <h2>Plugin Gallery — gallery/plugins/<span class="version-badge v4-0">v4.0</span></h2>
-  <span class="section-tag">post-request · plugins</span>
-</div>
-<div class="two-col">
-  <div>
-    <div class="desc-box" style="margin-bottom:16px">
-      <h3>Drop-in, zero dependencies, no engine fork</h3>
-      <p>Four working plugins plus a commented skeleton. Each is a single file you paste into a collection variable and register in the collection's Pre-request script — no build step, no fork.</p>
-      <ul>
-        <li>The descriptor key is <code>post</code>, and its value is the <strong>name of the variable</strong> holding the code, not the code itself</li>
-        <li>Plugins run <strong>once per request, second to last</strong> in the pipeline — after <code>securityAudit</code>, before <code>logger.summary</code></li>
-        <li>Running there is what makes them possible: every assertion verdict is already in <code>ctx._meta.results</code>, and <code>ctx.config</code> is still live</li>
-        <li>If <code>retryOnStatus</code> fires, the pipeline stops before plugins and they do not run that iteration</li>
-        <li>A throw inside a plugin becomes a failing test named after it; the remaining plugins still run</li>
-      </ul>
-    </div>
-    <div class="desc-box">
-      <h3>Gallery keys need <code>extraKeys</code></h3>
-      <p>Every gallery plugin reads its settings off <code>ctx.config</code>, so its keys live in your <code>hephaestus.defaults</code> or in a request's <code>override</code>. <strong>None of them are keys the engine knows about</strong> — they are not in <code>KNOWN_KEYS</code>, which covers only the engine's own options plus the shipped first-party plugins.</p>
-      <p style="margin-top:10px">So each one warns by default, and <strong>fails the run under <code>strictMode: true</code></strong>. Declare them with <a href="#extrakeys"><code>extraKeys</code></a> and both go away.</p>
-    </div>
-  </div>
-  <div class="code-window">
-    <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">install a gallery plugin</span></div>
-    <div class="code-body"><pre><span class="c-cmt">// 1. Paste the file's text into a collection variable:
-//    hephaestus.plugin.budget → &lt;contents of response-budget.js&gt;
-
-// 2. Register it in the collection Pre-request script:</span>
-<span class="c-var">pm</span>.collectionVariables.<span class="c-fn">set</span>(<span class="c-str">'hephaestus.plugins'</span>, <span class="c-var">JSON</span>.<span class="c-fn">stringify</span>([
-  { <span class="c-key">name</span>: <span class="c-str">'response-budget'</span>,  <span class="c-key">post</span>: <span class="c-str">'hephaestus.plugin.budget'</span> },
-  { <span class="c-key">name</span>: <span class="c-str">'timing-histogram'</span>, <span class="c-key">post</span>: <span class="c-str">'hephaestus.plugin.histogram'</span> },
-  { <span class="c-key">name</span>: <span class="c-str">'pii-redactor'</span>,     <span class="c-key">post</span>: <span class="c-str">'hephaestus.plugin.pii'</span> },
-]));
-
-<span class="c-cmt">// 3. Configure through override — every key lands in ctx.config,
-//    and must be declared when strictMode is on:</span>
-<span class="c-kw">const</span> override = {
-  <span class="c-key">extraKeys</span>: [<span class="c-str">'budgetMs'</span>, <span class="c-str">'budgets'</span>, <span class="c-str">'piiSoft'</span>, <span class="c-str">'csvPrint'</span>],
-  <span class="c-key">budgetMs</span>: <span class="c-num">800</span>,
-  <span class="c-key">budgets</span>:  { <span class="c-str">'Login'</span>: <span class="c-num">2000</span>, <span class="c-str">'Health check'</span>: <span class="c-num">200</span> },
-  <span class="c-key">piiSoft</span>:  <span class="c-kw">false</span>,
-  <span class="c-key">csvPrint</span>: <span class="c-kw">true</span>,
-};
-
-<span class="c-cmt">// Plugins that accumulate state (timing-histogram, csv-metrics)
-// use collection variables, which persist between runs — clear
-// them at the top of the same Pre-request script:</span>
-<span class="c-kw">if</span> (!<span class="c-var">pm</span>.info.iteration) {
-  <span class="c-var">pm</span>.collectionVariables.<span class="c-fn">unset</span>(<span class="c-str">'hephaestus.plugin.timings'</span>);
-  <span class="c-var">pm</span>.collectionVariables.<span class="c-fn">unset</span>(<span class="c-str">'hephaestus.plugin.csvRows'</span>);
 }</pre>
-    </div>
-  </div>
-</div>
 
-<div class="three-col" style="margin-top:24px">
-  <div class="mini-card">
-    <h4>📉 response-budget.js</h4>
-    <p>Fails the run when a response misses its latency budget. Per-request budgets, soft mode, and a warning band before the hard limit.</p>
-    <p style="margin-top:8px;font-size:.7rem;color:var(--accent)">budgetMs · budgets · budgetSoft · budgetWarnAt</p>
-  </div>
-  <div class="mini-card">
-    <h4>📊 timing-histogram.js</h4>
-    <p>Collects response times across a run and prints an ASCII histogram with p50/p90/p95/max and the three slowest requests.</p>
-    <p style="margin-top:8px;font-size:.7rem;color:var(--accent)">histogramVar · histogramMax · histogramBuckets · histogramPrint</p>
-  </div>
-  <div class="mini-card">
-    <h4>🕵️ pii-redactor.js</h4>
-    <p>Finds credential- and PII-shaped values in the response, reports them masked, and registers their field names so the engine summary redacts them too.</p>
-    <p style="margin-top:8px;font-size:.7rem;color:var(--accent)">piiRedact · piiKinds · piiIgnore · piiMaxDepth · piiSoft</p>
-  </div>
-  <div class="mini-card">
-    <h4>📑 csv-metrics.js</h4>
-    <p>Appends one CSV row per request — timing, size, and every module's verdict — and prints the whole table between cut markers at the end of the run.</p>
-    <p style="margin-top:8px;font-size:.7rem;color:var(--accent)">csvVar · csvMaxRows · csvUrl · csvPrint</p>
-  </div>
-  <div class="mini-card">
-    <h4>📄 _template.js</h4>
-    <p>Commented skeleton documenting every surface a plugin can touch: <code>ctx.config</code>, <code>ctx.request</code>, <code>ctx.response</code>, <code>ctx.api</code>, <code>ctx.iteration</code>, <code>ctx._meta</code>, <code>_override</code>. Copy, rename, delete the rest.</p>
-  </div>
-  <div class="mini-card">
-    <h4>⚠️ Two things that trip up first plugins</h4>
-    <p><code>ctx.api</code> carries only <code>get</code>/<code>find</code>/<code>all</code>/<code>count</code>/<code>save</code> — status and timing live on <code>ctx.response</code>. And <code>ctx._meta.results</code> entries use <code>ok</code>, not <code>passed</code>; modules that did not run leave their slot empty, so guard before reading.</p>
-  </div>
-</div>
-</div>
+    <h3>assertHeaders — one test per header</h3>
+    <p>An array of entries, each keyed by <code>name</code>. Unless it is an absence check, every entry first asserts the header <b>exists and is a non-empty string</b>, then applies a matcher: <code>expect</code> as a substring or a predicate, <code>equals</code> for an exact value, or <code>absent: true</code>. <code>equals</code> wins when both are given; a throwing predicate counts as a failed check, not a broken run. The predicate form is a function, so it only works in a JS <code>override</code>, not in JSON defaults. Add <code>label</code> to name the test.</p>
 
-<!-- NEW IN 4.0 -->
-<div class="section" id="v4">
-<div class="section-header">
-  <div class="section-icon">⚒️</div>
-  <h2>New in 4.0<span class="version-badge v4-0">v4.0</span></h2>
-  <span class="section-tag">engine + CLI</span>
-</div>
-<div class="two-col">
-  <div>
-    <div class="desc-box" style="margin-bottom:16px">
-      <h3>Engine — all opt-in, all off by default</h3>
-      <ul>
-        <li><code>graphql</code> — GraphQL answers <strong>200 even with an <code>errors[]</code> array</strong>; assert <code>noErrors</code>, <code>errorCount</code>/<code>errorContains</code> for negative tests, and <code>dataShape</code> under <code>data.*</code>.</li>
-        <li><code>snapshot.mode: "structural"</code> — compares the response <em>shape</em> (leaf path → type) and ignores values, so volatile timestamps and ids stop causing false diffs while a field added, removed or retyped still fails.</li>
-        <li><code>retryOnStatus.respectRetryAfter</code> — honours the server's <code>Retry-After</code>, waiting up to <code>retryAfterCapMs</code> and refusing to hammer past it.</li>
-        <li><code>maxBytes</code> — a response-size budget; the <code>maxResponseTime</code> for payload size.</li>
-        <li><strong>securityAudit v2</strong> — <code>cookieFlags</code>, <code>checkJwt</code> (rejects <code>alg:none</code> and expired tokens) and <code>requireNoStore</code>.</li>
-        <li><strong>Override typo-guard</strong> — an unknown key warns with a "did you mean"; <code>strictMode: true</code> fails the run so CI blocks on a typo.</li>
-      </ul>
-    </div>
-    <div class="desc-box">
-      <h3>Any locale is now selectable</h3>
-      <p>Locale selection was hardcoded to <code>ru</code>/<code>en</code>, so a fully translated third language could never be used. Any locale the catalog carries is now selectable, and <code>npm run check:locales</code> validates a contribution — completeness, parameter parity, argument types, status coverage.</p>
-    </div>
-  </div>
-  <div>
-    <div class="desc-box" style="margin-bottom:16px">
-      <h3>CLI — gates and local tooling</h3>
-      <ul>
-        <li><code>doctor</code> — pre-flight: engine integrity, version drift, config sanity.</li>
-        <li><code>coverage --spec</code> — % of an OpenAPI spec your collection covers, with a <code>--min</code> gate.</li>
-        <li><code>flaky</code> — assertions that flap across repeated runs (<code>--fail-on-flaky</code>).</li>
-        <li><code>trends</code> + <code>summary --history</code> — pass-rate and p95 sparklines from a local run log.</li>
-        <li><code>bench</code> — what the engine actually costs per request (~1.6 ms), with a <code>--max-ms</code> budget.</li>
-        <li><code>mock</code> — replay saved snapshots as a local API.</li>
-        <li><code>generate</code> — interactive wizard that prints a ready-to-paste <code>override</code>.</li>
-        <li><code>panel</code> — local dev panel: run history, snapshots, defaults editor, docs.</li>
-      </ul>
-      <p style="margin-top:10px">Every gate exits <strong>1</strong> when it trips — see the <a href="newman-ci.md">CI guide</a>.</p>
-    </div>
-    <div class="code-window">
-      <div class="code-tb"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="code-fn">override</span></div>
-      <div class="code-body"><pre><span class="c-cmt">// a few of the new fields</span>
-<span class="c-kw">const</span> override = {
-    <span class="c-key">graphql</span>: { <span class="c-key">noErrors</span>: <span class="c-kw">true</span> },
-    <span class="c-key">snapshot</span>: { <span class="c-key">enabled</span>: <span class="c-kw">true</span>, <span class="c-key">mode</span>: <span class="c-str">"structural"</span> },
-    <span class="c-key">retryOnStatus</span>: {
-        <span class="c-key">statuses</span>: [<span class="c-num">503</span>, <span class="c-num">429</span>],
-        <span class="c-key">respectRetryAfter</span>: <span class="c-kw">true</span>
-    },
-    <span class="c-key">maxBytes</span>: <span class="c-num">1048576</span>,
-    <span class="c-key">strictMode</span>: <span class="c-kw">true</span>
-};</pre></div>
-    </div>
-  </div>
-</div>
-</div>
+    <pre><span class="c-key">assertHeaders</span>: [
+  { <span class="c-key">name</span>: <span class="c-str">"X-Request-Id"</span> },
+  { <span class="c-key">name</span>: <span class="c-str">"Content-Type"</span>, <span class="c-key">expect</span>: <span class="c-str">"json"</span> },
+  { <span class="c-key">name</span>: <span class="c-str">"X-Api-Version"</span>, <span class="c-key">equals</span>: <span class="c-str">"v2"</span> },
+  { <span class="c-key">name</span>: <span class="c-str">"X-Powered-By"</span>, <span class="c-key">absent</span>: <span class="c-kw">true</span> },
+  { <span class="c-key">name</span>: <span class="c-str">"X-RateLimit-Remaining"</span>,
+    <span class="c-key">label</span>: <span class="c-str">"rate limit left"</span>,
+    <span class="c-key">expect</span>: <span class="c-var">v</span> =&gt; <span class="c-fn">Number</span>(<span class="c-var">v</span>) &gt; <span class="c-num">0</span> },
+]</pre>
 
-</div><!-- /page-inner -->
+    <h2 id="snapshots">Snapshots <span class="pill">post-request</span></h2>
+    <p>Snapshot regression pins a response against a saved baseline. On the first run the engine stores the body in <code>collectionVariables["hephaestus.snapshots"]</code>, keyed by <code>collection::request::status::format</code>; later runs compare against it. It stays off unless <code>enabled: true</code> (or <code>record: true</code>). <code>ignorePaths</code> drops volatile fields before comparing; <code>checkPaths</code> narrows the comparison to just those sub-paths.</p>
+    <ul>
+      <li><b>strict</b> — full deep-equal, minus <code>ignorePaths</code>.</li>
+      <li><b>non-strict</b> — the default: every key in the baseline must be present now, but new keys are allowed.</li>
+      <li><b>structural</b> — compares shape only (leaf path → type). A field added, removed or retyped fails; volatile ids, timestamps and counters never register as drift.</li>
+    </ul>
+    <p>When an endpoint changes on purpose, set <code>snapshotRecord: true</code> (shorthand for <code>snapshot.record</code>), run once to overwrite the baseline, then drop the flag. Storage defaults to <code>"collection-vars"</code>, the only backend that works offline; <code>"postman-api"</code> is unavailable offline, so the engine warns once and falls back automatically.</p>
 
-<footer><span class="mk">⚒</span> Hephaestus v4.0.1 · <a href="index.html">Home</a> · <a href="quickstart.html">Quick Start</a> · <a href="config-reference.html">Config Reference</a> · <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework">GitHub</a> · <a href="https://www.linkedin.com/in/i-a-bogdanov/" target="_blank" rel="noopener">LinkedIn</a> · MIT</footer>
+    <pre><span class="c-key">snapshot</span>: {
+  <span class="c-key">enabled</span>: <span class="c-kw">true</span>,
+  <span class="c-key">mode</span>: <span class="c-str">"structural"</span>,   <span class="c-cmt">// shape only</span>
+  <span class="c-key">ignorePaths</span>: [<span class="c-str">"data.updatedAt"</span>, <span class="c-str">"meta.ts"</span>],
+  <span class="c-key">checkPaths</span>: [<span class="c-str">"data.status"</span>, <span class="c-str">"data.type"</span>],
+},
+
+<span class="c-cmt">// force a fresh baseline for one run, then remove:</span>
+<span class="c-key">snapshotRecord</span>: <span class="c-kw">true</span></pre>
+
+    <h2 id="schema">Schema, GraphQL &amp; retries <span class="pill">post-request</span></h2>
+    <p><code>schema</code> validates the parsed response against a full JSON Schema through a bundled <code>tv4</code> (draft-04 / draft-07) — no network, no extra dependency. It is off unless <code>enabled: true</code>.</p>
+    <p><code>graphql</code> checks the contract a 200 hides: GraphQL answers <code>200</code> even when the body carries an <code>errors[]</code> array, so status alone proves nothing. Passing <code>true</code> is shorthand for <code>{ noErrors: true }</code>; you can also assert <code>errorCount</code> / <code>errorContains</code> for negative tests and shape the payload under <code>data</code> with <code>dataShape</code>.</p>
+    <p><code>retryOnStatus</code> re-sends the request while its status is in the list, using <code>setNextRequest</code> — and it short-circuits the rest of the pipeline on intermediate attempts, so a retry never runs half a set of assertions. Turn on <code>respectRetryAfter</code> to obey the server's <code>Retry-After</code> header, waiting at most <code>retryAfterCapMs</code> so a hostile value can't stall the run.</p>
+
+    <pre><span class="c-key">schema</span>: {
+  <span class="c-key">enabled</span>: <span class="c-kw">true</span>,
+  <span class="c-key">schema</span>: { <span class="c-key">type</span>: <span class="c-str">"object"</span>, <span class="c-key">required</span>: [<span class="c-str">"id"</span>] },
+},
+
+<span class="c-key">graphql</span>: { <span class="c-key">noErrors</span>: <span class="c-kw">true</span> },   <span class="c-cmt">// 200 + errors[] fails</span>
+
+<span class="c-key">retryOnStatus</span>: {
+  <span class="c-key">statuses</span>: [<span class="c-num">503</span>, <span class="c-num">429</span>],
+  <span class="c-key">maxRetries</span>: <span class="c-num">3</span>,
+  <span class="c-key">respectRetryAfter</span>: <span class="c-kw">true</span>,   <span class="c-cmt">// obey Retry-After</span>
+  <span class="c-key">retryAfterCapMs</span>: <span class="c-num">5000</span>,
+}</pre>
+
+    <h2 id="security">Security &amp; output <span class="pill">post-request</span></h2>
+    <p><code>securityAudit</code> runs passive checks on the response and emits a separate test for each finding, so failures surface individually. It is opt-in — the default is <code>{ enabled: false, checkCors: true }</code>. Enabled with no lists, it applies OWASP-style defaults: it requires HSTS, CSP, <code>X-Frame-Options</code> and <code>X-Content-Type-Options</code>; forbids <code>server</code>, <code>x-powered-by</code> and <code>x-aspnet-version</code>; and scans the body for stack traces and database errors. Version 4 added <code>cookieFlags</code>, <code>checkJwt</code> (rejects <code>alg:none</code> and expired tokens) and <code>requireNoStore</code>. Providing your own list replaces the matching built-in default.</p>
+    <p><b>Localization.</b> <code>locale</code> selects the language of every user-facing string the engine emits — generated test names, logs, errors and status labels. <code>"ru"</code> is the default and is byte-identical to prior releases; <code>"en"</code> is the same engine in English. Assertion behaviour never changes, only the text. Any locale the catalog carries is now selectable, and <code>npm run check:locales</code> validates a contribution for completeness and parity.</p>
+    <p><b>Payload budget and config safety.</b> <code>maxBytes</code> caps response size in bytes (values &lt;= 0 disable it) — the size counterpart to <code>maxResponseTime</code>. <code>strictMode</code> turns the typo-guard strict: an unknown top-level override key normally warns with a "did you mean" suggestion, but under <code>strictMode: true</code> it fails the run so CI blocks on the typo. <code>extraKeys</code> is the escape hatch — list the names a third-party plugin reads off <code>ctx.config</code> and both the warning and the strict failure go away for exactly those keys.</p>
+
+    <pre><span class="c-key">securityAudit</span>: {
+  <span class="c-key">enabled</span>: <span class="c-kw">true</span>,
+  <span class="c-key">checkJwt</span>: <span class="c-kw">true</span>,        <span class="c-cmt">// alg:none / expired</span>
+  <span class="c-key">cookieFlags</span>: <span class="c-kw">true</span>,     <span class="c-cmt">// Secure, HttpOnly, SameSite</span>
+  <span class="c-key">requireNoStore</span>: <span class="c-kw">true</span>,
+},
+<span class="c-key">maxBytes</span>: <span class="c-num">1048576</span>,       <span class="c-cmt">// 1 MB response budget</span>
+<span class="c-key">locale</span>: <span class="c-str">"en"</span>,            <span class="c-cmt">// "ru" default, or "en"</span>
+<span class="c-key">strictMode</span>: <span class="c-kw">true</span>,        <span class="c-cmt">// unknown keys fail the run</span>
+<span class="c-key">extraKeys</span>: [<span class="c-str">"budgetMs"</span>],  <span class="c-cmt">// allowlist plugin keys</span></pre>
+
+    <h2 id="cli">The CLI</h2>
+    <p>Outside Postman lives a single zero-dependency binary. It never touches the engine — it reads what Newman wrote and turns each metric into a gate, exiting non-zero on the specific thing that regressed. Install it globally, then feed it a run report.</p>
+    <div class="cmd" style="margin-bottom:18px"><span class="p">$</span> npm i -g hephaestus-postman-framework<button class="cc" data-cmd="npm i -g hephaestus-postman-framework">copy</button></div>
+    <div class="tools">
+      <div class="tool"><span class="cmd">summary</span><span class="desc">run summary, p50/p95/p99 + --sla gate</span></div>
+      <div class="tool"><span class="cmd">compare</span><span class="desc">diff two runs — regression gate</span></div>
+      <div class="tool"><span class="cmd">flaky</span><span class="desc">assertions that flap across runs</span></div>
+      <div class="tool"><span class="cmd">coverage</span><span class="desc">OpenAPI coverage, --min gate</span></div>
+      <div class="tool"><span class="cmd">bench</span><span class="desc">engine overhead, --max-ms budget</span></div>
+      <div class="tool"><span class="cmd">report</span><span class="desc">self-contained HTML report</span></div>
+      <div class="tool"><span class="cmd">trends</span><span class="desc">pass-rate / p95 sparklines</span></div>
+      <div class="tool"><span class="cmd">doctor</span><span class="desc">pre-flight integrity &amp; drift</span></div>
+      <div class="tool"><span class="cmd">mock</span><span class="desc">replay snapshots as a local API</span></div>
+      <div class="tool"><span class="cmd">watch</span><span class="desc">re-run Newman on file changes</span></div>
+      <div class="tool"><span class="cmd">openapi</span><span class="desc">spec → collection (+ negatives)</span></div>
+      <div class="tool"><span class="cmd">docs</span><span class="desc">API docs from a collection</span></div>
+      <div class="tool"><span class="cmd">junit</span><span class="desc">Newman JSON → JUnit XML</span></div>
+      <div class="tool"><span class="cmd">migrate</span><span class="desc">classify migration state</span></div>
+      <div class="tool"><span class="cmd">sync-examples</span><span class="desc">snapshots → Postman examples</span></div>
+      <div class="tool"><span class="cmd">init</span><span class="desc">config wizard; --demo offline demo</span></div>
+      <div class="tool"><span class="cmd">generate</span><span class="desc">wizard → paste-able override</span></div>
+      <div class="tool"><span class="cmd">panel</span><span class="desc">dev panel: trends, diff, editor</span></div>
+    </div>
+
+    <h2 id="plugins">Plugins &amp; the gallery <span class="pill">post-request</span></h2>
+    <p>Extensibility follows the engine-as-data model: a plugin is a single file you paste into a collection variable and register in the collection's Pre-request script — no build step, no engine fork. Plugins run once per request, <b>second to last in the pipeline</b>: after <code>securityAudit</code>, before the log summary. That position is what makes them useful — every assertion verdict is already in <code>ctx._meta.results</code> and <code>ctx.config</code> is still live. A throw inside a plugin becomes a failing test named after it, and the rest still run; if <code>retryOnStatus</code> fires, the pipeline stops before plugins and they sit out that iteration.</p>
+    <p>The gallery under <code>gallery/plugins/</code> ships four working plugins plus a commented skeleton:</p>
+    <ul>
+      <li><code>response-budget.js</code> — fails a request that misses its latency budget, with per-request budgets, soft mode and a warning band.</li>
+      <li><code>timing-histogram.js</code> — collects response times and prints an ASCII histogram with p50/p90/p95/max and the slowest three.</li>
+      <li><code>pii-redactor.js</code> — finds credential- and PII-shaped values, reports them masked, and registers their field names so the summary redacts them too.</li>
+      <li><code>csv-metrics.js</code> — appends one CSV row per request and prints the table between cut markers at the end of a run.</li>
+      <li><code>_template.js</code> — a commented skeleton documenting every <code>ctx</code> surface a plugin can touch.</li>
+    </ul>
+    <p>Gallery keys are read off <code>ctx.config</code>, so they live in your config where the engine has never heard of them — none are in <code>KNOWN_KEYS</code>. Each therefore warns by default and fails under <code>strictMode</code>, so declare them with <code>extraKeys</code>.</p>
+
+    <pre><span class="c-cmt">// 1. paste the file into a collection variable:</span>
+<span class="c-cmt">//    hephaestus.plugin.budget = &lt;response-budget.js&gt;</span>
+
+<span class="c-cmt">// 2. register in the collection Pre-request script:</span>
+<span class="c-var">pm</span>.collectionVariables.<span class="c-fn">set</span>(<span class="c-str">"hephaestus.plugins"</span>,
+  <span class="c-var">JSON</span>.<span class="c-fn">stringify</span>([
+    { <span class="c-key">name</span>: <span class="c-str">"response-budget"</span>,
+      <span class="c-key">post</span>: <span class="c-str">"hephaestus.plugin.budget"</span> },
+  ]));
+
+<span class="c-cmt">// 3. its keys live in ctx.config — declare them</span>
+<span class="c-cmt">//    when strictMode is on:</span>
+<span class="c-kw">const</span> <span class="c-var">override</span> = {
+  <span class="c-key">extraKeys</span>: [<span class="c-str">"budgetMs"</span>, <span class="c-str">"budgets"</span>],
+  <span class="c-key">budgetMs</span>: <span class="c-num">800</span>,
+};</pre>
+
+    <div class="callout"><b>Full key reference.</b> Every option above, typed and described, lives on the <a href="config-reference.html">config reference</a>. Snapshots have their own <a href="snapshot-viewer.html">viewer</a> for inspecting baselines.</div>
+
+  </main>
+</div>
+<footer class="foot-wrap">
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <div class="foot-brand"><svg class="logo-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 12-8.4 8.4a2.1 2.1 0 0 1-3-3L12 9"/><path d="M17.6 15 22 10.6"/><path d="m21 11.7-1.3-1.3c-.6-.6-.9-1.4-.9-2.2v-.9L16 4.6A5.6 5.6 0 0 0 12 3H9l.9.8A6.2 6.2 0 0 1 12 8.4v1.6l2 2h2.5l2.3 1.9"/></svg> Hephaestus</div>
+        <p class="foot-lead">A modular, zero-dependency API-testing framework for Postman &amp; Newman.</p>
+      </div>
+      <div class="foot-cols">
+        <div class="foot-col"><h4>Docs</h4>
+          <a href="quickstart.html">Quickstart</a>
+          <a href="features.html">Guide</a>
+          <a href="config-reference.html">Config reference</a>
+          <a href="snapshot-viewer.html">Snapshot tool</a>
+        </div>
+        <div class="foot-col"><h4>Project</h4>
+          <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework">GitHub</a>
+          <a href="https://www.npmjs.com/package/hephaestus-postman-framework">npm</a>
+          <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework/releases">Releases</a>
+          <a href="https://github.com/bogdanov-igor/hephaestus-postman-framework/blob/main/CHANGELOG.md">Changelog</a>
+        </div>
+      </div>
+    </div>
+    <div class="foot-legal"><span>MIT © Bogdanov Igor · v4.0.1</span><span>Scattered scripts, forged into one engine.</span></div>
+  </div>
+</footer>
+<script>
+var burger=document.getElementById('burger'),mnav=document.getElementById('mnav');
+if(burger){burger.addEventListener('click',function(){var o=mnav.classList.toggle('open');burger.setAttribute('aria-expanded',o)});mnav.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){mnav.classList.remove('open')})});}
+document.querySelectorAll('[data-cmd]').forEach(function(b){b.addEventListener('click',function(){navigator.clipboard&&navigator.clipboard.writeText(b.dataset.cmd);var t=b.textContent;b.textContent='copied';setTimeout(function(){b.textContent=t},1200)})});
+</script>
+
 </body>
 </html>
